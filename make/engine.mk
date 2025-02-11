@@ -1,9 +1,28 @@
+# Copyright 2025 Mist Tecnologia Ltda
+# Copyright 2016 The Fuchsia Authors
+# Copyright (c) 2008-2015 Travis Geiselbrecht
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
 LOCAL_MAKEFILE:=$(MAKEFILE_LIST)
+
+# include settings for prebuilts that are auto-updated by checkout scripts
+-include prebuilt/config.mk
+-include prebuilt/config-zig.mk
 
 # macros used all over the build system
 include make/macros.mk
 
+# various command line and environment arguments
+# default them to something so when they're referenced in the make instance they're not undefined
 BUILDROOT ?= .
+DEBUG ?= 2
+DEBUG_HARD ?= false
+USE_CLANG ?=
+USE_ZIG_CC ?=
+USE_LLD ?= $(USE_CLANG) $(USE_ZIG_CC)
 
 # 'make spotless' is a special rule that skips most of the rest of the build system and
 # simply deletes everything in build-*
@@ -52,7 +71,11 @@ endif # DEFAULT_PROJECT == something
 
 endif # PROJECT == null
 
-DEBUG ?= 2
+# DEBUG_HARD enables limited optimizations and full debug symbols for use with gdb/lldb
+ifeq ($(call TOBOOL,$(DEBUG_HARD)),true)
+GLOBAL_DEBUGFLAGS := -O0 -g3
+endif
+GLOBAL_DEBUGFLAGS ?= -O2 -g
 
 BUILDDIR_SUFFIX ?=
 BUILDDIR := $(BUILDROOT)/build-$(PROJECT)$(BUILDDIR_SUFFIX)
@@ -62,15 +85,16 @@ CONFIGHEADER := $(BUILDDIR)/config.h
 
 GLOBAL_INCLUDES := $(BUILDDIR) $(addsuffix /include,$(LKINC))
 GLOBAL_OPTFLAGS ?= $(ARCH_OPTFLAGS)
-GLOBAL_COMPILEFLAGS := -g -include $(CONFIGHEADER)
+GLOBAL_COMPILEFLAGS := $(GLOBAL_DEBUGFLAGS)
+GLOBAL_COMPILEFLAGS += -include $(CONFIGHEADER)
 GLOBAL_COMPILEFLAGS += -Wextra -Wall -Werror=return-type -Wshadow -Wdouble-promotion
 GLOBAL_COMPILEFLAGS += -Wno-multichar -Wno-unused-parameter -Wno-unused-function -Wno-unused-label
 GLOBAL_COMPILEFLAGS += -fno-common
 # Build with -ffreestanding since we are building an OS kernel and cannot
 # rely on all hosted environment functionality being present.
 GLOBAL_COMPILEFLAGS += -ffreestanding
-GLOBAL_CFLAGS := --std=gnu11 -Werror-implicit-function-declaration -Wstrict-prototypes -Wwrite-strings
-GLOBAL_CPPFLAGS := --std=c++14 -fno-exceptions -fno-rtti -fno-threadsafe-statics
+GLOBAL_CFLAGS := --std=c11 -Werror-implicit-function-declaration -Wstrict-prototypes -Wwrite-strings
+GLOBAL_CPPFLAGS := --std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics
 GLOBAL_ASMFLAGS := -DASSEMBLY
 GLOBAL_LDFLAGS :=
 
@@ -190,6 +214,27 @@ endif
 
 # default to no ccache
 CCACHE ?=
+
+ifeq ($(call TOBOOL,$(USE_CLANG)),true)
+CC ?= $(CCACHE) $(CLANG_TOOLCHAIN_PREFIX)clang
+OBJDUMP := $(CLANG_TOOLCHAIN_PREFIX)llvm-objdump
+READELF := $(CLANG_TOOLCHAIN_PREFIX)llvm-readelf
+CPPFILT := $(CLANG_TOOLCHAIN_PREFIX)llvm-cxxfilt
+SIZE := $(CLANG_TOOLCHAIN_PREFIX)llvm-size
+NM := $(CLANG_TOOLCHAIN_PREFIX)llvm-nm
+OBJCOPY := $(CLANG_TOOLCHAIN_PREFIX)llvm-objcopy
+STRIP := $(CLANG_TOOLCHAIN_PREFIX)llvm-objcopy --strip-sections
+else
+ifeq ($(call TOBOOL,$(USE_ZIG_CC)),true)
+CC ?= $(ZIG_TOOLCHAIN_PREFIX)zig cc
+OBJDUMP := $(CLANG_TOOLCHAIN_PREFIX)llvm-objdump
+READELF := $(CLANG_TOOLCHAIN_PREFIX)llvm-readelf
+CPPFILT := $(CLANG_TOOLCHAIN_PREFIX)llvm-cxxfilt
+SIZE := $(CLANG_TOOLCHAIN_PREFIX)llvm-size
+NM := $(CLANG_TOOLCHAIN_PREFIX)llvm-nm
+OBJCOPY := $(CLANG_TOOLCHAIN_PREFIX)llvm-objcopy
+STRIP := $(CLANG_TOOLCHAIN_PREFIX)llvm-objcopy --strip-sections
+else
 CC ?= $(CCACHE) $(TOOLCHAIN_PREFIX)gcc
 LD ?= $(TOOLCHAIN_PREFIX)ld
 OBJDUMP ?= $(TOOLCHAIN_PREFIX)objdump
@@ -198,6 +243,17 @@ CPPFILT ?= $(TOOLCHAIN_PREFIX)c++filt
 SIZE ?= $(TOOLCHAIN_PREFIX)size
 NM ?= $(TOOLCHAIN_PREFIX)nm
 STRIP ?= $(TOOLCHAIN_PREFIX)strip
+endif
+endif
+
+LD := $(TOOLCHAIN_PREFIX)ld
+ifeq ($(call TOBOOL,$(USE_LLD)),true)
+ifeq ($(call TOBOOL,$(USE_ZIG_CC)),true)
+LD := $(ZIG_TOOLCHAIN_PREFIX)zig ld.lld
+else
+LD := $(CLANG_TOOLCHAIN_PREFIX)ld.lld
+endif
+endif
 
 # Detect whether we are using ld.lld. If we don't detect ld.lld, we assume
 # it's ld.bfd. This check can be refined in the future if we need to handle
@@ -252,6 +308,14 @@ $(info DEBUG = $(DEBUG))
 
 # include the top level module that includes basic always-there modules
 include top/rules.mk
+
+ifeq ($(call TOBOOL,$(USE_CLANG)),true)
+GLOBAL_COMPILEFLAGS += --target=$(CLANG_ARCH)-unknown-elf
+endif
+
+ifeq ($(call TOBOOL,$(USE_ZIG_CC)),true)
+GLOBAL_COMPILEFLAGS += --target=$(CLANG_ARCH)-freestanding-none
+endif
 
 # recursively include any modules in the MODULE variable, leaving a trail of included
 # modules in the ALLMODULES list

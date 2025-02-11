@@ -494,7 +494,7 @@ static inline void x86_restore_flags(x86_flags_t flags) {
 }
 
 static inline void tlbsync_local(vaddr_t address) {
-    asm volatile("invlpg %0" :: "m"(*(uint8_t *)address));
+    __asm__ volatile("invlpg %0" :: "m"(*(uint8_t *)address));
 }
 
 __END_CDECLS

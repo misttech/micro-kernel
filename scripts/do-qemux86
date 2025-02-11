@@ -21,6 +21,35 @@ function HELP {
     exit 1
 }
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Note these match the defaults in [virtual device specs](/build/images/flash/BUILD.gn;l=517)
+# and https://source.corp.google.com/fuchsia/build/sdk/virtual_device.gni
+# (//src/developer/ffx/plugins/emulator/src/vdl_files.rs).This can be overriden by the emulator
+# configs in the infra/recipe repo
+# (https://fuchsia.googlesource.com/infra/recipes/+/refs/heads/main/recipe_modules/emu/api.py).
+readonly MEMSIZE_DEFAULT=8192
+readonly SMP_DEFAULT=4
+
+# Host operating system. Will either be "Linux" or "Darwin" (macOS) on
+# supported platforms.
+HOST_OS=$(uname -s)
+readonly HOST_OS
+
+# Determine host architecture.
+case "$(uname -m)" in
+  aarch64*|arm64)
+    readonly HOST_ARCH="arm64"
+    ;;
+  x86_64)
+    readonly HOST_ARCH="x64"
+    ;;
+  *)
+    echo "unknown host architecture: $(uname -m)"
+    exit 1
+    ;;
+esac
+
 DO_64BIT=0
 DO_LEGACY=0
 DO_GRAPHICS=0
@@ -29,13 +58,14 @@ DO_DISK=0
 DISK_IMAGE=""
 DO_NET=0
 DO_NET_TAP=0
+QEMUDIR=
 NETDEV=e1000e
-MEMSIZE=0
+MEMSIZE=$MEMSIZE_DEFAULT
 SMP=1
 SUDO=""
 MAKE_VARS=""
 
-while getopts 6d:gklm:nN:s:th FLAG; do
+while getopts 6d:gklm:nNq:s:th FLAG; do
     case $FLAG in
         6) DO_64BIT=1;;
         d) DO_DISK=1; DISK_IMAGE=$OPTARG;;
@@ -44,6 +74,7 @@ while getopts 6d:gklm:nN:s:th FLAG; do
         l) DO_LEGACY=1;;
         m) MEMSIZE=$OPTARG;;
         n) DO_NET=1;;
+        q) QEMUDIR=${OPTARG}/;;
         t) DO_NET_TAP=1;;
         N) NETDEV=$OPTARG;;
         s) SMP=$OPTARG;;
@@ -56,19 +87,26 @@ done
 
 shift $((OPTIND-1))
 
+# by default use the qemu binary located in the fuchsia //prebuilt
+# repo if we can find it, but allow -q to override it for people
+# who want to use their own.
+if [[ -z $QEMUDIR && -d "$DIR/../prebuilt/downloads/qemu/bin" ]]; then
+    QEMUDIR="$DIR/../prebuilt/downloads/qemu/bin/"
+fi
+
 # pick the appropriate qemu and project
 if (( $DO_64BIT )); then
-    QEMU="qemu-system-x86_64"
-    PROJECT="pc-x86-64-test"
+    QEMU=${QEMUDIR}qemu-system-x86_64
+    PROJECT="x64"
     CPU=max
     MACHINE=q35
 elif (( $DO_LEGACY )); then
-    QEMU="qemu-system-i386"
+    QEMU=${QEMUDIR}qemu-system-i386
     PROJECT="pc-x86-legacy-test"
     CPU=486
     MACHINE=isapc
 else
-    QEMU="qemu-system-i386"
+    QEMU=${QEMUDIR}qemu-system-i386
     PROJECT="pc-x86-test"
     CPU=max
     MACHINE=pc

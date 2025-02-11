@@ -1,3 +1,11 @@
+# Copyright 2025 Mist Tecnologia Ltda
+# Copyright 2016 The Fuchsia Authors
+# Copyright (c) 2008-2015 Travis Geiselbrecht
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
 LOCAL_DIR := $(GET_LOCAL_DIR)
 
 MODULE := $(LOCAL_DIR)
@@ -7,18 +15,6 @@ MODULE_OPTIONS := extra_warnings
 # x86 code always runs with the mmu enabled
 WITH_KERNEL_VM := 1
 
-ifeq ($(SUBARCH),x86-32)
-MEMBASE ?= 0x00000000
-KERNEL_BASE ?= 0x80000000
-KERNEL_LOAD_OFFSET ?= 0x00200000
-KERNEL_ASPACE_BASE ?= 0x80000000
-KERNEL_ASPACE_SIZE ?= 0x7ff00000
-USER_ASPACE_BASE   ?= 0
-USER_ASPACE_SIZE   ?= 0x80000000
-
-SUBARCH_DIR := $(LOCAL_DIR)/32
-endif
-ifeq ($(SUBARCH),x86-64)
 GLOBAL_DEFINES += \
 	IS_64BIT=1 \
 
@@ -30,7 +26,6 @@ KERNEL_ASPACE_SIZE ?= 0x0000008000000000UL
 USER_ASPACE_BASE   ?= 0x0000000000000000UL
 USER_ASPACE_SIZE   ?= 0x0000800000000000UL
 SUBARCH_DIR := $(LOCAL_DIR)/64
-endif
 
 SUBARCH_BUILDDIR := $(call TOBUILDDIR,$(SUBARCH_DIR))
 
@@ -60,30 +55,18 @@ MODULE_SRCS += \
 	$(LOCAL_DIR)/gdt.S \
 	$(LOCAL_DIR)/thread.c \
 
-# legacy x86's dont have fpu support
-ifneq ($(CPU),legacy)
 GLOBAL_DEFINES += \
 	X86_WITH_FPU=1
 
 MODULE_SRCS += \
 	$(LOCAL_DIR)/fpu.c
-else
-GLOBAL_DEFINES += WITH_NO_FP=1
-endif
 
 include $(LOCAL_DIR)/toolchain.mk
 
 # set the default toolchain to x86 elf and set a #define
-ifeq ($(SUBARCH),x86-32)
-ifndef TOOLCHAIN_PREFIX
-TOOLCHAIN_PREFIX := $(ARCH_x86_TOOLCHAIN_PREFIX)
-endif
-endif # SUBARCH x86-32
-ifeq ($(SUBARCH),x86-64)
 ifndef TOOLCHAIN_PREFIX
 TOOLCHAIN_PREFIX := $(ARCH_x86_64_TOOLCHAIN_PREFIX)
 endif
-endif # SUBARCH x86-64
 
 $(warning ARCH_x86_TOOLCHAIN_PREFIX = $(ARCH_x86_TOOLCHAIN_PREFIX))
 $(warning ARCH_x86_64_TOOLCHAIN_PREFIX = $(ARCH_x86_64_TOOLCHAIN_PREFIX))
@@ -95,36 +78,30 @@ cc-option = $(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`";
 # disable SSP if the compiler supports it; it will break stuff
 GLOBAL_CFLAGS += $(call cc-option,$(CC),-fno-stack-protector,)
 
+CLANG_ARCH := x86_64
+
 ARCH_COMPILEFLAGS += -fasynchronous-unwind-tables
 ARCH_COMPILEFLAGS += -gdwarf-2
 ARCH_COMPILEFLAGS += -fno-pic
 ARCH_LDFLAGS += -z max-page-size=4096
 
-ifeq ($(SUBARCH),x86-64)
 ARCH_COMPILEFLAGS += -fno-stack-protector
 ARCH_COMPILEFLAGS += -mcmodel=kernel
 ARCH_COMPILEFLAGS += -mno-red-zone
-endif # SUBARCH x86-64
 
 # set switches to generate/not generate fpu code
 ARCH_COMPILEFLAGS_FLOAT +=
-ARCH_COMPILEFLAGS_NOFLOAT += -mgeneral-regs-only
+# hard disable floating point in the kernel
+ARCH_COMPILEFLAGS_NOFLOAT += -msoft-float -mno-mmx -mno-sse -mno-sse2 -mno-3dnow -mno-avx -mno-avx2
 
 # select default optimizations for different target cpu levels
-ifeq ($(CPU),legacy)
-# compile for 386 when selecting 'legacy' cpu support
-ARCH_COMPILEFLAGS += -march=i386
-ARCH_OPTFLAGS := -Os
-GLOBAL_DEFINES += X86_LEGACY=1
-else ifeq ($(SUBARCH),x86-32)
-ARCH_COMPILEFLAGS += -march=i686
-ARCH_OPTFLAGS := -O2
-GLOBAL_DEFINES += X86_LEGACY=0
-else ifeq ($(SUBARCH),x86-64)
-ARCH_COMPILEFLAGS += -march=x86-64
-ARCH_OPTFLAGS := -O2
-GLOBAL_DEFINES += X86_LEGACY=0
+ifeq ($(call TOBOOL,$(USE_ZIG_CC)),true)
+ARCH_COMPILEFLAGS += -march=x86_64 -mcx16
+else
+ARCH_COMPILEFLAGS += -march=x86-64 -mcx16
 endif
+ARCH_OPTFLAGS :=
+GLOBAL_DEFINES += X86_LEGACY=0
 
 LIBGCC := $(shell $(TOOLCHAIN_PREFIX)gcc $(GLOBAL_COMPILEFLAGS) $(ARCH_COMPILEFLAGS) -print-libgcc-file-name)
 $(warning LIBGCC = $(LIBGCC))

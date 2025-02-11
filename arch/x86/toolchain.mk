@@ -1,36 +1,34 @@
-# x86-32 toolchain
-ifeq ($(SUBARCH),x86-32)
-ifndef ARCH_x86_TOOLCHAIN_INCLUDED
-ARCH_x86_TOOLCHAIN_INCLUDED := 1
+# Copyright 2025 Mist Tecnologia Ltda
+# Copyright 2016 The Fuchsia Authors
+# Copyright (c) 2008-2015 Travis Geiselbrecht
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
 
-ifndef ARCH_x86_TOOLCHAIN_PREFIX
-ARCH_x86_TOOLCHAIN_PREFIX := i386-elf-
-FOUNDTOOL=$(shell which $(ARCH_x86_TOOLCHAIN_PREFIX)gcc)
-endif
 
-ifeq ($(FOUNDTOOL),)
-$(warning cannot find toolchain in path, assuming i386-elf- prefix)
-ARCH_x86_TOOLCHAIN_PREFIX := i386-elf-
-endif
-
-endif
-endif
-
-# x86-64 toolchain
-ifeq ($(SUBARCH),x86-64)
+# x86-64 GCC toolchain
 ifndef ARCH_x86_64_TOOLCHAIN_INCLUDED
 ARCH_x86_64_TOOLCHAIN_INCLUDED := 1
 
 ifndef ARCH_x86_64_TOOLCHAIN_PREFIX
 ARCH_x86_64_TOOLCHAIN_PREFIX := x86_64-elf-
-FOUNDTOOL=$(shell which $(ARCH_x86_64_TOOLCHAIN_PREFIX)gcc)
 endif
+FOUNDTOOL=$(shell which $(ARCH_x86_64_TOOLCHAIN_PREFIX)gcc)
+
+endif # ifndef ARCH_x86_64_TOOLCHAIN_INCLUDED
+
+# Clang
+ifeq ($(call TOBOOL,$(USE_CLANG)),true)
+FOUNDTOOL=$(shell which $(CLANG_TOOLCHAIN_PREFIX)clang)
+endif # USE_CLANG==true
+
+# Zig CC
+ifeq ($(call TOBOOL,$(USE_ZIG_CC)),true)
+FOUNDTOOL=$(shell which $(ZIG_TOOLCHAIN_PREFIX)zig)
+endif # USE_ZIG_CC==true
 
 ifeq ($(FOUNDTOOL),)
-$(warning cannot find toolchain in path, assuming x86_64-elf- prefix)
-ARCH_x86_64_TOOLCHAIN_PREFIX := x86_64-elf-
+$(error cannot find toolchain, please set ARCH_x86_64_TOOLCHAIN_PREFIX, \
+        CLANG_TOOLCHAIN_PREFIX, ZIG_TOOLCHAIN_PREFIX, or add either to your path)
 endif
-
-endif
-endif
-
