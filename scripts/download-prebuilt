@@ -142,7 +142,7 @@ download_package() {
 
   rm -f -- "$download_file_with_dir"
   echo "Downloading $url"
-  curl --progress-bar -continue-at=- --location \
+  curl --progress-bar --continue-at - --location \
        --create-dirs --output "$download_file_with_dir" "$url" || return
 
   verify_file "$download_file_with_dir" "$version" || {

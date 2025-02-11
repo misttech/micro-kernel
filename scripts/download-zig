@@ -119,7 +119,7 @@ download_package() {
 
   rm -f -- "$download_file_with_dir"
   echo "Downloading $url"
-  curl --progress-bar -continue-at=- --location \
+  curl --progress-bar --continue-at - --location \
        --create-dirs --output "$download_file_with_dir" "$url" || return
 
   verify_file "$download_file_with_dir" "$version" || {
@@ -133,7 +133,8 @@ download_package() {
   local -r dir="${download_file_with_dir%.tar.xz}"
   rm -rf -- "$dir"
   mkdir -p -- "$dir"
-  tar xzf "$download_file_with_dir" -C "$dir" --strip-components=1 || return
+  # -J because zig uses .tar.xz for all but Windows
+  tar xJf "$download_file_with_dir" -C "$dir" --strip-components=1 || return
 
   update_stamp "$package" "$version" "$download_file"
 }
