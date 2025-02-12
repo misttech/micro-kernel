@@ -28,7 +28,7 @@ REPLACEWITH=" \* Use of this source code is governed by a MIT-style\n"\
 " \* license that can be found in the LICENSE file or at\n"\
 " \* https:\/\/opensource.org\/licenses\/MIT\n"
 
-FILES=$(find . -name *.[chS] -or -name \*.cpp | grep -v external | grep -v build-)
+FILES=$(find . -name *.[chS] -or -name \*.cpp -or -name \*.cc | grep -v external | grep -v build-)
 echo $FILES
 
 for f in $FILES; do
