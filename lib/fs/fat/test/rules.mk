@@ -5,10 +5,10 @@ MODULE := $(LOCAL_DIR)
 MODULE_DEPS += lib/fs/fat
 MODULE_DEPS += lib/unittest
 
-MODULE_SRCS += $(LOCAL_DIR)/test.cpp
+MODULE_SRCS += $(LOCAL_DIR)/test.cc
 
 # pass in the local dir relative to the build root
-# so the test.cpp has a path to include files against
+# so the test.cc has a path to include files against
 MODULE_DEFINES += LOCAL_DIR=\"$(LOCAL_DIR)\"
 
 # add a few files that should force a rebuild if modified

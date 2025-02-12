@@ -11,11 +11,11 @@ ifeq ($(call TOBOOL,WITH_TESTS),true)
 MODULE_DEPS += $(LOCAL_DIR)/test
 endif
 
-MODULE_SRCS += $(LOCAL_DIR)/dir.cpp
-MODULE_SRCS += $(LOCAL_DIR)/fat.cpp
-MODULE_SRCS += $(LOCAL_DIR)/file.cpp
-MODULE_SRCS += $(LOCAL_DIR)/file_iterator.cpp
-MODULE_SRCS += $(LOCAL_DIR)/fs.cpp
+MODULE_SRCS += $(LOCAL_DIR)/dir.cc
+MODULE_SRCS += $(LOCAL_DIR)/fat.cc
+MODULE_SRCS += $(LOCAL_DIR)/file.cc
+MODULE_SRCS += $(LOCAL_DIR)/file_iterator.cc
+MODULE_SRCS += $(LOCAL_DIR)/fs.cc
 
 MODULE_COMPILEFLAGS += -Wmissing-declarations
 MODULE_CPPFLAGS += -Wno-invalid-offsetof

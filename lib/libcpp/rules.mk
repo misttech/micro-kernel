@@ -4,7 +4,7 @@ MODULE := $(LOCAL_DIR)
 
 MODULE_DEPS :=
 
-MODULE_SRCS += $(LOCAL_DIR)/new.cpp
-MODULE_SRCS += $(LOCAL_DIR)/pure_virtual.cpp
+MODULE_SRCS += $(LOCAL_DIR)/new.cc
+MODULE_SRCS += $(LOCAL_DIR)/pure_virtual.cc
 
 include make/module.mk

@@ -8,6 +8,6 @@ MODULE_DEPS := \
 	lib/libcpp
 
 MODULE_SRCS += \
-   $(LOCAL_DIR)/acpi_lite.cpp
+   $(LOCAL_DIR)/acpi_lite.cc
 
 include make/module.mk
