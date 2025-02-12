@@ -25,12 +25,9 @@ KERNEL_ASPACE_BASE ?= 0xffffff8000000000UL # -512GB
 KERNEL_ASPACE_SIZE ?= 0x0000008000000000UL
 USER_ASPACE_BASE   ?= 0x0000000000000000UL
 USER_ASPACE_SIZE   ?= 0x0000800000000000UL
-SUBARCH_DIR := $(LOCAL_DIR)/64
-
-SUBARCH_BUILDDIR := $(call TOBUILDDIR,$(SUBARCH_DIR))
 
 GLOBAL_DEFINES += \
-	ARCH_$(SUBARCH)=1 \
+	ARCH_X86_64=1 \
 	MEMBASE=$(MEMBASE) \
 	KERNEL_BASE=$(KERNEL_BASE) \
 	KERNEL_LOAD_OFFSET=$(KERNEL_LOAD_OFFSET) \
@@ -40,11 +37,11 @@ GLOBAL_DEFINES += \
 	ARCH_HAS_MMU=1
 
 MODULE_SRCS += \
-	$(SUBARCH_DIR)/start.S \
-	$(SUBARCH_DIR)/asm.S \
-	$(SUBARCH_DIR)/exceptions.S \
-	$(SUBARCH_DIR)/mmu.c \
-	$(SUBARCH_DIR)/ops.S \
+	$(LOCAL_DIR)/start.S \
+	$(LOCAL_DIR)/asm.S \
+	$(LOCAL_DIR)/exceptions.S \
+	$(LOCAL_DIR)/mmu.c \
+	$(LOCAL_DIR)/ops.S \
 	$(LOCAL_DIR)/arch.c \
 	$(LOCAL_DIR)/cache.c \
 	$(LOCAL_DIR)/descriptor.c \
@@ -52,12 +49,10 @@ MODULE_SRCS += \
 	$(LOCAL_DIR)/feature.c \
 	$(LOCAL_DIR)/gdt.S \
 	$(LOCAL_DIR)/thread.c \
+	$(LOCAL_DIR)/fpu.c
 
 GLOBAL_DEFINES += \
 	X86_WITH_FPU=1
-
-MODULE_SRCS += \
-	$(LOCAL_DIR)/fpu.c
 
 include $(LOCAL_DIR)/toolchain.mk
 
@@ -102,13 +97,13 @@ endif
 ARCH_OPTFLAGS :=
 GLOBAL_DEFINES += X86_LEGACY=0
 
-LINKER_SCRIPT += $(SUBARCH_BUILDDIR)/kernel.ld
+LINKER_SCRIPT += $(BUILDDIR)/kernel.ld
 
 # potentially generated files that should be cleaned out with clean make rule
-GENERATED += $(SUBARCH_BUILDDIR)/kernel.ld
+GENERATED += $(BUILDDIR)/kernel.ld
 
 # rules for generating the linker scripts
-$(SUBARCH_BUILDDIR)/kernel.ld: $(SUBARCH_DIR)/kernel.ld $(wildcard arch/*.ld)
+$(BUILDDIR)/kernel.ld: $(LOCAL_DIR)/kernel.ld $(wildcard arch/*.ld)
 	@echo generating $@
 	@$(MKDIR)
 	$(NOECHO)sed "s/%MEMBASE%/$(MEMBASE)/;s/%MEMSIZE%/$(MEMSIZE)/;s/%KERNEL_BASE%/$(KERNEL_BASE)/;s/%KERNEL_LOAD_OFFSET%/$(KERNEL_LOAD_OFFSET)/" < $< > $@.tmp
