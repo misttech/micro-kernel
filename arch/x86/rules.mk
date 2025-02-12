@@ -41,12 +41,10 @@ GLOBAL_DEFINES += \
 
 MODULE_SRCS += \
 	$(SUBARCH_DIR)/start.S \
-\
 	$(SUBARCH_DIR)/asm.S \
 	$(SUBARCH_DIR)/exceptions.S \
 	$(SUBARCH_DIR)/mmu.c \
 	$(SUBARCH_DIR)/ops.S \
-\
 	$(LOCAL_DIR)/arch.c \
 	$(LOCAL_DIR)/cache.c \
 	$(LOCAL_DIR)/descriptor.c \
@@ -68,9 +66,9 @@ ifndef TOOLCHAIN_PREFIX
 TOOLCHAIN_PREFIX := $(ARCH_x86_64_TOOLCHAIN_PREFIX)
 endif
 
-$(warning ARCH_x86_TOOLCHAIN_PREFIX = $(ARCH_x86_TOOLCHAIN_PREFIX))
-$(warning ARCH_x86_64_TOOLCHAIN_PREFIX = $(ARCH_x86_64_TOOLCHAIN_PREFIX))
-$(warning TOOLCHAIN_PREFIX = $(TOOLCHAIN_PREFIX))
+#$(warning ARCH_x86_TOOLCHAIN_PREFIX = $(ARCH_x86_TOOLCHAIN_PREFIX))
+#$(warning ARCH_x86_64_TOOLCHAIN_PREFIX = $(ARCH_x86_64_TOOLCHAIN_PREFIX))
+#$(warning TOOLCHAIN_PREFIX = $(TOOLCHAIN_PREFIX))
 
 cc-option = $(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`"; \
 	then echo "$(2)"; else echo "$(3)"; fi ;)
@@ -79,13 +77,14 @@ cc-option = $(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`";
 GLOBAL_CFLAGS += $(call cc-option,$(CC),-fno-stack-protector,)
 
 CLANG_ARCH := x86_64
+ARCH_LDFLAGS += -m elf_x86_64
 
 ARCH_COMPILEFLAGS += -fasynchronous-unwind-tables
 ARCH_COMPILEFLAGS += -gdwarf-2
 ARCH_COMPILEFLAGS += -fno-pic
 ARCH_LDFLAGS += -z max-page-size=4096
 
-ARCH_COMPILEFLAGS += -fno-stack-protector
+ARCH_COMPILEFLAGS += $(NO_SAFESTACK) $(NO_SANITIZERS)
 ARCH_COMPILEFLAGS += -mcmodel=kernel
 ARCH_COMPILEFLAGS += -mno-red-zone
 
@@ -102,9 +101,6 @@ ARCH_COMPILEFLAGS += -march=x86-64 -mcx16
 endif
 ARCH_OPTFLAGS :=
 GLOBAL_DEFINES += X86_LEGACY=0
-
-LIBGCC := $(shell $(TOOLCHAIN_PREFIX)gcc $(GLOBAL_COMPILEFLAGS) $(ARCH_COMPILEFLAGS) -print-libgcc-file-name)
-$(warning LIBGCC = $(LIBGCC))
 
 LINKER_SCRIPT += $(SUBARCH_BUILDDIR)/kernel.ld
 

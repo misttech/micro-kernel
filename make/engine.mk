@@ -96,12 +96,20 @@ GLOBAL_COMPILEFLAGS += -ffreestanding
 GLOBAL_CFLAGS := --std=c11 -Werror-implicit-function-declaration -Wstrict-prototypes -Wwrite-strings
 GLOBAL_CPPFLAGS := --std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics
 GLOBAL_ASMFLAGS := -DASSEMBLY
-GLOBAL_LDFLAGS :=
+GLOBAL_LDFLAGS := -nostdlib -z noexecstack
 
 ifeq ($(UBSAN), 1)
 # Inject lib/ubsan directly into MODULE_DEPS
 # lib/ubsan will itself add the needed CFLAGS
 MODULE_DEPS += lib/ubsan
+endif
+
+ifeq ($(call TOBOOL,$(USE_CLANG)),true)
+NO_SAFESTACK := -fno-sanitize=safe-stack -fno-stack-protector
+NO_SANITIZERS := -fno-sanitize=all -fno-stack-protector
+else
+NO_SAFESTACK :=
+NO_SANITIZERS :=
 endif
 
 # flags that are sometimes nice to enable to catch problems but too strict to have on all the time.
@@ -310,7 +318,7 @@ $(info DEBUG = $(DEBUG))
 include top/rules.mk
 
 ifeq ($(call TOBOOL,$(USE_CLANG)),true)
-GLOBAL_COMPILEFLAGS += --target=$(CLANG_ARCH)-unknown-elf
+GLOBAL_COMPILEFLAGS += --target=$(CLANG_ARCH)-fuchsia
 endif
 
 ifeq ($(call TOBOOL,$(USE_ZIG_CC)),true)
@@ -354,6 +362,11 @@ $(error INCLUDES variable set, please move to GLOBAL_INCLUDES: $(INCLUDES))
 endif
 ifneq ($(DEFINES),)
 $(error DEFINES variable set, please move to GLOBAL_DEFINES: $(DEFINES))
+endif
+
+LIBGCC := $(shell $(CC) $(GLOBAL_COMPILEFLAGS) $(ARCH_COMPILEFLAGS) -print-libgcc-file-name)
+ifeq ($(LIBGCC),)
+$(error cannot find runtime library, please set LIBGCC)
 endif
 
 # try to have the compiler output colorized error messages if available
