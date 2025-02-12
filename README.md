@@ -36,6 +36,10 @@ export PATH=$PWD/.jiri_root/bin:$PATH
 # Build:
 
 ```
+# Build with clang
+USE_CLANG=true ./scripts/do-qemux86 -6
+
+# Build with zig cc
 USE_ZIG_CC=true ./scripts/do-qemux86 -6
 ```
 
