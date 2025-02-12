@@ -353,6 +353,28 @@ GLOBAL_DEFINES += $(EXTERNAL_DEFINES)
 $(info EXTERNAL_DEFINES = $(EXTERNAL_DEFINES))
 endif
 
+# This needs to find the standard C++ library headers for the header-only
+# facilities that can be used in Zircon C++ code.  The only implementation
+# that's been tested is libc++ (aka libcxx) from the LLVM project.  In the
+# prebuilt Fuchsia Clang/LLVM toolchain, the libc++ headers are provided
+# with the toolchain and the compiler puts them in the default include
+# path, so nothing is needed here.  Normally when using the prebuilt
+# Fuchsia GCC toolchain, we just use the headers directly from the prebuilt
+# Clang toolchain since they're on hand.  If using a different compiler,
+# set this to a directory where the include/ subdirectory from
+# https://git.llvm.org/git/libcxx is unpacked.
+LIBCXX_INCLUDES ?=
+ifeq ($(call TOBOOL,$(USE_CLANG))$(strip $(LIBC_INCLUDES)),false)
+LIBCXX_INCLUDES := \
+    $(shell $(CLANG_TOOLCHAIN_PREFIX)clang --target=$(CLANG_ARCH) \
+            -print-file-name=include/c++/v1)
+endif
+GLOBAL_INCLUDES += $(LIBCXX_INCLUDES)
+
+ifeq ($(call TOBOOL,$(USE_ZIG_CC)),true)
+GLOBAL_COMPILEFLAGS += -D__GNU__
+endif
+
 # prefix all of the paths in GLOBAL_INCLUDES with -I
 GLOBAL_INCLUDES := $(addprefix -I,$(GLOBAL_INCLUDES))
 
@@ -364,9 +386,11 @@ ifneq ($(DEFINES),)
 $(error DEFINES variable set, please move to GLOBAL_DEFINES: $(DEFINES))
 endif
 
+ifeq ($(call TOBOOL,$(USE_ZIG_CC)),false)
 LIBGCC := $(shell $(CC) $(GLOBAL_COMPILEFLAGS) $(ARCH_COMPILEFLAGS) -print-libgcc-file-name)
 ifeq ($(LIBGCC),)
 $(error cannot find runtime library, please set LIBGCC)
+endif
 endif
 
 # try to have the compiler output colorized error messages if available
