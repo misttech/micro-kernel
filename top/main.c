@@ -1,38 +1,34 @@
-/*
- * Copyright (c) 2013-2015 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
+// Copyright 2025 Mist Tecnologia LTDA
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2013-2015 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
 /*
  * Main entry point to the OS. Initializes modules in order and creates
  * the default thread.
  */
+#include "lk/main.h"
+
 #include <app.h>
 #include <arch.h>
+#include <assert.h>
+#include <debug.h>
+#include <lib/console.h>
 #include <lib/heap.h>
 #include <platform.h>
-#include <string.h>
 #include <target.h>
+#include <zircon/compiler.h>
 
 #include <kernel/init.h>
 #include <kernel/mutex.h>
-#include <kernel/novm.h>
 #include <kernel/thread.h>
-#include <lk/compiler.h>
-#include <lk/debug.h>
 #include <lk/init.h>
-#include <lk/main.h>
 
 /* saved boot arguments from whoever loaded the system */
 ulong lk_boot_args[4];
-
-extern void (*__ctor_list[])(void);
-extern void (*__ctor_end[])(void);
-extern int __bss_start;
-extern int _end;
 
 #if WITH_SMP
 static thread_t *secondary_bootstrap_threads[SMP_MAX_CPUS - 1];
@@ -41,18 +37,19 @@ static uint secondary_bootstrap_thread_count;
 
 static int bootstrap2(void *arg);
 
+static bool lk_global_constructors_called_flag = false;
+
+extern void (*const __ctor_list[])(void);
+extern void (*const __ctor_end[])(void);
+
+bool lk_global_constructors_called(void) { return lk_global_constructors_called_flag; }
+
 static void call_constructors(void) {
-  void (**ctor)(void);
-
-  ctor = __ctor_list;
-  while (ctor != __ctor_end) {
-    void (*func)(void);
-
-    func = *ctor;
-
-    func();
-    ctor++;
+  for (void (*const *a)(void) = __ctor_list; a != __ctor_end; a++) {
+    (*a)();
   }
+
+  lk_global_constructors_called_flag = true;
 }
 
 /* called from arch code */
@@ -66,12 +63,27 @@ void lk_main(ulong arg0, ulong arg1, ulong arg2, ulong arg3) {
   // get us into some sort of thread context
   thread_init_early();
 
-  // early arch stuff
+  // bring the debuglog up early so we can safely printf
+  // dlog_init_early();
+
+  // deal with any static constructors
+  call_constructors();
+
+  // we can safely printf now since we have the debuglog, the current thread set
+  // which holds (a per-line buffer), and global ctors finished (some of the
+  // printf machinery depends on ctors right now).
+  // NOTE: botanist depends on this string being printed to serial. If this changes,
+  // that code must be changed as well. See https://fxbug.dev/42138089#c20.
+  // dprintf(ALWAYS, "printing enabled\n");
+
   lk_primary_cpu_init_level(LK_INIT_LEVEL_EARLIEST, LK_INIT_LEVEL_ARCH_EARLY - 1);
+
+  // Carry out any early architecture-specific and platform-specific init
+  // required to get the boot CPU and platform into a known state.
   arch_early_init();
 
-  // do any super early platform initialization
   lk_primary_cpu_init_level(LK_INIT_LEVEL_ARCH_EARLY, LK_INIT_LEVEL_PLATFORM_EARLY - 1);
+
   platform_early_init();
 
   // do any super early target initialization
@@ -90,10 +102,6 @@ void lk_main(ulong arg0, ulong arg1, ulong arg2, ulong arg3) {
   lk_primary_cpu_init_level(LK_INIT_LEVEL_TARGET_EARLY, LK_INIT_LEVEL_HEAP - 1);
   dprintf(SPEW, "initializing heap\n");
   heap_init();
-
-  // deal with any static constructors
-  dprintf(SPEW, "calling constructors\n");
-  call_constructors();
 
   // initialize the kernel
   lk_primary_cpu_init_level(LK_INIT_LEVEL_HEAP, LK_INIT_LEVEL_KERNEL - 1);
@@ -114,6 +122,8 @@ void lk_main(ulong arg0, ulong arg1, ulong arg2, ulong arg3) {
 }
 
 static int bootstrap2(void *arg) {
+  DEBUG_ASSERT(arch_curr_cpu_num() == BOOT_CPU_ID);
+
   dprintf(SPEW, "top of bootstrap2()\n");
 
   lk_primary_cpu_init_level(LK_INIT_LEVEL_THREADING, LK_INIT_LEVEL_ARCH - 1);
@@ -133,6 +143,7 @@ static int bootstrap2(void *arg) {
   lk_primary_cpu_init_level(LK_INIT_LEVEL_TARGET, LK_INIT_LEVEL_APPS - 1);
   apps_init();
 
+  dprintf(SPEW, "moving to last init level\n");
   lk_primary_cpu_init_level(LK_INIT_LEVEL_APPS, LK_INIT_LEVEL_LAST);
 
   return 0;
