@@ -85,12 +85,18 @@ static void debug_uart_putc(char c) {
   outp(uart_io_port + 0, c);
 }
 
-void platform_dputc(char c) {
-  if (c == '\n')
-    platform_dputc('\r');
-
-  cputc(c);
-  debug_uart_putc(c);
+void platform_dputs_thread(const char* str, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        debug_uart_putc(str[i]);
+    }
 }
 
-int platform_dgetc(char *c, bool wait) { return cbuf_read_char(&console_input_buf, c, wait); }
+void platform_dputs_irq(const char* str, size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        debug_uart_putc(str[i]);
+    }
+}
+
+int platform_dgetc(char* c, bool wait) {
+    return cbuf_read_char(&console_input_buf, c, wait);
+}
