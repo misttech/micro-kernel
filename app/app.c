@@ -14,7 +14,8 @@
 #include <lk/console_cmd.h>
 #include <lk/err.h>
 
-extern const struct app_descriptor __start_apps __WEAK;
+extern const struct
+ app_descriptor __start_apps __WEAK;
 extern const struct app_descriptor __stop_apps __WEAK;
 
 static void start_app(const struct app_descriptor *app, bool detach);
