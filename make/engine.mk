@@ -145,7 +145,7 @@ ARCH_OBJDUMP_FLAGS :=
 THUMBCFLAGS := # optional compile switches set by arm architecture when compiling in thumb mode
 
 # top level rule
-all:: $(OUTBIN) $(OUTELF).lst $(OUTELF).debug.lst $(OUTELF).sym $(OUTELF).sym.sorted $(OUTELF).size $(OUTELF).dump $(BUILDDIR)/srcfiles.txt $(BUILDDIR)/include_paths.txt
+all:: $(OUTBIN) $(OUTELF).lst $(OUTELF).debug.lst $(OUTELF).sym $(OUTELF).sym.sorted $(OUTELF).size $(OUTELF).dump $(BUILDDIR)/srcfiles.txt $(BUILDDIR)/include_paths.txt $(BUILDROOT)/compile_commands.json
 
 # master module object list
 ALLMODULE_OBJS :=
@@ -233,6 +233,7 @@ SIZE := $(CLANG_TOOLCHAIN_PREFIX)llvm-size
 NM := $(CLANG_TOOLCHAIN_PREFIX)llvm-nm
 OBJCOPY := $(CLANG_TOOLCHAIN_PREFIX)llvm-objcopy
 STRIP := $(CLANG_TOOLCHAIN_PREFIX)llvm-objcopy --strip-sections
+GLOBAL_OPTFLAGS += -MJ $(@:%o=%o.json)
 else
 ifeq ($(call TOBOOL,$(USE_ZIG_CC)),true)
 CC ?= $(ZIG_TOOLCHAIN_PREFIX)zig cc
@@ -243,6 +244,7 @@ SIZE := $(CLANG_TOOLCHAIN_PREFIX)llvm-size
 NM := $(CLANG_TOOLCHAIN_PREFIX)llvm-nm
 OBJCOPY := $(CLANG_TOOLCHAIN_PREFIX)llvm-objcopy
 STRIP := $(CLANG_TOOLCHAIN_PREFIX)llvm-objcopy --strip-sections
+GLOBAL_OPTFLAGS += -MJ $(@:%o=%json)
 else
 CC ?= $(CCACHE) $(TOOLCHAIN_PREFIX)gcc
 LD ?= $(TOOLCHAIN_PREFIX)ld

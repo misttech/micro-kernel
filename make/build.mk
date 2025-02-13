@@ -77,5 +77,9 @@ $(BUILDDIR)/include_paths.txt: $(OUTELF)
 	$(info generating $@)
 	$(NOECHO)echo $(subst -I,,$(sort $(GLOBAL_INCLUDES))) | tr ' ' '\n' > $@
 
+$(BUILDROOT)/compile_commands.json: $(OUTELF)
+	$(info generating $@)
+	$(NOECHO)find $(BUILDDIR) -name "*.o.json" -exec sed -e '1s/^/[\'$$'\n''/' -e '$$s/,$$/\'$$'\n'']/' {} \; > $(BUILDROOT)/compile_commands.json
+
 #include arch/$(ARCH)/compile.mk
 
