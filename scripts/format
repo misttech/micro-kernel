@@ -21,7 +21,6 @@ function HELP {
     echo "help:"
     echo "-c check only, don't modify files"
     echo "-v verbose output"
-    echo "-q hide output of formatting"
     echo "-h for help"
     exit 1
 }
@@ -43,14 +42,25 @@ done
 shift $((OPTIND-1))
 
 # find clang-format
-if command -v clang-format &> /dev/null; then
-    CLANG_FORMAT="clang-format"
-elif [ -f "${PREBUILTS_DIR}/downloads/clang/bin/clang-format" ]; then
+if [ -f "${PREBUILTS_DIR}/downloads/clang/bin/clang-format" ]; then
     CLANG_FORMAT="${PREBUILTS_DIR}/downloads/clang/bin/clang-format"
+elif command -v clang-format &> /dev/null; then
+    CLANG_FORMAT="clang-format"
 else
     echo "Error: clang-format not found"
     exit 1
 fi
+
+echo "Using: ${CLANG_FORMAT}"
+echo "Version: $(${CLANG_FORMAT} --version)"
+if [ -f "${MK_ROOT}/.clang-format" ]; then
+  echo "Root style file: ${MK_ROOT}/.clang-format"
+  echo "=== .clang-format configuration ==="
+  cat "${MK_ROOT}/.clang-format"
+  echo "=========================="
+else
+  echo "Root style file: not found"
+  fi
 
 # Find all source files
 FILES=$(find . \
@@ -64,7 +74,7 @@ FILES=$(find . \
     -not -path "./build-*/*" \
     -not -path "./prebuilt/*" \
     -not -path "./external/*" \
-    -not -path "./.git/*")
+    -not -path "./.*/*")
 
 FAILED=""
 
