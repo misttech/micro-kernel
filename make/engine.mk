@@ -163,7 +163,7 @@ LINKER_SCRIPT :=
 GENERATED := $(CONFIGHEADER)
 
 # anything added to GLOBAL_DEFINES will be put into $(BUILDDIR)/config.h
-GLOBAL_DEFINES := LK=1
+GLOBAL_DEFINES := LK=1 _KERNEL=1
 
 # Anything added to GLOBAL_SRCDEPS will become a dependency of every source file in the system.
 # Useful for header files that may be included by one or more source files.
