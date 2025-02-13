@@ -15,9 +15,6 @@
 
 __BEGIN_CDECLS
 
-#define PAGE_ALIGN(x) ALIGN(x, PAGE_SIZE)
-#define IS_PAGE_ALIGNED(x) IS_ALIGNED(x, PAGE_SIZE)
-
 // arena bitmaps for novm_alloc_pages
 #define NOVM_ARENA_ANY (UINT32_MAX)
 #define NOVM_ARENA_MAIN (1 << 0)

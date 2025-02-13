@@ -7,6 +7,7 @@
  */
 #pragma once
 
+#include <align.h>
 #include <endian.h>
 #include <malloc.h>
 #include <rand.h>
@@ -30,12 +31,6 @@ long long strtoll(const char *nptr, char **endptr, int base);
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
-
-#define ROUNDUP(a, b) (((a) + ((b) - 1)) & ~((b) - 1))
-#define ROUNDDOWN(a, b) ((a) & ~((b) - 1))
-
-#define ALIGN(a, b) ROUNDUP(a, b)
-#define IS_ALIGNED(a, b) (!(((uintptr_t)(a)) & (((uintptr_t)(b)) - 1)))
 
 /* allocate a buffer on the stack aligned and padded to the cpu's cache line size */
 #define STACKBUF_DMA_ALIGN(var, size) uint8_t var[ROUNDUP(size, CACHE_LINE)] __ALIGNED(CACHE_LINE);
