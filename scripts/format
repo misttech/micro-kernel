@@ -64,7 +64,7 @@ FILES=$(find . \
     -not -path "./build-*/*" \
     -not -path "./prebuilt/*" \
     -not -path "./external/*" \
-    -not -path "./.git/*")
+    -not -path "./.*/*")
 
 FAILED=""
 
