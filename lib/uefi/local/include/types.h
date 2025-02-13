@@ -58,11 +58,7 @@ using EfiTpl = enum EFI_TPL : size_t {
   HIGH_LEVEL = 31,
 };
 
-using EfiTimerDelay = enum EFI_TIMER_DELAY {
-  TIMER_CANCEL,
-  TIMER_PERIODIC,
-  TIMER_RELATIVE
-};
+using EfiTimerDelay = enum EFI_TIMER_DELAY { TIMER_CANCEL, TIMER_PERIODIC, TIMER_RELATIVE };
 
 enum EFI_MEMORY_TYPE {
   RESERVED_MEMORY_TYPE,
@@ -182,4 +178,4 @@ using EFI_TIME_CAPABILITIES = struct {
   bool SetsToZero;
 };
 
-#endif // __EFI_TYPES_H__
+#endif  // __EFI_TYPES_H__

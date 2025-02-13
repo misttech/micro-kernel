@@ -7,8 +7,9 @@
  */
 #pragma once
 
-#include <lk/compiler.h>
 #include <sys/types.h>
+
+#include <lk/compiler.h>
 
 /* Routines to read the current system time since an arbitrary point in the
  * past. Usually system boot time.
@@ -23,4 +24,3 @@ lk_time_t current_time(void);
 lk_bigtime_t current_time_hires(void);
 
 __END_CDECLS
-

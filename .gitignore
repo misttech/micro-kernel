@@ -1,9 +1,17 @@
+### General file patterns
 *.dSYM
 *.orig
 *.swp
 *~
+*.code-workspace
+!micro-kernel.code-workspace
 .cache
+.cproject
 .clangd
+.DS_Store
+.gdb_history
+.gdbinit
+.jiri_manifest
 .vscode
 blk.bin
 build-*
@@ -19,3 +27,17 @@ tags
 toolchain
 .cache
 vmlinux
+
+### Top-level directories
+/.jiri/
+/.jiri_root/
+# For storing local scripts and data files in a source tree.
+/local/
+/build-*/
+/prebuilt/downloads/
+/prebuilt/config.mk
+/prebuilt/config-zig.mk
+
+# Local test coverage file.
+lcov.info
+.coverage

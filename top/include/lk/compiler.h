@@ -11,14 +11,14 @@
 
 #pragma once
 
-#define __CONCAT1(x, y) x ## y
+#define __CONCAT1(x, y) x##y
 #define __CONCAT(x, y) __CONCAT1(x, y)
 
 #ifndef __ASSEMBLY__
 
 #if __GNUC__ || __clang__
-#define likely(x)       __builtin_expect(!!(x), 1)
-#define unlikely(x)     __builtin_expect(!!(x), 0)
+#define likely(x) __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
 #define __UNUSED __attribute__((__unused__))
 #if __clang__
 // Per https://clang.llvm.org/docs/AttributeReference.html#used
@@ -30,8 +30,8 @@
 #endif
 #define __PACKED __attribute__((packed))
 #define __ALIGNED(x) __attribute__((aligned(x)))
-#define __PRINTFLIKE(__fmt,__varargs) __attribute__((__format__ (__printf__, __fmt, __varargs)))
-#define __SCANFLIKE(__fmt,__varargs) __attribute__((__format__ (__scanf__, __fmt, __varargs)))
+#define __PRINTFLIKE(__fmt, __varargs) __attribute__((__format__(__printf__, __fmt, __varargs)))
+#define __SCANFLIKE(__fmt, __varargs) __attribute__((__format__(__scanf__, __fmt, __varargs)))
 #define __SECTION(x) __USED __attribute((section(x)))
 #define __PURE __attribute((pure))
 #define __CONST __attribute((const))
@@ -49,15 +49,15 @@
 #define __DESTRUCTOR __attribute__((destructor))
 #define __RESTRICT __restrict
 
-#define INCBIN(symname, sizename, filename, section)                    \
-    __asm__ (".section " section "; .balign 4; .globl "#symname);       \
-    __asm__ (""#symname ":\n.incbin \"" filename "\"");                 \
-    __asm__ (".balign 1; "#symname "_end:");                            \
-    __asm__ (".balign 4; .globl "#sizename);                            \
-    __asm__ (""#sizename ": .long "#symname "_end - "#symname);         \
-    __asm__ (".previous");                                              \
-    extern unsigned char symname[];                                     \
-    extern unsigned int sizename
+#define INCBIN(symname, sizename, filename, section)            \
+  __asm__(".section " section "; .balign 4; .globl " #symname); \
+  __asm__("" #symname ":\n.incbin \"" filename "\"");           \
+  __asm__(".balign 1; " #symname "_end:");                      \
+  __asm__(".balign 4; .globl " #sizename);                      \
+  __asm__("" #sizename ": .long " #symname "_end - " #symname); \
+  __asm__(".previous");                                         \
+  extern unsigned char symname[];                               \
+  extern unsigned int sizename
 
 #define INCFILE(symname, sizename, filename) INCBIN(symname, sizename, filename, ".rodata")
 
@@ -69,7 +69,7 @@
 #endif
 
 /* look for gcc 3.1 and above */
-#if !defined(__DEPRECATED) // seems to be built in in some versions of the compiler
+#if !defined(__DEPRECATED)  // seems to be built in in some versions of the compiler
 #if (__GNUC__ > 3) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)
 #define __DEPRECATED __attribute((deprecated))
 #else
@@ -119,17 +119,20 @@
 #define STATIC_ASSERT(e) _Static_assert(e, #e)
 #endif
 #else
-#define STATIC_ASSERT(e) extern char (*ct_assert(void)) [sizeof(char[1 - 2*!(e)])]
+#define STATIC_ASSERT(e) extern char (*ct_assert(void))[sizeof(char[1 - 2 * !(e)])]
 #endif
 
 /* compiler fence */
-#define CF do { __asm__ volatile("" ::: "memory"); } while(0)
+#define CF                             \
+  do {                                 \
+    __asm__ volatile("" ::: "memory"); \
+  } while (0)
 
 #define __WEAK_ALIAS(x) __attribute__((weak, alias(x)))
 #define __ALIAS(x) __attribute__((alias(x)))
 
-#define __EXPORT __attribute__ ((visibility("default")))
-#define __LOCAL  __attribute__ ((visibility("hidden")))
+#define __EXPORT __attribute__((visibility("default")))
+#define __LOCAL __attribute__((visibility("hidden")))
 
 #define __THREAD __thread
 
@@ -142,23 +145,25 @@
 #elif __GNUC__ >= 7
 #define __FALLTHROUGH __attribute__((__fallthrough__))
 #else
-#define __FALLTHROUGH do {} while (0)
+#define __FALLTHROUGH \
+  do {                \
+  } while (0)
 #endif
 
 #ifndef __has_attribute
-#define __has_attribute(x)  0
+#define __has_attribute(x) 0
 #endif
 #ifndef __has_extension
-#define __has_extension     __has_feature
+#define __has_extension __has_feature
 #endif
 #ifndef __has_feature
-#define __has_feature(x)    0
+#define __has_feature(x) 0
 #endif
 #ifndef __has_include
-#define __has_include(x)    0
+#define __has_include(x) 0
 #endif
 #ifndef __has_builtin
-#define __has_builtin(x)    0
+#define __has_builtin(x) 0
 #endif
 
 #ifndef __clang__
@@ -188,13 +193,13 @@
 
 #else
 
-#define likely(x)       (x)
-#define unlikely(x)     (x)
+#define likely(x) (x)
+#define unlikely(x) (x)
 #define __UNUSED
 #define __PACKED
 #define __ALIGNED(x)
-#define __PRINTFLIKE(__fmt,__varargs)
-#define __SCANFLIKE(__fmt,__varargs)
+#define __PRINTFLIKE(__fmt, __varargs)
+#define __SCANFLIKE(__fmt, __varargs)
 #define __SECTION(x)
 #define __PURE
 #define __CONST
@@ -215,8 +220,8 @@
 
 /* CPP header guards */
 #ifdef __cplusplus
-#define __BEGIN_CDECLS  extern "C" {
-#define __END_CDECLS    }
+#define __BEGIN_CDECLS extern "C" {
+#define __END_CDECLS }
 #else
 #define __BEGIN_CDECLS
 #define __END_CDECLS

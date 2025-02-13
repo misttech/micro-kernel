@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+
+# Copyright 2025 Mist Tecnologia Ltda.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+readonly SCRIPT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
+readonly MK_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+readonly PREBUILTS_DIR="$(cd "${MK_ROOT}/prebuilt" && pwd)"
+
+set -o pipefail
+
+handle_interrupt() {
+    echo "Caught ctrl-c, exiting"
+    exit 1
+}
+
+trap 'handle_interrupt' SIGINT
+
+function HELP {
+    echo "help:"
+    echo "-c check only, don't modify files"
+    echo "-v verbose output"
+    echo "-q hide output of formatting"
+    echo "-h for help"
+    exit 1
+}
+
+CHECK_ONLY=0
+VERBOSE=0
+
+while getopts cvh FLAG; do
+    case $FLAG in
+        c) CHECK_ONLY=1;;
+        v) VERBOSE=1;;
+        h) HELP;;
+        \?)
+            echo unrecognized option
+            HELP
+    esac
+done
+
+shift $((OPTIND-1))
+
+# find clang-format
+if command -v clang-format &> /dev/null; then
+    CLANG_FORMAT="clang-format"
+elif [ -f "${PREBUILTS_DIR}/downloads/clang/bin/clang-format" ]; then
+    CLANG_FORMAT="${PREBUILTS_DIR}/downloads/clang/bin/clang-format"
+else
+    echo "Error: clang-format not found"
+    exit 1
+fi
+
+# Find all source files
+FILES=$(find . \
+    -type f \
+    \( -name "*.c" \
+    -o -name "*.cc" \
+    -o -name "*.cpp" \
+    -o -name "*.h" \
+    -o -name "*.hpp" \
+    \) \
+    -not -path "./build-*/*" \
+    -not -path "./prebuilt/*" \
+    -not -path "./external/*" \
+    -not -path "./.git/*")
+
+FAILED=""
+
+format_file() {
+    local file="$1"
+    if (( $VERBOSE )); then
+        echo "Processing $file"
+    fi
+    
+    if (( $CHECK_ONLY )); then
+        if ! $CLANG_FORMAT --style=file --dry-run -Werror "$file" > /dev/null 2>&1; then
+            echo "Would format $file"
+            return 1
+        fi
+    else
+        if ! $CLANG_FORMAT --style=file -i "$file" > /dev/null 2>&1; then
+            echo "Failed to format $file"
+            return 1
+        fi
+    fi
+    return 0
+}
+
+# Process files sequentially
+for file in $FILES; do
+    if ! format_file "$file"; then
+        FAILED="$FAILED $file"
+    fi
+done
+
+if [ "$FAILED" != "" ]; then
+    echo
+    if (( $CHECK_ONLY )); then
+        echo "some files need formatting:"
+    else
+        echo "some files failed to format:"
+    fi
+    echo "$FAILED"
+    exit 1
+fi
+
+if (( $CHECK_ONLY )); then
+    echo "All files are properly formatted"
+else
+    echo "All files formatted successfully"
+fi

@@ -6,4 +6,3 @@
  * https://opensource.org/licenses/MIT
  */
 #pragma once
-

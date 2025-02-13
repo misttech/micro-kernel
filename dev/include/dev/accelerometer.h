@@ -8,10 +8,9 @@
 #pragma once
 
 typedef struct {
-    double x;
-    double y;
-    double z;
+  double x;
+  double y;
+  double z;
 } position_vector_t;
 
 status_t acc_read_xyz(position_vector_t *pos_vector);
-

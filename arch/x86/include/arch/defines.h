@@ -18,8 +18,7 @@
 
 /* based on how start.S sets up the physmap */
 #if ARCH_X86_64
-#define PHYSMAP_SIZE (64ULL*GB)
+#define PHYSMAP_SIZE (64ULL * GB)
 #elif ARCH_X86_32
-#define PHYSMAP_SIZE (1ULL*GB)
+#define PHYSMAP_SIZE (1ULL * GB)
 #endif
-

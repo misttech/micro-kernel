@@ -20,4 +20,3 @@
 int ethernet_send(void *data, unsigned length);
 
 status_t ethernet_init(void); /* initialize the ethernet device */
-

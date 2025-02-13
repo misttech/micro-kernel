@@ -6,11 +6,11 @@
  * https://opensource.org/licenses/MIT
  */
 #include <app.h>
-#include <lk/debug.h>
+
 #include <app/tests.h>
 #include <lk/compiler.h>
-
 #include <lk/console_cmd.h>
+#include <lk/debug.h>
 
 STATIC_COMMAND_START
 STATIC_COMMAND("printf_tests", "test printf", &printf_tests)

@@ -7,9 +7,9 @@
  */
 #pragma once
 
+#include <lib/norfs_inode.h>
 #include <stddef.h>
 #include <sys/types.h>
-#include <lib/norfs_inode.h>
 
 /* Tools to help test. */
 
@@ -22,4 +22,3 @@ void dump_bank(void);
 void wipe_fs(void);
 status_t collect_block(uint32_t garbage_block, uint32_t *garbage_write_ptr);
 bool get_inode(uint32_t key, struct norfs_inode **inode);
-

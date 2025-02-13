@@ -11,13 +11,11 @@
 
 /* uart interface */
 struct uart_ops {
-    struct driver_ops std;
+  struct driver_ops std;
 
-    ssize_t (*read)(struct device *dev, void *buf, size_t len);
-    ssize_t (*write)(struct device *dev, const void *buf, size_t len);
+  ssize_t (*read)(struct device *dev, void *buf, size_t len);
+  ssize_t (*write)(struct device *dev, const void *buf, size_t len);
 };
-
 
 ssize_t class_uart_read(struct device *dev, void *buf, size_t len);
 ssize_t class_uart_write(struct device *dev, const void *buf, size_t len);
-

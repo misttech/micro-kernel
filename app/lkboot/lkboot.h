@@ -8,12 +8,15 @@
 #pragma once
 
 #include <sys/types.h>
+
 #include <app/lkboot.h>
+
 #include "lkboot_protocol.h"
 
 /* private to lkboot app */
 
-int lkb_handle_command(lkb_t *lkb, const char *cmd, const char *arg, size_t len, const char **result);
+int lkb_handle_command(lkb_t *lkb, const char *cmd, const char *arg, size_t len,
+                       const char **result);
 
 status_t do_flash_boot(void);
 
@@ -29,4 +32,3 @@ lkb_t *lkboot_tcp_opened(void *s);
 /* dcc based server */
 void lkboot_dcc_init(void);
 lkb_t *lkboot_check_dcc_open(void);
-

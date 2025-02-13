@@ -27,11 +27,10 @@ struct EfiBlockIoProtocol {
   uint64_t revision;
   EfiBlockIoMedia *media;
   EfiStatus (*reset)(EfiBlockIoProtocol *self, bool extended_verification);
-  EfiStatus (*read_blocks)(EfiBlockIoProtocol *self, uint32_t media_id,
-                           uint64_t lba, size_t buffer_size, void *buffer);
-  EfiStatus (*write_blocks)(EfiBlockIoProtocol *self, uint32_t media_id,
-                            uint64_t lba, size_t buffer_size,
-                            const void *buffer);
+  EfiStatus (*read_blocks)(EfiBlockIoProtocol *self, uint32_t media_id, uint64_t lba,
+                           size_t buffer_size, void *buffer);
+  EfiStatus (*write_blocks)(EfiBlockIoProtocol *self, uint32_t media_id, uint64_t lba,
+                            size_t buffer_size, const void *buffer);
   EfiStatus (*flush_blocks)(EfiBlockIoProtocol *self);
 };
 
@@ -62,4 +61,4 @@ struct EfiBlockIoInterface {
   void *io_stack;
 };
 
-#endif //__BLOCK_IO_PROTOCOL_H__
+#endif  //__BLOCK_IO_PROTOCOL_H__

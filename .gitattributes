@@ -1,0 +1,15 @@
+# Auto detect text files and perform LF normalization.
+*      text=auto
+
+# Always perform LF normalization on these files.
+*.c    text
+*.cc   text
+*.cpp  text
+*.h    text
+*.md   text
+
+# Don't treat SVG as text.
+*.svg -diff
+
+# Skip Tricium by default on files in third_party files.
+**/third_party/** -tricium

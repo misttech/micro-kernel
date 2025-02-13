@@ -12,15 +12,15 @@
 #include <sys/types.h>
 
 typedef struct moot_sysinfo {
-    uintptr_t sys_base_addr;  // Pointer to the base of the main system image.
+  uintptr_t sys_base_addr;  // Pointer to the base of the main system image.
 
-    size_t btldr_offset;
-    size_t bootloader_len;
+  size_t btldr_offset;
+  size_t bootloader_len;
 
-    size_t system_offset;
-    size_t system_len;
+  size_t system_offset;
+  size_t system_len;
 
-    char *system_flash_name;
+  char *system_flash_name;
 } moot_sysinfo_t;
 
 // Must be implemented by the platform;

@@ -15,10 +15,9 @@
  *
  */
 
+#include "protocols/device_path_protocol.h"
 #include "system_table.h"
 #include "types.h"
-
-#include "protocols/device_path_protocol.h"
 
 typedef struct {
   uint32_t revision;

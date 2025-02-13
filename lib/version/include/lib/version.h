@@ -14,12 +14,12 @@ __BEGIN_CDECLS
 #define VERSION_STRUCT_VERSION 0x1
 
 typedef struct {
-    unsigned int struct_version;
-    const char *arch;
-    const char *platform;
-    const char *target;
-    const char *project;
-    const char *buildid;
+  unsigned int struct_version;
+  const char *arch;
+  const char *platform;
+  const char *target;
+  const char *project;
+  const char *buildid;
 } lk_version_t;
 
 extern const lk_version_t lk_version;
@@ -27,4 +27,3 @@ extern const lk_version_t lk_version;
 void print_version(void);
 
 __END_CDECLS
-

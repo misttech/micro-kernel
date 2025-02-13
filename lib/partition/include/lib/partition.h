@@ -7,8 +7,9 @@
  */
 #pragma once
 
-#include <lk/compiler.h>
 #include <sys/types.h>
+
+#include <lk/compiler.h>
 
 __BEGIN_CDECLS
 

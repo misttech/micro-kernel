@@ -33,21 +33,20 @@
 #include <sys/types.h>
 
 /* unset: drive active output low, set: drive active output high */
-#define GPIOKPF_ACTIVE_HIGH     (1U << 0)
-#define GPIOKPF_DRIVE_INACTIVE      (1U << 1)
+#define GPIOKPF_ACTIVE_HIGH (1U << 0)
+#define GPIOKPF_DRIVE_INACTIVE (1U << 1)
 
 struct gpio_keypad_info {
-    /* size must be ninputs * noutputs */
-    const uint16_t *keymap;
-    unsigned *input_gpios;
-    unsigned *output_gpios;
-    int ninputs;
-    int noutputs;
-    /* time to wait before reading inputs after driving each output */
-    time_t settle_time;
-    time_t poll_time;
-    unsigned flags;
+  /* size must be ninputs * noutputs */
+  const uint16_t *keymap;
+  unsigned *input_gpios;
+  unsigned *output_gpios;
+  int ninputs;
+  int noutputs;
+  /* time to wait before reading inputs after driving each output */
+  time_t settle_time;
+  time_t poll_time;
+  unsigned flags;
 };
 
 void gpio_keypad_init(struct gpio_keypad_info *kpinfo);
-

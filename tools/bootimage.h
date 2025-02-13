@@ -14,14 +14,11 @@ typedef struct bootimage bootimage;
 
 bootimage *bootimage_init(void);
 
-bootentry_data *bootimage_add_string(
-    bootimage *img, unsigned kind, const char *s);
+bootentry_data *bootimage_add_string(bootimage *img, unsigned kind, const char *s);
 
-bootentry_file *bootimage_add_filedata(
-    bootimage *img, unsigned type, void *data, unsigned len);
+bootentry_file *bootimage_add_filedata(bootimage *img, unsigned type, void *data, unsigned len);
 
-bootentry_file *bootimage_add_file(
-    bootimage *img, unsigned type, const char *fn);
+bootentry_file *bootimage_add_file(bootimage *img, unsigned type, const char *fn);
 
 void bootimage_done(bootimage *img);
 

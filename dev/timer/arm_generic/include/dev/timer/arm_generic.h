@@ -14,4 +14,3 @@
 void arm_generic_timer_init(int irq, uint32_t freq_override);
 
 #endif
-

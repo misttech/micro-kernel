@@ -25,12 +25,7 @@
 
 static constexpr size_t GBL_EFI_OS_CONFIGURATION_PROTOCOL_REVISION = 0x00000000;
 
-typedef enum GBL_EFI_DEVICE_TREE_SOURCE {
-  BOOT,
-  VENDOR_BOOT,
-  DTBO,
-  DTB
-} GblEfiDeviceTreeSource;
+typedef enum GBL_EFI_DEVICE_TREE_SOURCE { BOOT, VENDOR_BOOT, DTBO, DTB } GblEfiDeviceTreeSource;
 
 typedef struct {
   // GblDeviceTreeSource
@@ -62,19 +57,17 @@ typedef struct GblEfiOsConfigurationProtocol {
   uint64_t revision;
 
   // Generates fixups for the kernel command line built by GBL.
-  EfiStatus (*fixup_kernel_commandline)(
-      struct GblEfiOsConfigurationProtocol *self, const char *command_line,
-      char *fixup, size_t *fixup_buffer_size);
+  EfiStatus (*fixup_kernel_commandline)(struct GblEfiOsConfigurationProtocol *self,
+                                        const char *command_line, char *fixup,
+                                        size_t *fixup_buffer_size);
 
   // Generates fixups for the bootconfig built by GBL.
-  EfiStatus (*fixup_bootconfig)(struct GblEfiOsConfigurationProtocol *self,
-                                const char *bootconfig, size_t size,
-                                char *fixup, size_t *fixup_buffer_size);
+  EfiStatus (*fixup_bootconfig)(struct GblEfiOsConfigurationProtocol *self, const char *bootconfig,
+                                size_t size, char *fixup, size_t *fixup_buffer_size);
 
   // Selects which device trees and overlays to use from those loaded by GBL.
   EfiStatus (*select_device_trees)(struct GblEfiOsConfigurationProtocol *self,
-                                   GblEfiVerifiedDeviceTree *device_trees,
-                                   size_t num_device_trees);
+                                   GblEfiVerifiedDeviceTree *device_trees, size_t num_device_trees);
 } GblEfiOsConfigurationProtocol;
 
-#endif //__GBL_OS_CONFIGURATION_PROTOCOL_H__
+#endif  //__GBL_OS_CONFIGURATION_PROTOCOL_H__

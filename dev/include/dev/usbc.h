@@ -7,12 +7,13 @@
  */
 #pragma once
 
-#include <lk/compiler.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <hw/usb.h>
+
 #include <dev/usb.h>
+#include <hw/usb.h>
+#include <lk/compiler.h>
 
 __BEGIN_CDECLS
 
@@ -20,35 +21,31 @@ void usbc_init(void);
 
 typedef uint ep_t;
 
-typedef enum {
-    USB_IN = 0,
-    USB_OUT
-} ep_dir_t;
+typedef enum { USB_IN = 0, USB_OUT } ep_dir_t;
 
 typedef enum {
-    USB_CTRL = 0x00,
-    USB_ISOC = 0x01,
-    USB_BULK = 0x02,
-    USB_INTR = 0x03,
+  USB_CTRL = 0x00,
+  USB_ISOC = 0x01,
+  USB_BULK = 0x02,
+  USB_INTR = 0x03,
 } ep_type_t;
-
 
 struct usbc_transfer;
 typedef status_t (*ep_callback)(ep_t endpoint, struct usbc_transfer *transfer);
 
 typedef struct usbc_transfer {
-    ep_callback callback;
-    status_t result;
-    void *buf;
-    size_t buflen;
-    uint bufpos;
-    void *extra; // extra pointer to store whatever you want
+  ep_callback callback;
+  status_t result;
+  void *buf;
+  size_t buflen;
+  uint bufpos;
+  void *extra;  // extra pointer to store whatever you want
 } usbc_transfer_t;
 
 enum {
-    USB_TRANSFER_RESULT_OK = 0,
-    USB_TRANSFER_RESULT_ERR = -1,
-    USB_TRANSFER_RESULT_CANCELLED = -2,
+  USB_TRANSFER_RESULT_OK = 0,
+  USB_TRANSFER_RESULT_ERR = -1,
+  USB_TRANSFER_RESULT_CANCELLED = -2,
 };
 
 status_t usbc_setup_endpoint(ep_t ep, ep_dir_t dir, uint width, ep_type_t type);
@@ -71,8 +68,8 @@ void usbc_ep0_recv(void *buf, size_t len, ep_callback);
 bool usbc_is_highspeed(void);
 
 static inline void usbc_dump_transfer(const usbc_transfer_t *t) {
-    printf("usb transfer %p: cb %p buf %p, buflen %zd, bufpos %u, result %d\n", t, t->callback, t->buf, t->buflen, t->bufpos, t->result);
+  printf("usb transfer %p: cb %p buf %p, buflen %zd, bufpos %u, result %d\n", t, t->callback,
+         t->buf, t->buflen, t->bufpos, t->result);
 }
 
 __END_CDECLS
-

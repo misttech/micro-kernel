@@ -7,5 +7,4 @@
  * https://opensource.org/licenses/MIT
  */
 
-void append_usb_interfaces(void) {
-}
+void append_usb_interfaces(void) {}

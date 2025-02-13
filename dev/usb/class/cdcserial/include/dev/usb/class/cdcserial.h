@@ -9,27 +9,28 @@
 
 #pragma once
 
+#include <sys/types.h>
+
 #include <dev/usbc.h>
 #include <kernel/event.h>
-#include <sys/types.h>
 
 typedef struct _cdcserial_channel_t cdcserial_channel_t;
 typedef struct _cdcserial_channel_t {
-    int data_ep_addr;
-    int ctrl_ep_addr;
+  int data_ep_addr;
+  int ctrl_ep_addr;
 
-    event_t txevt;
-    event_t rxevt;
+  event_t txevt;
+  event_t rxevt;
 
-    volatile bool usb_online;
-    void (*online_cb)(cdcserial_channel_t *chan, bool online);
+  volatile bool usb_online;
+  void (*online_cb)(cdcserial_channel_t *chan, bool online);
 
-    // A bitfield corresponding to the registered endpoints. When we get a
-    // USB_ONLINE event, these are the endpoints that we need to setup.
-    volatile uint16_t registered_bulk_eps_in;
-    volatile uint16_t registered_bulk_eps_out;
-    volatile uint16_t registered_intr_eps_in;
-    volatile uint16_t registered_intr_eps_out;
+  // A bitfield corresponding to the registered endpoints. When we get a
+  // USB_ONLINE event, these are the endpoints that we need to setup.
+  volatile uint16_t registered_bulk_eps_in;
+  volatile uint16_t registered_bulk_eps_out;
+  volatile uint16_t registered_intr_eps_in;
+  volatile uint16_t registered_intr_eps_out;
 } cdcserial_channel_t;
 
 void cdcserial_create_channel(cdcserial_channel_t *chan, int data_ep_addr, int ctrl_ep_addr);

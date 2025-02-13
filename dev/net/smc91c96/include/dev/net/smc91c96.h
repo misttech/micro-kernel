@@ -11,4 +11,3 @@
 void smc91c96_init(void);
 
 #endif
-

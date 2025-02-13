@@ -7,10 +7,11 @@
  */
 #pragma once
 
-#include <lk/compiler.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
+
+#include <lk/compiler.h>
 
 __BEGIN_CDECLS
 
@@ -26,4 +27,3 @@ void plic_early_init(uintptr_t base, size_t num_irqs_, bool hart0_m_only);
 void plic_init(void);
 
 __END_CDECLS
-

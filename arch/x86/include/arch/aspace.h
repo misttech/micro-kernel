@@ -12,8 +12,7 @@
 __BEGIN_CDECLS
 
 struct arch_aspace {
-    // nothing for now, does not support address spaces other than the kernel
+  // nothing for now, does not support address spaces other than the kernel
 };
 
 __END_CDECLS
-

@@ -7,8 +7,9 @@
  */
 #pragma once
 
-#include <lk/compiler.h>
 #include <stdbool.h>
+
+#include <lk/compiler.h>
 
 __BEGIN_CDECLS
 
@@ -31,4 +32,3 @@ void target_set_debug_led(unsigned int led, bool on);
 #endif
 
 __END_CDECLS
-

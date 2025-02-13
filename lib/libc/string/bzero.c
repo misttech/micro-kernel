@@ -12,8 +12,4 @@
 #include <string.h>
 #include <sys/types.h>
 
-void
-bzero(void *dst, size_t count) {
-    memset(dst, 0, count);
-}
-
+void bzero(void *dst, size_t count) { memset(dst, 0, count); }

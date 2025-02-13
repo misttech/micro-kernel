@@ -7,8 +7,9 @@
  */
 #pragma once
 
-#include <lk/compiler.h>
 #include <sys/types.h>
+
+#include <lk/compiler.h>
 
 __BEGIN_CDECLS
 
@@ -24,18 +25,18 @@ typedef void *port_t;
 /* A Port packet is wide enough to carry two full words of data */
 #define PORT_PACKET_LEN (sizeof(void *) * 2)
 typedef struct {
-    char value[PORT_PACKET_LEN];
+  char value[PORT_PACKET_LEN];
 } port_packet_t;
 
 typedef struct {
-    void *ctx;
-    port_packet_t packet;
+  void *ctx;
+  port_packet_t packet;
 } port_result_t;
 
 typedef enum {
-    PORT_MODE_BROADCAST   = 0,
-    PORT_MODE_UNICAST     = 1,
-    PORT_MODE_BIG_BUFFER  = 2,
+  PORT_MODE_BROADCAST = 0,
+  PORT_MODE_UNICAST = 1,
+  PORT_MODE_BIG_BUFFER = 2,
 } port_mode_t;
 
 /* Inits the port subsystem

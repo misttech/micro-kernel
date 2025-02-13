@@ -1,0 +1,142 @@
+{
+  // This is a checked-in VSCode workspace configuration file that can be used
+  // instead of directly opening project dir in VSCode.
+  //
+  // It's an opt-in workspace configuration that contains settings for:
+  //  - vscode itself
+  //  - LSP settings for working correctly with the fuchsia.git checkout
+  //  - etc.
+  //
+  // In terms of precedence, VSCode uses the following order in which settings
+  // are applied (merged together).
+  //
+  //  0) default settings
+  //  1) user's settings
+  //  2) remote machine settings
+  //  3) workspace settings  (this file)
+  //  4) workspace folder settings
+  //
+  //
+  // For details, see:
+  // https://code.visualstudio.com/docs/getstarted/settings#_settings-precedence
+
+
+  ////////
+  // VSCode Workspace Contents
+  //
+  // These are the workspace folders, and general VSCode workspace
+  // configuration itself.
+  //
+  // See https://code.visualstudio.com/docs/editor/workspaces for more
+  // information on this section of the file.
+  "folders": [
+    {
+      // The whole project directory.
+      "path": "."
+    }
+  ],
+
+  ////////
+  // Recommended Extensions for VSCode and Fuchsia
+  //
+  "extensions": {
+    "recommendations": [
+      // The Python extensions
+      "ms-python.python",
+      "ms-python.mypy-type-checker",
+      "ms-python.black-formatter",
+      "ms-python.vscode-pylance",
+
+      // The official Clang LSP for C/C++.
+      "llvm-vs-code-extensions.vscode-clangd",
+
+      // Supports inserting and formatting C/C++ include guards as required
+      // in Fuchsia.
+      "akiramiyakoda.cppincludeguard",
+
+      // Adds JSON5 syntax highlighting (including *.cml files).
+      "mrmlnc.vscode-json5",
+
+      // Adds coverage gutters.
+      "ryanluker.vscode-coverage-gutters",
+
+      "mkornelsen.vscode-arm64",
+
+      "sunshaoce.risc-v"
+    ],
+
+    "unwantedRecommendations": [
+      // Conflicts with vscode-clangd intellisense, and vscode-clangd is the
+      // preferred C++ extension.
+      "ms-vscode.cpptools",
+    ]
+  },
+
+
+  "settings": {
+    ////////
+    // C/C++
+
+    "clangd.arguments": [
+      "--clang-tidy",
+      "--background-index",
+      "--header-insertion=never"
+    ],
+    "clangd.path": "${workspaceFolder}/prebuilt/downloads/clang/bin/clangd",
+
+    // Formats C/C++ include guards to match Fuchsia style.
+    "C/C++ Include Guard.Comment Style": "Line",
+    "C/C++ Include Guard.Macro Type": "Filepath",
+    "C/C++ Include Guard.Suffix": "_H_",
+    "C/C++ Include Guard.Spaces After Endif": 2,
+
+    ////////
+    // VSCode file exclusions
+    //
+
+    // Files that are marked as hidden in the Workspace Explorer.
+    "files.exclude": {
+      "**/.DS_Store": true,
+      "**/.cipd": true,
+      "**/.git": true,
+      "**/__pycache__": true,
+    },
+    // sub repos managed by jiri are listed in .gitignore, so make sure that
+    // they are not hidden.
+    "explorer.excludeGitIgnore": false,
+
+    // Files that are excluded from file-watching notifications.
+    "files.watcherExclude": {
+      "**/.DS_Store": true,
+      "**/.cipd": true,
+      "**/.git": true,
+      ".jiri_root/goma_cache/**": true,
+      ".jiri_root/update_history*/**": true,
+      "out/**": true,
+      ".cache/**": true,
+    },
+
+    // Files that are excluded from search and quick open (^P).
+    // This significantly speeds up search and avoids polluting results with
+    // build output, third party code, and prebuilt binaries.
+    "search.exclude": {
+      // Don't exclude local files used for overrides
+      "local/**": false,
+    },
+
+    "search.useIgnoreFiles": true,
+    // Don't follow symlinks (into other parts of the tree)
+    "search.followSymlinks": false,
+
+    ////////
+    // Code coverage
+    "coverage-gutters.coverageBaseDir": ".",
+    "coverage-gutters.showLineCoverage": true,
+    "coverage-gutters.coverageFileNames": [ "lcov.info" ],
+
+    // Disable task auto-detection for supported project configuration files
+    // (e.g. NPM's project.json). This significantly speeds up task running.
+    "task.autoDetect": "off",
+  },
+
+}

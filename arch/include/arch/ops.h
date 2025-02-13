@@ -9,9 +9,10 @@
 
 #ifndef ASSEMBLY
 
-#include <sys/types.h>
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <sys/types.h>
+
 #include <lk/compiler.h>
 
 __BEGIN_CDECLS
@@ -41,12 +42,11 @@ void arch_idle(void);
 
 __END_CDECLS
 
-#endif // !ASSEMBLY
+#endif  // !ASSEMBLY
 
 /* for the above arch enable/disable routines */
 #define ARCH_CACHE_FLAG_ICACHE 1
 #define ARCH_CACHE_FLAG_DCACHE 2
-#define ARCH_CACHE_FLAG_UCACHE (ARCH_CACHE_FLAG_ICACHE|ARCH_CACHE_FLAG_DCACHE)
+#define ARCH_CACHE_FLAG_UCACHE (ARCH_CACHE_FLAG_ICACHE | ARCH_CACHE_FLAG_DCACHE)
 
 #include <arch/arch_ops.h>
-

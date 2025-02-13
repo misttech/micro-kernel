@@ -8,8 +8,9 @@
 #pragma once
 
 #include <stdarg.h>
-#include <lk/compiler.h>
 #include <stddef.h>
+
+#include <lk/compiler.h>
 
 __BEGIN_CDECLS
 
@@ -24,4 +25,3 @@ typedef int (*_printf_engine_output_func)(const char *str, size_t len, void *sta
 int _printf_engine(_printf_engine_output_func out, void *state, const char *fmt, va_list ap);
 
 __END_CDECLS
-

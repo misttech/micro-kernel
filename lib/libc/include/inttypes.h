@@ -43,4 +43,3 @@
 #define PRIXPTR "lX"
 
 #include <stdint.h>
-

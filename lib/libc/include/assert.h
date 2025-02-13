@@ -31,7 +31,6 @@
     }                                                          \
   } while (0)
 
-
 // DEBUG_ASSERT_IMPLEMENTED is intended to be used to conditionalize code that is logically part of
 // a debug assert. It's useful for performing complex consistency checks that are difficult to work
 // into a DEBUG_ASSERT statement.
@@ -87,7 +86,7 @@ __BEGIN_CDECLS
 
 // The following functions are called when an assert fails.
 void assert_fail(const char *file, int line, const char *expression) __NO_RETURN __NO_INLINE;
-void assert_fail_msg(const char *file, int line, const char *expression, const char *fmt,
-                     ...) __PRINTFLIKE(4, 5) __NO_RETURN __NO_INLINE;
+void assert_fail_msg(const char *file, int line, const char *expression, const char *fmt, ...)
+    __PRINTFLIKE(4, 5) __NO_RETURN __NO_INLINE;
 
 __END_CDECLS

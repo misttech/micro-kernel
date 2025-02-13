@@ -1,0 +1,219 @@
+#!/usr/bin/env bash
+
+# Copyright 2025 Mist Tecnologia Ltda.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+readonly SCRIPT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
+readonly MK_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+readonly PREBUILTS_DIR="$(cd "${MK_ROOT}/prebuilt" && pwd)"
+readonly DOWNLOAD_DIR="${PREBUILTS_DIR}/downloads"
+readonly VERSIONS_FILE="${PREBUILTS_DIR}/zig.version"
+readonly URL_PREFIX="https://ziglang.org/download"
+
+set -o pipefail
+
+case "$#:$1" in
+0:)
+  mode=update
+  ;;
+1:--verify)
+  mode=verify
+  ;;
+1:--list)
+  mode=list
+  ;;
+*)
+  echo >&2 "Usage: $0 [--verify|--list]"
+  exit 1
+  ;;
+esac
+
+case "$(uname)-$(uname -m)" in
+Darwin-x86_64)
+  PLATFORM=macos-x86_64
+  ;;
+Linux-x86_64)
+  PLATFORM=linux-x86_64
+  ;;
+Linux-aarch64)
+  PLATFORM=linux-aarch64
+  ;;
+*)
+  echo 'Unknown operating system.'
+  exit 1
+  ;;
+esac
+readonly PLATFORM
+
+update_stamp() {
+  local -r package="$1" version="$2" download_file="$3"
+  local -r stamp="${DOWNLOAD_DIR}/${download_file%.*.*}.stamp"
+  mkdir -p "$(dirname "$stamp")" && echo "$version" > "$stamp"
+}
+
+verify_stamp() {
+  local verbose=false
+  if [[ "$1" = "--verbose" ]]; then
+    verbose=true
+    shift
+  fi
+  local -r package="$1" version="$2" download_file="$3"
+  local -r stamp="${DOWNLOAD_DIR}/${download_file%.*.*}.stamp"
+  local stamp_version
+  if [[ -r "$stamp" ]]; then
+    stamp_version="$(< "$stamp")"
+  else
+    stamp_version="missing"
+  fi
+  if [[ "$stamp_version" = "$version" ]]; then
+    return 0
+  fi
+  if $verbose; then
+    echo "WARNING: unpacked $package $stamp_version != current $version"
+  fi
+  return 1
+}
+
+list_package() {
+  local -r package="$1" tag="$2" version="$3" download_file="$4"
+  local -r package_suffix="$5"
+  local -r stamp="${DOWNLOAD_DIR}/${download_file%.*.*}.stamp"
+  local stamp_version
+  if [[ -r "$stamp" ]]; then
+    stamp_version="$(< "$stamp")"
+  else
+    stamp_version="missing"
+  fi
+  local installed="${stamp_version:-missing}"
+  if [[ "$installed" = "$version" ]]; then
+    installed="current"
+  fi
+  echo "$package$package_suffix" "installed=$installed" "current=$version"
+}
+
+verify_file() {
+  local -r file="$1"
+  local -r sum="$2"
+  if [[ "${#sum}" = "40" ]]; then
+    shasum --binary --check --status <<EOF
+$sum *$file
+EOF
+  elif [[ "${#sum}" = "44" ]]; then
+    digest="$(echo $sum | tr '_-' '/+' | base64 --decode | xxd -p -c 64)"
+    shasum -a 256  --binary --check --status <<EOF
+${digest:0:64} *$file
+EOF
+  else
+    echo >&2 "$0: unknown digest type for file ${file}: ${sum}"
+    return 1
+  fi
+}
+
+download_package() {
+  local -r package="$1" tag="$2" version="$3" download_file="$4"
+  local -r package_suffix="$5"
+  local -r url="${URL_PREFIX}/${tag}/${package}${package_suffix}-${tag}.tar.xz"
+  local -r download_file_with_dir="${DOWNLOAD_DIR}/${download_file}"
+
+  # If the stamp file says it's already in place, do nothing more.
+  verify_stamp "$package" "$version" "$download_file" && return
+
+  rm -f -- "$download_file_with_dir"
+  echo "Downloading $url"
+  curl --progress-bar --continue-at - --location \
+       --create-dirs --output "$download_file_with_dir" "$url" || return
+
+  verify_file "$download_file_with_dir" "$version" || {
+    echo >&2 "*** VERIFICATION ERROR ***"
+    echo >&2 "*** VERIFICATION ERROR *** $download_file from $url"
+    echo >&2 "*** VERIFICATION ERROR *** Not using the file!"
+    return 1
+  }
+
+  echo "Unpacking $download_file"
+  local -r dir="${download_file_with_dir%.tar.xz}"
+  rm -rf -- "$dir"
+  mkdir -p -- "$dir"
+  # -J because zig uses .tar.xz for all but Windows
+  tar xJf "$download_file_with_dir" -C "$dir" --strip-components=1 || return
+
+  update_stamp "$package" "$version" "$download_file"
+}
+
+for_each_package() {
+  local package tag version download_file single_file package_suffix status=0
+  local line next=package
+  while read line; do
+    case "$line" in
+    ''|\#*)
+      continue
+      ;;
+    esac
+    eval $next=\$line
+    case $next in
+    package)
+      next=tag
+      continue
+      ;;
+    tag)
+      next=version
+      continue
+      ;;
+    version)
+      next=package
+      ;;
+    esac
+    # Now we've seen all three lines: package, tag, version.
+    case "$package" in
+    mk/*)
+      package="${package#mk/}"
+      ;;
+    *)
+      continue
+      ;;
+    esac
+    case "$package" in
+    */${PLATFORM})
+      package="${package%/*}"
+      # Subdirectories are packed in .tar.xz files.
+      if [[ "$package" == third_party/* ]]; then
+        download_file="${package#*/}.tar.xz"
+      else
+        download_file="${package}.tar.xz"
+      fi
+      package_suffix="-${PLATFORM}"
+      ;;
+    *)
+      # Skip packages for other platforms.
+      continue
+      ;;
+    esac
+    "$@" "$package" "$tag" "$version" "$download_file" "$package_suffix" ||
+      status=$?
+  done
+  return $status
+}
+
+write_config_mk() {
+  local -r config_mk="${PREBUILTS_DIR}/config-zig.mk"
+  rm -f -- "$config_mk"
+  echo > "$config_mk" "# Generated by $0.  DO NOT EDIT!"'
+
+ZIG_TOOLCHAIN_PREFIX = $(LKMAKEROOT)/prebuilt/downloads/zig/'
+}
+
+update() {
+  for_each_package download_package < "$VERSIONS_FILE" || return
+  write_config_mk
+}
+
+verify() {
+  for_each_package verify_stamp --verbose < "$VERSIONS_FILE"
+}
+
+list() {
+  for_each_package list_package < "$VERSIONS_FILE"
+}
+
+$mode

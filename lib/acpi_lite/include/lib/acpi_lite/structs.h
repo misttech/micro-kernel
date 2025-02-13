@@ -6,11 +6,11 @@
 // https://opensource.org/licenses/MIT
 #pragma once
 
-#include <stdint.h>
-#include <lk/compiler.h>
 #include <assert.h>
-
 #include <lib/acpi_lite/structs.h>
+#include <stdint.h>
+
+#include <lk/compiler.h>
 
 // ACPI structures declared here
 
@@ -277,13 +277,12 @@ struct acpi_mcfg_table {
 static_assert(sizeof(struct acpi_mcfg_table) == 44, "");
 
 struct acpi_mcfg_entry {
-    uint64_t base_address;
-    uint16_t segment;
-    uint8_t  start_bus;
-    uint8_t  end_bus;
-    uint8_t  reserved[4];
+  uint64_t base_address;
+  uint16_t segment;
+  uint8_t start_bus;
+  uint8_t end_bus;
+  uint8_t reserved[4];
 } __PACKED;
 static_assert(sizeof(struct acpi_mcfg_entry) == 16, "");
 
 __END_CDECLS
-

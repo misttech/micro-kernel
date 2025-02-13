@@ -8,14 +8,14 @@
 #pragma once
 
 #include <lib/gfx.h>
+
 #include <lk/compiler.h>
 
-#define FONT_X  6
-#define FONT_Y  12
+#define FONT_X 6
+#define FONT_Y 12
 
 __BEGIN_CDECLS
 
 void font_draw_char(gfx_surface *surface, unsigned char c, int x, int y, uint32_t color);
 
 __END_CDECLS
-

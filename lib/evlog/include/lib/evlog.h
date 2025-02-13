@@ -11,10 +11,10 @@
 #include <sys/types.h>
 
 typedef struct evlog {
-    uint head;
-    uint unitsize;
-    uint len_pow2;
-    uintptr_t *items;
+  uint head;
+  uint unitsize;
+  uint len_pow2;
+  uintptr_t *items;
 } evlog_t;
 
 status_t evlog_init_etc(evlog_t *e, uint len, uint unitsize, uintptr_t *items);
@@ -40,4 +40,3 @@ void evlog_add2(evlog_t *e, uintptr_t a, uintptr_t b)
     e->items[index + 1] = b;
 }
 */
-

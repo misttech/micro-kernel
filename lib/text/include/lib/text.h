@@ -15,4 +15,3 @@ void text_draw(int x, int y, const char *string);
 
 /* super dumb, someone has to call this to refresh everything */
 void text_update(void);
-

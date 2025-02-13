@@ -10,5 +10,3 @@
 #include <stdbool.h>
 
 void uart_init(void);
-
-

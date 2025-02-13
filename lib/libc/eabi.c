@@ -16,29 +16,26 @@ void *__dso_handle;
 
 /* Our toolchain has eabi functionality built in, but they're not really used.
  * so we stub them out here. */
-_Unwind_Reason_Code __aeabi_unwind_cpp_pr0(_Unwind_State state, _Unwind_Control_Block *ucbp, _Unwind_Context *context) {
-    return _URC_FAILURE;
+_Unwind_Reason_Code __aeabi_unwind_cpp_pr0(_Unwind_State state, _Unwind_Control_Block *ucbp,
+                                           _Unwind_Context *context) {
+  return _URC_FAILURE;
 }
 
-_Unwind_Reason_Code __aeabi_unwind_cpp_pr1(_Unwind_State state, _Unwind_Control_Block *ucbp, _Unwind_Context *context) {
-    return _URC_FAILURE;
+_Unwind_Reason_Code __aeabi_unwind_cpp_pr1(_Unwind_State state, _Unwind_Control_Block *ucbp,
+                                           _Unwind_Context *context) {
+  return _URC_FAILURE;
 }
 
-_Unwind_Reason_Code __aeabi_unwind_cpp_pr2(_Unwind_State state, _Unwind_Control_Block *ucbp, _Unwind_Context *context) {
-    return _URC_FAILURE;
+_Unwind_Reason_Code __aeabi_unwind_cpp_pr2(_Unwind_State state, _Unwind_Control_Block *ucbp,
+                                           _Unwind_Context *context) {
+  return _URC_FAILURE;
 }
 
 #endif
 
 /* needed by some piece of EABI */
-void raise(void) {
-}
+void raise(void) {}
 
-int __cxa_atexit(void (*destructor)(void *), void *arg, void *dso_handle) {
-    return 0;
-}
+int __cxa_atexit(void (*destructor)(void *), void *arg, void *dso_handle) { return 0; }
 
-int __aeabi_atexit(void *arg, void (*func)(void *), void *d) {
-    return __cxa_atexit(func, arg, d);
-}
-
+int __aeabi_atexit(void *arg, void (*func)(void *), void *d) { return __cxa_atexit(func, arg, d); }

@@ -25,4 +25,3 @@ void pic_mask_interrupts(void);
 // local apic
 void lapic_init(void);
 void lapic_eoi(unsigned int vector);
-

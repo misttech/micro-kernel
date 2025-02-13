@@ -9,6 +9,7 @@
 
 #include <stdbool.h>
 #include <sys/types.h>
+
 #include <lk/compiler.h>
 
 #define FS_MAX_PATH_LEN 128
@@ -18,35 +19,35 @@ __BEGIN_CDECLS
 
 // Generic FS ioctls
 enum fs_ioctl_num {
-    FS_IOCTL_NULL = 0,
-    FS_IOCTL_GET_FILE_ADDR,
-    FS_IOCTL_IS_LINEAR,         // If supported, determine if the underlying device is in linear mode.
+  FS_IOCTL_NULL = 0,
+  FS_IOCTL_GET_FILE_ADDR,
+  FS_IOCTL_IS_LINEAR,  // If supported, determine if the underlying device is in linear mode.
 };
 
 struct file_stat {
-    bool is_dir;
-    uint64_t size;
-    uint64_t capacity;
+  bool is_dir;
+  uint64_t size;
+  uint64_t capacity;
 };
 
 struct fs_stat {
-    uint64_t free_space;
-    uint64_t total_space;
+  uint64_t free_space;
+  uint64_t total_space;
 
-    uint32_t free_inodes;
-    uint32_t total_inodes;
+  uint32_t free_inodes;
+  uint32_t total_inodes;
 };
 
 struct dirent {
-    char name[FS_MAX_FILE_LEN];
+  char name[FS_MAX_FILE_LEN];
 };
 
 typedef struct filehandle filehandle;
 typedef struct dirhandle dirhandle;
 
-
 status_t fs_format_device(const char *fsname, const char *device, const void *args) __NONNULL((1));
-status_t fs_mount(const char *path, const char *fs, const char *device) __NONNULL((1)) __NONNULL((2));
+status_t fs_mount(const char *path, const char *fs, const char *device) __NONNULL((1))
+    __NONNULL((2));
 status_t fs_unmount(const char *path) __NONNULL();
 status_t fs_file_ioctl(filehandle *handle, int request, void *argp) __NONNULL((1)) __NONNULL((3));
 
@@ -84,36 +85,37 @@ typedef struct dircookie dircookie;
 struct bdev;
 
 struct fs_api {
-    status_t (*format)(struct bdev *, const void *);
-    status_t (*fs_stat)(fscookie *, struct fs_stat *);
+  status_t (*format)(struct bdev *, const void *);
+  status_t (*fs_stat)(fscookie *, struct fs_stat *);
 
-    status_t (*mount)(struct bdev *, fscookie **);
-    status_t (*unmount)(fscookie *);
-    status_t (*open)(fscookie *, const char *, filecookie **);
-    status_t (*create)(fscookie *, const char *, filecookie **, uint64_t);
-    status_t (*remove)(fscookie *, const char *);
-    status_t (*truncate)(filecookie *, uint64_t);
-    status_t (*stat)(filecookie *, struct file_stat *);
-    ssize_t (*read)(filecookie *, void *, off_t, size_t);
-    ssize_t (*write)(filecookie *, const void *, off_t, size_t);
-    status_t (*close)(filecookie *);
+  status_t (*mount)(struct bdev *, fscookie **);
+  status_t (*unmount)(fscookie *);
+  status_t (*open)(fscookie *, const char *, filecookie **);
+  status_t (*create)(fscookie *, const char *, filecookie **, uint64_t);
+  status_t (*remove)(fscookie *, const char *);
+  status_t (*truncate)(filecookie *, uint64_t);
+  status_t (*stat)(filecookie *, struct file_stat *);
+  ssize_t (*read)(filecookie *, void *, off_t, size_t);
+  ssize_t (*write)(filecookie *, const void *, off_t, size_t);
+  status_t (*close)(filecookie *);
 
-    status_t (*mkdir)(fscookie *, const char *);
-    status_t (*opendir)(fscookie *, const char *, dircookie **) __NONNULL();
-    status_t (*readdir)(dircookie *, struct dirent *) __NONNULL();
-    status_t (*closedir)(dircookie *) __NONNULL();
+  status_t (*mkdir)(fscookie *, const char *);
+  status_t (*opendir)(fscookie *, const char *, dircookie **) __NONNULL();
+  status_t (*readdir)(dircookie *, struct dirent *) __NONNULL();
+  status_t (*closedir)(dircookie *) __NONNULL();
 
-    status_t (*file_ioctl)(filecookie *, int, void *);
+  status_t (*file_ioctl)(filecookie *, int, void *);
 };
 
 struct fs_impl {
-    const char *name;
-    const struct fs_api *api;
+  const char *name;
+  const struct fs_api *api;
 };
 
 /* define in your fs implementation to register your api with the fs layer */
-#define STATIC_FS_IMPL(_name, _api) const struct fs_impl __fs_impl_##_name __ALIGNED(sizeof(void *)) __SECTION("fs_impl") = \
-    { .name = #_name, .api = _api }
+#define STATIC_FS_IMPL(_name, _api)                                \
+  const struct fs_impl __fs_impl_##_name __ALIGNED(sizeof(void *)) \
+      __SECTION("fs_impl") = {.name = #_name, .api = _api}
 
 /* list all registered file systems */
 void fs_dump_list(void);

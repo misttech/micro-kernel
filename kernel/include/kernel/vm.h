@@ -13,20 +13,20 @@
 #define __MMU_INITIAL_MAPPING_VIRT_OFFSET 8
 #define __MMU_INITIAL_MAPPING_SIZE_OFFSET 16
 #define __MMU_INITIAL_MAPPING_FLAGS_OFFSET 24
-#define __MMU_INITIAL_MAPPING_SIZE        40
+#define __MMU_INITIAL_MAPPING_SIZE 40
 #else
 #define __MMU_INITIAL_MAPPING_PHYS_OFFSET 0
 #define __MMU_INITIAL_MAPPING_VIRT_OFFSET 4
 #define __MMU_INITIAL_MAPPING_SIZE_OFFSET 8
 #define __MMU_INITIAL_MAPPING_FLAGS_OFFSET 12
-#define __MMU_INITIAL_MAPPING_SIZE        20
+#define __MMU_INITIAL_MAPPING_SIZE 20
 #endif
 
 /* flags for initial mapping struct */
-#define MMU_INITIAL_MAPPING_TEMPORARY     (0x1)
+#define MMU_INITIAL_MAPPING_TEMPORARY (0x1)
 #define MMU_INITIAL_MAPPING_FLAG_UNCACHED (0x2)
-#define MMU_INITIAL_MAPPING_FLAG_DEVICE   (0x4)
-#define MMU_INITIAL_MAPPING_FLAG_DYNAMIC  (0x8)  /* entry has to be patched up by platform_reset */
+#define MMU_INITIAL_MAPPING_FLAG_DEVICE (0x4)
+#define MMU_INITIAL_MAPPING_FLAG_DYNAMIC (0x8) /* entry has to be patched up by platform_reset */
 
 #if !ARCH_HAS_MMU
 #error ARCH needs to declare mmu support
@@ -35,12 +35,13 @@
 #ifndef ASSEMBLY
 
 #include <arch.h>
-#include <arch/mmu.h>
-#include <lk/compiler.h>
-#include <lk/list.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/types.h>
+
+#include <arch/mmu.h>
+#include <lk/compiler.h>
+#include <lk/list.h>
 
 __BEGIN_CDECLS
 
@@ -49,11 +50,11 @@ __BEGIN_CDECLS
 struct list_node *get_arena_list(void);
 
 struct mmu_initial_mapping {
-    paddr_t phys;
-    vaddr_t virt;
-    size_t  size;
-    unsigned int flags;
-    const char *name;
+  paddr_t phys;
+  vaddr_t virt;
+  size_t size;
+  unsigned int flags;
+  const char *name;
 };
 
 /* Assert that the assembly macros above match this struct. */
@@ -70,13 +71,13 @@ extern struct mmu_initial_mapping mmu_initial_mappings[];
 
 /* core per page structure */
 typedef struct vm_page {
-    struct list_node node;
+  struct list_node node;
 
-    uint flags : 8;
-    uint ref : 24;
+  uint flags : 8;
+  uint ref : 24;
 } vm_page_t;
 
-#define VM_PAGE_FLAG_NONFREE  (0x1)
+#define VM_PAGE_FLAG_NONFREE (0x1)
 
 /* kernel address space */
 #ifndef KERNEL_ASPACE_BASE
@@ -89,7 +90,8 @@ typedef struct vm_page {
 STATIC_ASSERT(KERNEL_ASPACE_BASE + (KERNEL_ASPACE_SIZE - 1) > KERNEL_ASPACE_BASE);
 
 static inline bool is_kernel_address(vaddr_t va) {
-    return (va >= (vaddr_t)KERNEL_ASPACE_BASE && va <= ((vaddr_t)KERNEL_ASPACE_BASE + ((vaddr_t)KERNEL_ASPACE_SIZE - 1)));
+  return (va >= (vaddr_t)KERNEL_ASPACE_BASE &&
+          va <= ((vaddr_t)KERNEL_ASPACE_BASE + ((vaddr_t)KERNEL_ASPACE_SIZE - 1)));
 }
 
 /* user address space, defaults to below kernel space with a 16MB guard gap on either side */
@@ -103,24 +105,24 @@ static inline bool is_kernel_address(vaddr_t va) {
 STATIC_ASSERT(USER_ASPACE_BASE + (USER_ASPACE_SIZE - 1) > USER_ASPACE_BASE);
 
 static inline bool is_user_address(vaddr_t va) {
-    return (va >= USER_ASPACE_BASE && va <= (USER_ASPACE_BASE + (USER_ASPACE_SIZE - 1)));
+  return (va >= USER_ASPACE_BASE && va <= (USER_ASPACE_BASE + (USER_ASPACE_SIZE - 1)));
 }
 
 /* physical allocator */
 typedef struct pmm_arena {
-    struct list_node node;
-    const char *name;
+  struct list_node node;
+  const char *name;
 
-    uint flags;
-    uint priority;
+  uint flags;
+  uint priority;
 
-    paddr_t base;
-    size_t  size;
+  paddr_t base;
+  size_t size;
 
-    size_t free_count;
+  size_t free_count;
 
-    struct vm_page *page_array;
-    struct list_node free_list;
+  struct vm_page *page_array;
+  struct list_node free_list;
 } pmm_arena_t;
 
 #define PMM_ARENA_FLAG_KMAP (0x1) /* this arena is already mapped and useful for kallocs */
@@ -184,32 +186,32 @@ vm_page_t *paddr_to_vm_page(paddr_t addr);
 
 /* virtual allocator */
 typedef struct vmm_aspace {
-    struct list_node node;
-    char name[32];
+  struct list_node node;
+  char name[32];
 
-    uint flags;
+  uint flags;
 
-    vaddr_t base;
-    size_t  size;
+  vaddr_t base;
+  size_t size;
 
-    struct list_node region_list;
+  struct list_node region_list;
 
-    arch_aspace_t arch_aspace;
+  arch_aspace_t arch_aspace;
 } vmm_aspace_t;
 
 #define VMM_ASPACE_FLAG_KERNEL 0x1
 
 typedef struct vmm_region {
-    struct list_node node;
-    char name[32];
+  struct list_node node;
+  char name[32];
 
-    uint flags;
-    uint arch_mmu_flags;
+  uint flags;
+  uint arch_mmu_flags;
 
-    vaddr_t base;
-    size_t  size;
+  vaddr_t base;
+  size_t size;
 
-    struct list_node page_list;
+  struct list_node page_list;
 } vmm_region_t;
 
 #define VMM_REGION_FLAG_RESERVED 0x1
@@ -217,29 +219,29 @@ typedef struct vmm_region {
 
 /* grab a handle to the kernel address space */
 extern vmm_aspace_t _kernel_aspace;
-static inline vmm_aspace_t *vmm_get_kernel_aspace(void) {
-    return &_kernel_aspace;
-}
+static inline vmm_aspace_t *vmm_get_kernel_aspace(void) { return &_kernel_aspace; }
 
 /* virtual to container address space */
 struct vmm_aspace *vaddr_to_aspace(void *ptr);
 
 /* reserve a chunk of address space to prevent allocations from that space */
 status_t vmm_reserve_space(vmm_aspace_t *aspace, const char *name, size_t size, vaddr_t vaddr)
-__NONNULL((1));
+    __NONNULL((1));
 
 /* allocate a region of virtual space that maps a physical piece of address space.
    the physical pages that back this are not allocated from the pmm. */
-status_t vmm_alloc_physical(vmm_aspace_t *aspace, const char *name, size_t size, void **ptr, uint8_t align_log2, paddr_t paddr, uint vmm_flags, uint arch_mmu_flags)
-__NONNULL((1));
+status_t vmm_alloc_physical(vmm_aspace_t *aspace, const char *name, size_t size, void **ptr,
+                            uint8_t align_log2, paddr_t paddr, uint vmm_flags, uint arch_mmu_flags)
+    __NONNULL((1));
 
 /* allocate a region of memory backed by newly allocated contiguous physical memory  */
-status_t vmm_alloc_contiguous(vmm_aspace_t *aspace, const char *name, size_t size, void **ptr, uint8_t align_log2, uint vmm_flags, uint arch_mmu_flags)
-__NONNULL((1));
+status_t vmm_alloc_contiguous(vmm_aspace_t *aspace, const char *name, size_t size, void **ptr,
+                              uint8_t align_log2, uint vmm_flags, uint arch_mmu_flags)
+    __NONNULL((1));
 
 /* allocate a region of memory backed by newly allocated physical memory */
-status_t vmm_alloc(vmm_aspace_t *aspace, const char *name, size_t size, void **ptr, uint8_t align_log2, uint vmm_flags, uint arch_mmu_flags)
-__NONNULL((1));
+status_t vmm_alloc(vmm_aspace_t *aspace, const char *name, size_t size, void **ptr,
+                   uint8_t align_log2, uint vmm_flags, uint arch_mmu_flags) __NONNULL((1));
 
 /* Unmap previously allocated region and free physical memory pages backing it (if any) */
 status_t vmm_free_region(vmm_aspace_t *aspace, vaddr_t va);
@@ -248,20 +250,18 @@ status_t vmm_free_region(vmm_aspace_t *aspace, vaddr_t va);
 #define VMM_FLAG_VALLOC_SPECIFIC 0x1
 
 /* allocate a new address space */
-status_t vmm_create_aspace(vmm_aspace_t **aspace, const char *name, uint flags)
-__NONNULL((1));
+status_t vmm_create_aspace(vmm_aspace_t **aspace, const char *name, uint flags) __NONNULL((1));
 
 /* destroy everything in the address space */
-status_t vmm_free_aspace(vmm_aspace_t *aspace)
-__NONNULL((1));
+status_t vmm_free_aspace(vmm_aspace_t *aspace) __NONNULL((1));
 
 /* internal routine by the scheduler to swap mmu contexts */
 void vmm_context_switch(vmm_aspace_t *oldspace, vmm_aspace_t *newaspace);
 
 /* set the current user aspace as active on the current thread.
    NULL is a valid argument, which unmaps the current user address space */
-vmm_aspace_t* vmm_set_active_aspace(vmm_aspace_t *aspace);
+vmm_aspace_t *vmm_set_active_aspace(vmm_aspace_t *aspace);
 
 __END_CDECLS
 
-#endif // !ASSEMBLY
+#endif  // !ASSEMBLY

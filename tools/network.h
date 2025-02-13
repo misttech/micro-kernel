@@ -7,11 +7,11 @@
  */
 #pragma once
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 int udp_listen(in_addr_t addr, unsigned port, int shared);
 int udp_connect(in_addr_t addr, unsigned port);

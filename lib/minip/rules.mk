@@ -11,7 +11,7 @@ MODULE_DEPS := \
 MODULE_SRCS += \
 	$(LOCAL_DIR)/arp.c \
 	$(LOCAL_DIR)/chksum.c \
-	$(LOCAL_DIR)/dhcp.cpp \
+	$(LOCAL_DIR)/dhcp.cc \
 	$(LOCAL_DIR)/lk_console.c \
 	$(LOCAL_DIR)/minip.c \
 	$(LOCAL_DIR)/net_timer.c \

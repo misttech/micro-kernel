@@ -1,0 +1,9 @@
+# Zig version
+
+mk/zig/linux-x86_64
+	0.13.0
+	39602cedd05a733555d9a56f13e0985ef608859d
+
+mk/zig/macos-x86_64
+	0.13.0
+	iwbtEJGyJptwCzsH-OO-O4MwAIQbrlqmoJsai0dz7_0=

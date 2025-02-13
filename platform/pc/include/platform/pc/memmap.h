@@ -13,4 +13,3 @@
 #define REG_B(x) ((volatile unsigned char *)(x))
 
 /* TODO: put fixed memory address definitions here */
-

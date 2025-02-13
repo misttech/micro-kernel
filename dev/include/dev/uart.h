@@ -22,4 +22,3 @@ void uart_init_port(int port, uint baud);
 /* panic-time uart accessors, intended to be run with interrupts disabled */
 int uart_pputc(int port, char c);
 int uart_pgetc(int port);
-

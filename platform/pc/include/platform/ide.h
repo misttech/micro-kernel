@@ -8,6 +8,5 @@
 #pragma once
 
 struct platform_ide_config {
-    int legacy_index; // 0x80, 0x81 for pci detection channel 0 and 1, 0 or 1 for legacy ISA IDE
+  int legacy_index;  // 0x80, 0x81 for pci detection channel 0 and 1, 0 or 1 for legacy ISA IDE
 };
-

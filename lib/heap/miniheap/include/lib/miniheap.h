@@ -12,11 +12,11 @@
 __BEGIN_CDECLS
 
 struct miniheap_stats {
-    void *heap_start;
-    size_t heap_len;
-    size_t heap_free;
-    size_t heap_max_chunk;
-    size_t heap_low_watermark;
+  void *heap_start;
+  size_t heap_len;
+  size_t heap_free;
+  size_t heap_max_chunk;
+  size_t heap_low_watermark;
 };
 
 void miniheap_get_stats(struct miniheap_stats *ptr);

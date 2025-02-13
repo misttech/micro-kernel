@@ -9,8 +9,4 @@
 
 #pragma once
 
-typedef enum {
-    BOOT_NOW,
-    NEXT_BOOT_STRATEGY
-} next_boot_action_t;
-
+typedef enum { BOOT_NOW, NEXT_BOOT_STRATEGY } next_boot_action_t;

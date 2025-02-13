@@ -7,14 +7,10 @@
  */
 
 #include <target.h>
+
 #include <arch/arch_ops.h>
 #include <platform/sifive.h>
 
-void target_early_init(void) {
-}
+void target_early_init(void) {}
 
-void target_init(void) {
-}
-
-
-
+void target_init(void) {}

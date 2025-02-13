@@ -23,50 +23,51 @@
  */
 #pragma once
 
+#include <string.h>
+#include <sys/types.h>
+
 #include <dev/virtio/9p.h>
 #include <kernel/event.h>
 #include <kernel/mutex.h>
 #include <lk/list.h>
-#include <sys/types.h>
-#include <string.h>
 
 #define VIRTIO_9P_RPC_TIMEOUT 3000 /* ms */
 #define VIRTIO_9P_DEFAULT_MSIZE (PAGE_SIZE << 5)
 
 struct p9_fcall {
-    uint32_t size;
+  uint32_t size;
 
-    size_t offset;
-    size_t capacity;
+  size_t offset;
+  size_t capacity;
 
-    uint8_t *sdata;
+  uint8_t *sdata;
 };
 
 struct p9_req {
-    int status;
-    event_t io_event;
-    struct p9_fcall tc;
-    struct p9_fcall rc;
+  int status;
+  event_t io_event;
+  struct p9_fcall tc;
+  struct p9_fcall rc;
 };
 
 enum {
-    P9_REQ_S_UNKNOWN = 0,
-    P9_REQ_S_INITIALIZED,
-    P9_REQ_S_SENT,
-    P9_REQ_S_RECEIVED,
+  P9_REQ_S_UNKNOWN = 0,
+  P9_REQ_S_INITIALIZED,
+  P9_REQ_S_SENT,
+  P9_REQ_S_RECEIVED,
 };
 
 struct virtio_9p_dev {
-    struct virtio_device *dev;
-    struct virtio_9p_config *config;
-    bdev_t bdev;
+  struct virtio_device *dev;
+  struct virtio_9p_config *config;
+  bdev_t bdev;
 
-    uint32_t msize;
-    struct p9_req req;
-    mutex_t req_lock;
+  uint32_t msize;
+  struct p9_req req;
+  mutex_t req_lock;
 
-    struct list_node list;
-    spin_lock_t lock;
+  struct list_node list;
+  spin_lock_t lock;
 };
 
 // read/write APIs of basic types

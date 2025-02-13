@@ -7,11 +7,12 @@
  */
 #pragma once
 
-#include <kernel/thread.h>
 #include <limits.h>
-#include <lk/compiler.h>
 #include <stdbool.h>
 #include <stdint.h>
+
+#include <kernel/thread.h>
+#include <lk/compiler.h>
 
 __BEGIN_CDECLS
 
@@ -25,8 +26,8 @@ typedef uint32_t mp_cpu_mask_t;
 #define MP_RESCHEDULE_FLAG_REALTIME (0x1)
 
 typedef enum {
-    MP_IPI_GENERIC,
-    MP_IPI_RESCHEDULE,
+  MP_IPI_GENERIC,
+  MP_IPI_RESCHEDULE,
 } mp_ipi_t;
 
 #ifdef WITH_SMP
@@ -40,47 +41,31 @@ enum handler_return mp_mbx_reschedule_irq(void);
 
 /* global mp state to track what the cpus are up to */
 struct mp_state {
-    volatile mp_cpu_mask_t active_cpus;
+  volatile mp_cpu_mask_t active_cpus;
 
-    /* only safely accessible with thread lock held */
-    mp_cpu_mask_t idle_cpus;
-    mp_cpu_mask_t realtime_cpus;
+  /* only safely accessible with thread lock held */
+  mp_cpu_mask_t idle_cpus;
+  mp_cpu_mask_t realtime_cpus;
 };
 
 extern struct mp_state mp;
 
-static inline bool mp_is_cpu_active(uint cpu) {
-    return mp.active_cpus & (1UL << cpu);
-}
+static inline bool mp_is_cpu_active(uint cpu) { return mp.active_cpus & (1UL << cpu); }
 
-static inline bool mp_is_cpu_idle(uint cpu) {
-    return mp.idle_cpus & (1UL << cpu);
-}
+static inline bool mp_is_cpu_idle(uint cpu) { return mp.idle_cpus & (1UL << cpu); }
 
 /* must be called with the thread lock held */
-static inline void mp_set_cpu_idle(uint cpu) {
-    mp.idle_cpus |= 1UL << cpu;
-}
+static inline void mp_set_cpu_idle(uint cpu) { mp.idle_cpus |= 1UL << cpu; }
 
-static inline void mp_set_cpu_busy(uint cpu) {
-    mp.idle_cpus &= ~(1UL << cpu);
-}
+static inline void mp_set_cpu_busy(uint cpu) { mp.idle_cpus &= ~(1UL << cpu); }
 
-static inline mp_cpu_mask_t mp_get_idle_mask(void) {
-    return mp.idle_cpus;
-}
+static inline mp_cpu_mask_t mp_get_idle_mask(void) { return mp.idle_cpus; }
 
-static inline void mp_set_cpu_realtime(uint cpu) {
-    mp.realtime_cpus |= 1UL << cpu;
-}
+static inline void mp_set_cpu_realtime(uint cpu) { mp.realtime_cpus |= 1UL << cpu; }
 
-static inline void mp_set_cpu_non_realtime(uint cpu) {
-    mp.realtime_cpus &= ~(1UL << cpu);
-}
+static inline void mp_set_cpu_non_realtime(uint cpu) { mp.realtime_cpus &= ~(1UL << cpu); }
 
-static inline mp_cpu_mask_t mp_get_realtime_mask(void) {
-    return mp.realtime_cpus;
-}
+static inline mp_cpu_mask_t mp_get_realtime_mask(void) { return mp.realtime_cpus; }
 #else
 static inline void mp_init(void) {}
 static inline void mp_reschedule(mp_cpu_mask_t target, uint flags) {}
@@ -90,7 +75,9 @@ static inline enum handler_return mp_mbx_reschedule_irq(void) { return INT_NO_RE
 
 // only one cpu exists in UP and if you're calling these functions, it's active...
 static inline int mp_is_cpu_active(uint cpu) { return 1; }
-static inline int mp_is_cpu_idle(uint cpu) { return (get_current_thread()->flags & THREAD_FLAG_IDLE) != 0; }
+static inline int mp_is_cpu_idle(uint cpu) {
+  return (get_current_thread()->flags & THREAD_FLAG_IDLE) != 0;
+}
 
 static inline void mp_set_cpu_idle(uint cpu) {}
 static inline void mp_set_cpu_busy(uint cpu) {}

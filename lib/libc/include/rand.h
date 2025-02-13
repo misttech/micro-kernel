@@ -7,8 +7,9 @@
  */
 #pragma once
 
-#include <lk/compiler.h>
 #include <sys/types.h>
+
+#include <lk/compiler.h>
 
 __BEGIN_CDECLS
 
@@ -19,4 +20,3 @@ void srand(unsigned int seed);
 void rand_add_entropy(const void *buf, size_t len);
 
 __END_CDECLS
-

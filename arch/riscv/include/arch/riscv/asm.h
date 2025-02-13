@@ -11,13 +11,12 @@
 // wide load/stores
 #if __riscv_xlen == 32
 #define REGOFF(x) ((x) * 4)
-#define STR       sw
-#define LDR       lw
+#define STR sw
+#define LDR lw
 #else
 #define REGOFF(x) ((x) * 8)
-#define STR       sd
-#define LDR       ld
+#define STR sd
+#define LDR ld
 #endif
 
 #define RISCV_XLEN_BYTES (__riscv_xlen / 8)
-
