@@ -13,7 +13,7 @@
 
 // Fail by default. System must override this.
 __WEAK status_t moot_mount_default_fs(char **mount_path, char **device_name) {
-    *device_name = NULL;
-    *mount_path = NULL;
-    return ERR_NOT_IMPLEMENTED;
+  *device_name = NULL;
+  *mount_path = NULL;
+  return ERR_NOT_IMPLEMENTED;
 }

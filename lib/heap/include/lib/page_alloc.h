@@ -9,6 +9,7 @@
 
 #include <stddef.h>
 #include <sys/types.h>
+
 #include <lk/compiler.h>
 
 // to pick up PAGE_SIZE, PAGE_ALIGN, etc
@@ -37,8 +38,8 @@ void page_free(void *ptr, size_t pages);
 
 #if WITH_KERNEL_VM
 struct page_range {
-    void *address;
-    size_t size;
+  void *address;
+  size_t size;
 };
 #endif
 

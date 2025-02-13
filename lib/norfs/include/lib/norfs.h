@@ -8,8 +8,8 @@
 #pragma once
 
 #include <iovec.h>
-#include <sys/types.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 /*
  * File system must be mounted prior to usage.
@@ -37,9 +37,7 @@ status_t norfs_put_obj_iovec(uint32_t key, const iovec_t *obj_iov, uint32_t iov_
  * Put an object in filesystem.  Previous versions of the object will be
  * overwritten.
  */
-status_t norfs_put_obj(uint32_t key, unsigned char *obj, uint16_t obj_len,
-                       uint8_t flags);
-
+status_t norfs_put_obj(uint32_t key, unsigned char *obj, uint16_t obj_len, uint8_t flags);
 
 /*
  * Read object into an iovec buffer.  Will fail with ERR_TOO_BIG if
@@ -60,4 +58,3 @@ status_t norfs_read_obj(uint32_t key, unsigned char *buffer, uint16_t buffer_len
  * Wipe NVRAM.  Leaves filesystem unmounted.
  */
 void norfs_wipe_fs(void);
-

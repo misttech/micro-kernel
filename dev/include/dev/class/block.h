@@ -7,20 +7,20 @@
  */
 #pragma once
 
-#include <lk/compiler.h>
 #include <dev/driver.h>
+#include <lk/compiler.h>
 
 /* block interface */
 struct block_ops {
-    struct driver_ops std;
+  struct driver_ops std;
 
-    ssize_t (*get_block_size)(struct device *dev);
-    ssize_t (*get_block_count)(struct device *dev);
+  ssize_t (*get_block_size)(struct device *dev);
+  ssize_t (*get_block_count)(struct device *dev);
 
-    ssize_t (*write)(struct device *dev, off_t offset, const void *buf, size_t count);
-    ssize_t (*read)(struct device *dev, off_t offset, void *buf, size_t count);
+  ssize_t (*write)(struct device *dev, off_t offset, const void *buf, size_t count);
+  ssize_t (*read)(struct device *dev, off_t offset, void *buf, size_t count);
 
-    status_t (*flush)(struct device *dev);
+  status_t (*flush)(struct device *dev);
 };
 
 __BEGIN_CDECLS
@@ -32,4 +32,3 @@ ssize_t class_block_read(struct device *dev, off_t offset, void *buf, size_t cou
 status_t class_block_flush(struct device *dev);
 
 __END_CDECLS
-

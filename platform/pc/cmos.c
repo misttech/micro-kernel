@@ -20,25 +20,22 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <platform/cmos.h>
-
-#include <lk/trace.h>
-#include <lk/debug.h>
 #include <kernel/spinlock.h>
+#include <lk/debug.h>
+#include <lk/trace.h>
+#include <platform/cmos.h>
 #include <platform/pc.h>
 
 static spin_lock_t lock = SPIN_LOCK_INITIAL_VALUE;
 
 uint8_t cmos_read(uint8_t reg) {
-    spin_lock_saved_state_t state;
-    spin_lock_irqsave(&lock, state);
+  spin_lock_saved_state_t state;
+  spin_lock_irqsave(&lock, state);
 
-    outp(CMOS_CONTROL_REG, reg | 0x80);
-    uint8_t val = inp(CMOS_DATA_REG);
+  outp(CMOS_CONTROL_REG, reg | 0x80);
+  uint8_t val = inp(CMOS_DATA_REG);
 
-    spin_unlock_irqrestore(&lock, state);
+  spin_unlock_irqrestore(&lock, state);
 
-    return val;
+  return val;
 }
-
-

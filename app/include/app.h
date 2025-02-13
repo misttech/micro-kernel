@@ -7,10 +7,11 @@
  */
 #pragma once
 
-#include <stddef.h>
-#include <lk/compiler.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <sys/types.h>
+
+#include <lk/compiler.h>
 
 __BEGIN_CDECLS
 
@@ -33,16 +34,19 @@ typedef void (*app_entry)(const struct app_descriptor *, void *args);
 
 /* each app needs to define one of these to define its startup conditions */
 struct app_descriptor {
-    const char *name;
-    app_init  init;
-    app_entry entry;
-    unsigned int flags;
-    size_t stack_size;
+  const char *name;
+  app_init init;
+  app_entry entry;
+  unsigned int flags;
+  size_t stack_size;
 };
 
-#define APP_START(appname) const struct app_descriptor _app_##appname __USED __ALIGNED(sizeof(void *)) __SECTION("apps") = { .name = #appname,
+#define APP_START(appname)                                                    \
+  const struct app_descriptor _app_##appname __USED __ALIGNED(sizeof(void *)) \
+      __SECTION("apps") = {.name = #appname,
 
-#define APP_END };
+#define APP_END \
+  }             \
+  ;
 
 __END_CDECLS
-

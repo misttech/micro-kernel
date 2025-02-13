@@ -26,11 +26,9 @@ typedef struct EfiInputKey {
 } EfiInputKey;
 
 typedef struct EfiSimpleTextInputProtocol {
-  EfiStatus (*reset)(struct EfiSimpleTextInputProtocol* self,
-                     bool extendend_verification);
+  EfiStatus (*reset)(struct EfiSimpleTextInputProtocol* self, bool extendend_verification);
 
-  EfiStatus (*read_key_stroke)(struct EfiSimpleTextInputProtocol* self,
-                               EfiInputKey* key);
+  EfiStatus (*read_key_stroke)(struct EfiSimpleTextInputProtocol* self, EfiInputKey* key);
 
   EfiEvent wait_for_key;
 } EfiSimpleTextInputProtocol;

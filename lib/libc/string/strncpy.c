@@ -12,16 +12,14 @@
 #include <string.h>
 #include <sys/types.h>
 
-char *
-strncpy(char *dest, char const *src, size_t count) {
-    char *tmp = dest;
+char *strncpy(char *dest, char const *src, size_t count) {
+  char *tmp = dest;
 
-    size_t i;
-    for (i = 0; i++ < count && (*dest++ = *src++) != '\0'; )
-        ;
-    for (; i < count; i++)
-        *dest++ = '\0';
+  size_t i;
+  for (i = 0; i++ < count && (*dest++ = *src++) != '\0';)
+    ;
+  for (; i < count; i++)
+    *dest++ = '\0';
 
-    return tmp;
+  return tmp;
 }
-

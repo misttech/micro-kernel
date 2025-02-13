@@ -5,16 +5,16 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT
 
-#include <lib/acpi_lite.h>
-
 #include <inttypes.h>
+#include <lib/acpi_lite.h>
 #include <string.h>
+
+#include <kernel/vm.h>
 #include <lk/compiler.h>
 #include <lk/cpp.h>
 #include <lk/debug.h>
 #include <lk/err.h>
 #include <lk/trace.h>
-#include <kernel/vm.h>
 
 // uses the vm to map in ACPI tables as they are found
 static_assert(WITH_KERNEL_VM, "");
@@ -27,14 +27,14 @@ struct acpi_lite_state {
   paddr_t rsdp_pa;
   const acpi_rsdt_xsdt* sdt;
   paddr_t sdt_pa;
-  bool xsdt;          // are the pointers in the SDT 64 or 32bit?
+  bool xsdt;  // are the pointers in the SDT 64 or 32bit?
 
-  size_t num_tables;  // number of top level tables
-  const void **tables; // array of pointers to detected tables
+  size_t num_tables;    // number of top level tables
+  const void** tables;  // array of pointers to detected tables
 } acpi;
 
 // map a region around a physical address
-static void *map_region(paddr_t pa, size_t len, const char *name) {
+static void* map_region(paddr_t pa, size_t len, const char* name) {
   const auto pa_page_aligned = ROUNDDOWN(pa, PAGE_SIZE);
   const size_t align_offset = pa - pa_page_aligned;
   size_t map_len = ROUNDUP(len + align_offset, PAGE_SIZE);
@@ -44,14 +44,14 @@ static void *map_region(paddr_t pa, size_t len, const char *name) {
     perms |= ARCH_MMU_FLAG_PERM_NO_EXECUTE;
   }
 
-  void *ptr;
-  status_t err = vmm_alloc_physical(vmm_get_kernel_aspace(), name, map_len,
-                                    &ptr, 0, pa_page_aligned, 0, perms);
+  void* ptr;
+  status_t err = vmm_alloc_physical(vmm_get_kernel_aspace(), name, map_len, &ptr, 0,
+                                    pa_page_aligned, 0, perms);
   if (err < 0) {
     return nullptr;
   }
 
-  return (void *)((uintptr_t)ptr + align_offset);
+  return (void*)((uintptr_t)ptr + align_offset);
 }
 
 static uint8_t acpi_checksum(const void* _buf, size_t len) {
@@ -112,18 +112,17 @@ static paddr_t find_rsdp_pc() {
   const size_t len = range_end - range_start;
 
   // map all of the scannable area, 0xe0000...1MB
-  const uint8_t *bios_ptr;
+  const uint8_t* bios_ptr;
   status_t err = vmm_alloc_physical(vmm_get_kernel_aspace(), "acpi rsdp bios area", len,
-                                    (void **)&bios_ptr, 0, range_start, 0, ARCH_MMU_FLAG_PERM_RO);
+                                    (void**)&bios_ptr, 0, range_start, 0, ARCH_MMU_FLAG_PERM_RO);
   if (err < 0) {
     return 0;
   }
   LTRACEF("bios area mapping at %p\n", bios_ptr);
 
   // free the region when we exit
-  auto ac = lk::make_auto_call([bios_ptr]() {
-      vmm_free_region(vmm_get_kernel_aspace(), (vaddr_t)bios_ptr);
-  });
+  auto ac = lk::make_auto_call(
+      [bios_ptr]() { vmm_free_region(vmm_get_kernel_aspace(), (vaddr_t)bios_ptr); });
 
   // search for it in the BIOS EBDA area (0xe0000..0xfffff) on 16 byte boundaries
   for (size_t i = 0; i < len; i += 16) {
@@ -206,7 +205,7 @@ static const acpi_sdt_header* acpi_get_table_at_index(size_t index) {
     return nullptr;
   }
 
-  return static_cast<const acpi_sdt_header *>(acpi.tables[index]);
+  return static_cast<const acpi_sdt_header*>(acpi.tables[index]);
 }
 
 const acpi_sdt_header* acpi_get_table_by_sig(const char* sig) {
@@ -230,10 +229,10 @@ static status_t initialize_table(size_t i) {
   char name[64];
   snprintf(name, sizeof(name), "acpi table %zu", i);
 
-  const size_t table_initial_len = PAGE_SIZE; // enough to read the header
+  const size_t table_initial_len = PAGE_SIZE;  // enough to read the header
   auto pa = acpi_get_table_pa_at_index(i);
 
-  const acpi_sdt_header *header = (const acpi_sdt_header *)map_region(pa, table_initial_len, name);
+  const acpi_sdt_header* header = (const acpi_sdt_header*)map_region(pa, table_initial_len, name);
   if (!header) {
     dprintf(INFO, "ACPI LITE: failed to map table %zu address %#" PRIxPTR "\n", i, pa);
     return ERR_NOT_FOUND;
@@ -241,11 +240,11 @@ static status_t initialize_table(size_t i) {
 
   // cleanup the mapping that maps just the first page when we exit
   auto cleanup_header_mapping = lk::make_auto_call([header]() {
-      vmm_free_region(vmm_get_kernel_aspace(), ROUNDDOWN((vaddr_t)header, PAGE_SIZE));
+    vmm_free_region(vmm_get_kernel_aspace(), ROUNDDOWN((vaddr_t)header, PAGE_SIZE));
   });
 
   // check the header and determine the real size
-  if (header->length > 1024*1024) {
+  if (header->length > 1024 * 1024) {
     // probably bogus?
     dprintf(INFO, "ACPI LITE: table %zu has length %u, too large\n", i, header->length);
     return ERR_NOT_FOUND;
@@ -270,7 +269,7 @@ static status_t initialize_table(size_t i) {
   LTRACEF("table %zu (%s) mapped at %p\n", i, sig, acpi.tables[i]);
 
   // ODO compute checksum on table?
-  header = (const acpi_sdt_header *)acpi.tables[i];
+  header = (const acpi_sdt_header*)acpi.tables[i];
   uint8_t c = acpi_checksum(header, header->length);
   if (c != 0) {
     dprintf(INFO, "ACPI LITE: table %zu (%s) fails checksum\n", i, sig);
@@ -299,8 +298,8 @@ status_t acpi_lite_init(paddr_t rsdp_pa) {
     }
   }
 
-  const size_t rsdp_area_len = 0x1000; // 4K should cover it. TODO: see if it's specced
-  const void * const rsdp_ptr = map_region(rsdp_pa, rsdp_area_len, "acpi rsdp area");
+  const size_t rsdp_area_len = 0x1000;  // 4K should cover it. TODO: see if it's specced
+  const void* const rsdp_ptr = map_region(rsdp_pa, rsdp_area_len, "acpi rsdp area");
   if (!rsdp_ptr) {
     dprintf(INFO, "ACPI LITE: failed to map RSDP address %#" PRIxPTR " to virtual\n", rsdp_pa);
     return ERR_NOT_FOUND;
@@ -309,9 +308,9 @@ status_t acpi_lite_init(paddr_t rsdp_pa) {
 
   // free the region if we abort
   auto cleanup_rsdp_mapping = lk::make_auto_call([rsdp_ptr]() {
-      vmm_free_region(vmm_get_kernel_aspace(), ROUNDDOWN((vaddr_t)rsdp_ptr, PAGE_SIZE));
-      acpi.rsdp_pa = 0;
-      acpi.rsdp = nullptr;
+    vmm_free_region(vmm_get_kernel_aspace(), ROUNDDOWN((vaddr_t)rsdp_ptr, PAGE_SIZE));
+    acpi.rsdp_pa = 0;
+    acpi.rsdp = nullptr;
   });
 
   // see if the RSDP is there
@@ -322,8 +321,8 @@ status_t acpi_lite_init(paddr_t rsdp_pa) {
   }
   acpi.rsdp_pa = rsdp_pa;
 
-  dprintf(SPEW, "ACPI LITE: RSDP checks out, found at %#lx, revision %u\n",
-      acpi.rsdp_pa, acpi.rsdp->revision);
+  dprintf(SPEW, "ACPI LITE: RSDP checks out, found at %#lx, revision %u\n", acpi.rsdp_pa,
+          acpi.rsdp->revision);
 
   // find the pointer to either the RSDT or XSDT
   acpi.sdt = nullptr;
@@ -338,8 +337,8 @@ status_t acpi_lite_init(paddr_t rsdp_pa) {
   }
 
   // map the *sdt somewhere
-  const size_t sdt_area_len = 0x1000; // 4K should cover it. TODO: see if it's specced
-  const void * const sdt_ptr = map_region(acpi.sdt_pa, sdt_area_len, "acpi sdt area");
+  const size_t sdt_area_len = 0x1000;  // 4K should cover it. TODO: see if it's specced
+  const void* const sdt_ptr = map_region(acpi.sdt_pa, sdt_area_len, "acpi sdt area");
   if (!sdt_ptr) {
     dprintf(INFO, "ACPI LITE: failed to map SDT address %#" PRIxPTR " to virtual\n", acpi.sdt_pa);
     return ERR_NOT_FOUND;
@@ -347,12 +346,12 @@ status_t acpi_lite_init(paddr_t rsdp_pa) {
   LTRACEF("sdt mapped at %p\n", sdt_ptr);
 
   auto cleanup_sdt_mapping = lk::make_auto_call([sdt_ptr]() {
-      vmm_free_region(vmm_get_kernel_aspace(), ROUNDDOWN((vaddr_t)sdt_ptr, PAGE_SIZE));
-      acpi.sdt_pa = 0;
-      acpi.sdt = nullptr;
+    vmm_free_region(vmm_get_kernel_aspace(), ROUNDDOWN((vaddr_t)sdt_ptr, PAGE_SIZE));
+    acpi.sdt_pa = 0;
+    acpi.sdt = nullptr;
   });
 
-  acpi.sdt = static_cast<const acpi_rsdt_xsdt *>(sdt_ptr);
+  acpi.sdt = static_cast<const acpi_rsdt_xsdt*>(sdt_ptr);
 
   if (!validate_sdt(acpi.sdt, &acpi.num_tables, &acpi.xsdt)) {
     dprintf(INFO, "ACPI LITE: RSDT/XSDT structure does not check out\n");
@@ -362,7 +361,7 @@ status_t acpi_lite_init(paddr_t rsdp_pa) {
   dprintf(SPEW, "ACPI LITE: RSDT/XSDT checks out, %zu tables\n", acpi.num_tables);
 
   // map all of the tables in
-  acpi.tables = new const void *[acpi.num_tables];
+  acpi.tables = new const void*[acpi.num_tables];
   for (size_t i = 0; i < acpi.num_tables; i++) {
     status_t err = initialize_table(i);
     if (err < 0) {
@@ -407,7 +406,8 @@ void acpi_lite_dump_tables(bool full_dump) {
   }
 }
 
-status_t acpi_process_madt_entries_etc(const uint8_t search_type, const madt_entry_callback callback) {
+status_t acpi_process_madt_entries_etc(const uint8_t search_type,
+                                       const madt_entry_callback callback) {
   const acpi_madt_table* madt =
       reinterpret_cast<const acpi_madt_table*>(acpi_get_table_by_sig(ACPI_MADT_SIG));
   if (!madt) {

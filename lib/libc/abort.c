@@ -6,9 +6,7 @@
  * https://opensource.org/licenses/MIT
  */
 #include <stdlib.h>
+
 #include <lk/debug.h>
 
-void abort(void) {
-    panic("abort\n");
-}
-
+void abort(void) { panic("abort\n"); }

@@ -7,23 +7,22 @@
  */
 #pragma once
 
+#include <arch/arm64/mmu.h>
 #include <lk/compiler.h>
 #include <lk/list.h>
-#include <arch/arm64/mmu.h>
 
 __BEGIN_CDECLS
 
 struct arch_aspace {
-    /* pointer to the translation table */
-    paddr_t tt_phys;
-    pte_t *tt_virt;
+  /* pointer to the translation table */
+  paddr_t tt_phys;
+  pte_t *tt_virt;
 
-    uint flags;
+  uint flags;
 
-    /* range of address space */
-    vaddr_t base;
-    size_t size;
+  /* range of address space */
+  vaddr_t base;
+  size_t size;
 };
 
 __END_CDECLS
-

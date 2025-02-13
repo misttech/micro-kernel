@@ -33,13 +33,12 @@ constexpr uint32_t EFI_DT_APPLY_FIXUPS = 0x00000001;
 constexpr uint32_t EFI_DT_RESERVE_MEMORY = 0x00000002;
 // Install the device-tree as configuration table
 constexpr uint32_t EFI_DT_INSTALL_TABLE = 0x00000004;
-constexpr uint32_t EFI_DT_ALL =
-    EFI_DT_APPLY_FIXUPS | EFI_DT_RESERVE_MEMORY | EFI_DT_INSTALL_TABLE;
+constexpr uint32_t EFI_DT_ALL = EFI_DT_APPLY_FIXUPS | EFI_DT_RESERVE_MEMORY | EFI_DT_INSTALL_TABLE;
 
 typedef struct EfiDtFixupProtocol {
   uint64_t revision;
-  EfiStatus (*fixup)(struct EfiDtFixupProtocol *self, void *fdt,
-                     size_t *buffer_size, uint32_t flags);
+  EfiStatus (*fixup)(struct EfiDtFixupProtocol *self, void *fdt, size_t *buffer_size,
+                     uint32_t flags);
 } EfiDtFixupProtocol;
 
-#endif // __EFI_DT_FIXUP_PROTOCOL_H__
+#endif  // __EFI_DT_FIXUP_PROTOCOL_H__

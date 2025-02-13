@@ -13,9 +13,9 @@
 #define GB (1024UL * 1024UL * 1024UL)
 
 #define RETURN_IF_ERROR(expr) \
-        do { \
-            status_t err_ = (expr); \
-            if (err_ != NO_ERROR) { \
-                return err_; \
-            } \
-        } while (0)
+  do {                        \
+    status_t err_ = (expr);   \
+    if (err_ != NO_ERROR) {   \
+      return err_;            \
+    }                         \
+  } while (0)

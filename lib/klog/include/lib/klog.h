@@ -7,12 +7,13 @@
  */
 #pragma once
 
-#include <stddef.h>
-#include <stdbool.h>
-#include <sys/types.h>
 #include <iovec.h>
-#include <lk/compiler.h>
 #include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <sys/types.h>
+
+#include <lk/compiler.h>
 
 #if WITH_LIB_KLOG
 

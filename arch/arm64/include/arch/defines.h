@@ -7,9 +7,9 @@
  */
 #pragma once
 
-#define SHIFT_4K        (12)
-#define SHIFT_16K       (14)
-#define SHIFT_64K       (16)
+#define SHIFT_4K (12)
+#define SHIFT_16K (14)
+#define SHIFT_64K (16)
 
 /* arm specific stuff */
 #ifdef ARM64_LARGE_PAGESIZE_64K

@@ -8,8 +8,8 @@
 #pragma once
 
 #include <limits.h>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 typedef unsigned char uchar;
 typedef unsigned short ushort;
@@ -20,7 +20,7 @@ typedef unsigned short u_short;
 typedef unsigned int u_int;
 typedef unsigned long u_long;
 
-typedef long long     off_t;
+typedef long long off_t;
 
 typedef int status_t;
 
@@ -40,8 +40,8 @@ typedef unsigned long long lk_bigtime_t;
 #define TIME_LT(a, b) ((int32_t)((a) - (b)) < 0)
 
 enum handler_return {
-    INT_NO_RESCHEDULE = 0,
-    INT_RESCHEDULE,
+  INT_NO_RESCHEDULE = 0,
+  INT_RESCHEDULE,
 };
 
 typedef signed long int ssize_t;
@@ -60,4 +60,3 @@ typedef uint8_t u_int8_t;
 typedef uint16_t u_int16_t;
 typedef uint32_t u_int32_t;
 typedef uint64_t u_int64_t;
-

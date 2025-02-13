@@ -12,17 +12,18 @@ static char bootloader_secondary_flash_name[] = "qspi-flash";
 static char bootloader_mount_point[] = "/spifs";
 
 #include <lib/fs.h>
-#include <lk/err.h>
-#include <app/moot/stubs.h>
 #include <stdio.h>
+
+#include <app/moot/stubs.h>
+#include <lk/err.h>
 
 #define BOOTLOADER_SIZE_KB (64)
 #define SYSTEM_FLASH_SIZE_KB (1024)
 
 status_t moot_mount_default_fs(char **mount_path, char **device_name) {
-    *mount_path = bootloader_mount_point;
-    *device_name = bootloader_secondary_flash_name;
-    return NO_ERROR;
+  *mount_path = bootloader_mount_point;
+  *device_name = bootloader_secondary_flash_name;
+  return NO_ERROR;
 }
 
 const moot_sysinfo_t moot_system_info = {

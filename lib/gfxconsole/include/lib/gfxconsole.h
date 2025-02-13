@@ -11,4 +11,3 @@
 
 void gfxconsole_start_on_display(void);
 void gfxconsole_start(gfx_surface *surface);
-

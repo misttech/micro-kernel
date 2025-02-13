@@ -21,7 +21,6 @@
 #include "protocols/simple_text_output_protocol.h"
 
 EfiSimpleTextOutputProtocol get_text_output_protocol();
-EfiStatus output_string(struct EfiSimpleTextOutputProtocol *self,
-                        char16_t *string);
+EfiStatus output_string(struct EfiSimpleTextOutputProtocol *self, char16_t *string);
 
 #endif

@@ -26,6 +26,7 @@
  */
 
 #include <assert.h>
+
 #include <kernel/event.h>
 #include <kernel/thread.h>
 #include <lk/debug.h>
@@ -39,7 +40,7 @@
  * @param flags    0 or EVENT_FLAG_AUTOUNSIGNAL
  */
 void event_init(event_t *e, bool initial, uint flags) {
-    *e = (event_t)EVENT_INITIAL_VALUE(*e, initial, flags);
+  *e = (event_t)EVENT_INITIAL_VALUE(*e, initial, flags);
 }
 
 /**
@@ -52,16 +53,16 @@ void event_init(event_t *e, bool initial, uint flags) {
  * @param e        Event object to initialize
  */
 void event_destroy(event_t *e) {
-    DEBUG_ASSERT(e->magic == EVENT_MAGIC);
+  DEBUG_ASSERT(e->magic == EVENT_MAGIC);
 
-    THREAD_LOCK(state);
+  THREAD_LOCK(state);
 
-    e->magic = 0;
-    e->signaled = false;
-    e->flags = 0;
-    wait_queue_destroy(&e->wait, true);
+  e->magic = 0;
+  e->signaled = false;
+  e->flags = 0;
+  wait_queue_destroy(&e->wait, true);
 
-    THREAD_UNLOCK(state);
+  THREAD_UNLOCK(state);
 }
 
 /**
@@ -80,26 +81,26 @@ void event_destroy(event_t *e) {
  *         other values on other errors.
  */
 status_t event_wait_timeout(event_t *e, lk_time_t timeout) {
-    status_t ret = NO_ERROR;
+  status_t ret = NO_ERROR;
 
-    DEBUG_ASSERT(e->magic == EVENT_MAGIC);
+  DEBUG_ASSERT(e->magic == EVENT_MAGIC);
 
-    THREAD_LOCK(state);
+  THREAD_LOCK(state);
 
-    if (e->signaled) {
-        /* signaled, we're going to fall through */
-        if (e->flags & EVENT_FLAG_AUTOUNSIGNAL) {
-            /* autounsignal flag lets one thread fall through before unsignaling */
-            e->signaled = false;
-        }
-    } else {
-        /* unsignaled, block here */
-        ret = wait_queue_block(&e->wait, timeout);
+  if (e->signaled) {
+    /* signaled, we're going to fall through */
+    if (e->flags & EVENT_FLAG_AUTOUNSIGNAL) {
+      /* autounsignal flag lets one thread fall through before unsignaling */
+      e->signaled = false;
     }
+  } else {
+    /* unsignaled, block here */
+    ret = wait_queue_block(&e->wait, timeout);
+  }
 
-    THREAD_UNLOCK(state);
+  THREAD_UNLOCK(state);
 
-    return ret;
+  return ret;
 }
 
 /**
@@ -120,31 +121,31 @@ status_t event_wait_timeout(event_t *e, lk_time_t timeout) {
  * @return  Returns NO_ERROR on success.
  */
 status_t event_signal(event_t *e, bool reschedule) {
-    DEBUG_ASSERT(e->magic == EVENT_MAGIC);
+  DEBUG_ASSERT(e->magic == EVENT_MAGIC);
 
-    THREAD_LOCK(state);
+  THREAD_LOCK(state);
 
-    if (!e->signaled) {
-        if (e->flags & EVENT_FLAG_AUTOUNSIGNAL) {
-            /* try to release one thread and leave unsignaled if successful */
-            if (wait_queue_wake_one(&e->wait, reschedule, NO_ERROR) <= 0) {
-                /*
-                 * if we didn't actually find a thread to wake up, go to
-                 * signaled state and let the next call to event_wait
-                 * unsignal the event.
-                 */
-                e->signaled = true;
-            }
-        } else {
-            /* release all threads and remain signaled */
-            e->signaled = true;
-            wait_queue_wake_all(&e->wait, reschedule, NO_ERROR);
-        }
+  if (!e->signaled) {
+    if (e->flags & EVENT_FLAG_AUTOUNSIGNAL) {
+      /* try to release one thread and leave unsignaled if successful */
+      if (wait_queue_wake_one(&e->wait, reschedule, NO_ERROR) <= 0) {
+        /*
+         * if we didn't actually find a thread to wake up, go to
+         * signaled state and let the next call to event_wait
+         * unsignal the event.
+         */
+        e->signaled = true;
+      }
+    } else {
+      /* release all threads and remain signaled */
+      e->signaled = true;
+      wait_queue_wake_all(&e->wait, reschedule, NO_ERROR);
     }
+  }
 
-    THREAD_UNLOCK(state);
+  THREAD_UNLOCK(state);
 
-    return NO_ERROR;
+  return NO_ERROR;
 }
 
 /**
@@ -160,10 +161,9 @@ status_t event_signal(event_t *e, bool reschedule) {
  * @return  Returns NO_ERROR on success.
  */
 status_t event_unsignal(event_t *e) {
-    DEBUG_ASSERT(e->magic == EVENT_MAGIC);
+  DEBUG_ASSERT(e->magic == EVENT_MAGIC);
 
-    e->signaled = false;
+  e->signaled = false;
 
-    return NO_ERROR;
+  return NO_ERROR;
 }
-

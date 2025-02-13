@@ -7,19 +7,20 @@
  * https://opensource.org/licenses/MIT
  */
 
-#include <lk/debug.h>
 #include <arch.h>
-#include <arch/ops.h>
-#include <arch/x86.h>
-#include <arch/x86/mmu.h>
-#include <arch/x86/descriptor.h>
-#include <arch/x86/feature.h>
+#include <platform.h>
+#include <string.h>
+#include <sys/types.h>
+
 #include <arch/fpu.h>
 #include <arch/mmu.h>
+#include <arch/ops.h>
+#include <arch/x86.h>
+#include <arch/x86/descriptor.h>
+#include <arch/x86/feature.h>
+#include <arch/x86/mmu.h>
 #include <kernel/vm.h>
-#include <platform.h>
-#include <sys/types.h>
-#include <string.h>
+#include <lk/debug.h>
 
 /* Describe how start.S sets up the MMU.
  * These data structures are later used by vm routines to lookup pointers
@@ -28,30 +29,25 @@
 struct mmu_initial_mapping mmu_initial_mappings[] = {
 #if ARCH_X86_64
     /* 64GB of memory mapped where the kernel lives */
-    {
-        .phys = MEMBASE,
-        .virt = KERNEL_ASPACE_BASE,
-        .size = PHYSMAP_SIZE, /* x86-64 maps first 64GB by default, 1GB on x86-32 */
-        .flags = 0,
-        .name = "physmap"
-    },
+    {.phys = MEMBASE,
+     .virt = KERNEL_ASPACE_BASE,
+     .size = PHYSMAP_SIZE, /* x86-64 maps first 64GB by default, 1GB on x86-32 */
+     .flags = 0,
+     .name = "physmap"},
 #endif
     /* 1GB of memory mapped where the kernel lives */
-    {
-        .phys = MEMBASE,
-        .virt = KERNEL_BASE,
+    {.phys = MEMBASE,
+     .virt = KERNEL_BASE,
 #if X86_LEGACY
-        .size = 16*MB, /* only map the first 16MB on legacy x86 due to page table usage */
+     .size = 16 * MB, /* only map the first 16MB on legacy x86 due to page table usage */
 #else
-        .size = 1*GB, /* x86 maps first 1GB by default */
+     .size = 1 * GB, /* x86 maps first 1GB by default */
 #endif
-        .flags = 0,
-        .name = "kernel"
-    },
+     .flags = 0,
+     .name = "kernel"},
 
     /* null entry to terminate the list */
-    { 0 }
-};
+    {0}};
 
 /* early stack */
 uint8_t _kstack[PAGE_SIZE] __ALIGNED(sizeof(unsigned long));
@@ -67,47 +63,47 @@ static tss_t system_tss __ALIGNED(16);
  * printf output is available.
  */
 void arch_early_init(void) {
-    /* enable caches here for now */
-    clear_in_cr0(X86_CR0_NW | X86_CR0_CD);
+  /* enable caches here for now */
+  clear_in_cr0(X86_CR0_NW | X86_CR0_CD);
 
 #if ARCH_X86_32
-    system_tss.esp0 = 0;
-    system_tss.ss0 = DATA_SELECTOR;
-    system_tss.ss1 = 0;
-    system_tss.ss2 = 0;
-    system_tss.eflags = 0x00003002;
-    system_tss.bitmap = offsetof(tss_32_t, tss_bitmap);
-    system_tss.trace = 1; // trap on hardware task switch
+  system_tss.esp0 = 0;
+  system_tss.ss0 = DATA_SELECTOR;
+  system_tss.ss1 = 0;
+  system_tss.ss2 = 0;
+  system_tss.eflags = 0x00003002;
+  system_tss.bitmap = offsetof(tss_32_t, tss_bitmap);
+  system_tss.trace = 1;  // trap on hardware task switch
 #endif
 
-    set_global_desc(TSS_SELECTOR, &system_tss, sizeof(system_tss), 1, 0, 0, SEG_TYPE_TSS, 0, 0);
-    x86_ltr(TSS_SELECTOR);
+  set_global_desc(TSS_SELECTOR, &system_tss, sizeof(system_tss), 1, 0, 0, SEG_TYPE_TSS, 0, 0);
+  x86_ltr(TSS_SELECTOR);
 
-    x86_feature_early_init();
+  x86_feature_early_init();
 
-    x86_mmu_early_init();
+  x86_mmu_early_init();
 
 #if X86_WITH_FPU
-    x86_fpu_early_init();
+  x86_fpu_early_init();
 #endif
 }
 
 /* later initialization pass, once the main kernel is initialized and scheduling has begun */
 void arch_init(void) {
-    x86_feature_init();
-    x86_mmu_init();
+  x86_feature_init();
+  x86_mmu_init();
 
 #if X86_WITH_FPU
-    x86_fpu_init();
+  x86_fpu_init();
 #endif
 }
 
 void arch_chain_load(void *entry, ulong arg0, ulong arg1, ulong arg2, ulong arg3) {
-    PANIC_UNIMPLEMENTED;
+  PANIC_UNIMPLEMENTED;
 }
 
 void arch_enter_uspace(vaddr_t entry_point, vaddr_t user_stack_top) {
-    PANIC_UNIMPLEMENTED;
+  PANIC_UNIMPLEMENTED;
 #if 0
     DEBUG_ASSERT(IS_ALIGNED(user_stack_top, 16));
 

@@ -7,8 +7,8 @@
  */
 #pragma once
 
-#include <sys/types.h>
 #include <stdbool.h>
+#include <sys/types.h>
 
 status_t pl310_set_enable(bool enable);
 

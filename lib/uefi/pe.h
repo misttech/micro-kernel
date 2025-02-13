@@ -42,38 +42,36 @@ static constexpr size_t IMAGE_SIZEOF_SHORT_NAME = 8;
 static constexpr uint32_t kPEHeader = 0x4550;
 struct IMAGE_NT_HEADERS64;
 
-struct IMAGE_DOS_HEADER { // DOS .EXE header
-  u16 e_magic;            // Magic number
-  u16 e_cblp;             // Bytes on last page of file
-  u16 e_cp;               // Pages in file
-  u16 e_crlc;             // Relocations
-  u16 e_cparhdr;          // Size of header in paragraphs
-  u16 e_minalloc;         // Minimum extra paragraphs needed
-  u16 e_maxalloc;         // Maximum extra paragraphs needed
-  u16 e_ss;               // Initial (relative) SS value
-  u16 e_sp;               // Initial SP value
-  u16 e_csum;             // Checksum
-  u16 e_ip;               // Initial IP value
-  u16 e_cs;               // Initial (relative) CS value
-  u16 e_lfarlc;           // File address of relocation table
-  u16 e_ovno;             // Overlay number
-  u16 e_res[4];           // Reserved words
-  u16 e_oemid;            // OEM identifier (for e_oeminfo)
-  u16 e_oeminfo;          // OEM information; e_oemid specific
-  u16 e_res2[10];         // Reserved words
-  u32 e_lfanew;           // File address of new exe header
+struct IMAGE_DOS_HEADER {  // DOS .EXE header
+  u16 e_magic;             // Magic number
+  u16 e_cblp;              // Bytes on last page of file
+  u16 e_cp;                // Pages in file
+  u16 e_crlc;              // Relocations
+  u16 e_cparhdr;           // Size of header in paragraphs
+  u16 e_minalloc;          // Minimum extra paragraphs needed
+  u16 e_maxalloc;          // Maximum extra paragraphs needed
+  u16 e_ss;                // Initial (relative) SS value
+  u16 e_sp;                // Initial SP value
+  u16 e_csum;              // Checksum
+  u16 e_ip;                // Initial IP value
+  u16 e_cs;                // Initial (relative) CS value
+  u16 e_lfarlc;            // File address of relocation table
+  u16 e_ovno;              // Overlay number
+  u16 e_res[4];            // Reserved words
+  u16 e_oemid;             // OEM identifier (for e_oeminfo)
+  u16 e_oeminfo;           // OEM information; e_oemid specific
+  u16 e_res2[10];          // Reserved words
+  u32 e_lfanew;            // File address of new exe header
 
   constexpr bool CheckMagic() const { return LE32(e_magic) == 0x5A4D; }
   IMAGE_NT_HEADERS64 *GetPEHeader() {
     auto address = reinterpret_cast<char *>(this);
-    const auto pe_header =
-        reinterpret_cast<IMAGE_NT_HEADERS64 *>(address + e_lfanew);
+    const auto pe_header = reinterpret_cast<IMAGE_NT_HEADERS64 *>(address + e_lfanew);
     return pe_header;
   }
   const IMAGE_NT_HEADERS64 *GetPEHeader() const {
     auto address = reinterpret_cast<const char *>(this);
-    const auto pe_header =
-        reinterpret_cast<const IMAGE_NT_HEADERS64 *>(address + e_lfanew);
+    const auto pe_header = reinterpret_cast<const IMAGE_NT_HEADERS64 *>(address + e_lfanew);
     return pe_header;
   }
 } __attribute__((packed));
@@ -152,34 +150,34 @@ enum SubsystemType : u16 {
 
 constexpr const char *ToString(SubsystemType type) {
   switch (type) {
-  case Native:
-    return "Native";
-  case WindowsGUI:
-    return "WindowsGUI";
-  case WindowsCUI:
-    return "WindowsCUI";
-  case OS2CUI:
-    return "OS2CUI";
-  case POSIXCUI:
-    return "POSIXCUI";
-  case Windows9xNative:
-    return "Windows9xNative";
-  case WindowsCEGUI:
-    return "WindowsCEGUI";
-  case EFIApplication:
-    return "EFIApplication";
-  case EFIBootServiceDriver:
-    return "EFIBootServiceDriver";
-  case EFIRuntimeDriver:
-    return "EFIRuntimeDriver";
-  case EFIROM:
-    return "EFIROM";
-  case Xbox:
-    return "Xbox";
-  case WindowsBootApplication:
-    return "WindowsBootApplication";
-  default:
-    return "Unknown";
+    case Native:
+      return "Native";
+    case WindowsGUI:
+      return "WindowsGUI";
+    case WindowsCUI:
+      return "WindowsCUI";
+    case OS2CUI:
+      return "OS2CUI";
+    case POSIXCUI:
+      return "POSIXCUI";
+    case Windows9xNative:
+      return "Windows9xNative";
+    case WindowsCEGUI:
+      return "WindowsCEGUI";
+    case EFIApplication:
+      return "EFIApplication";
+    case EFIBootServiceDriver:
+      return "EFIBootServiceDriver";
+    case EFIRuntimeDriver:
+      return "EFIRuntimeDriver";
+    case EFIROM:
+      return "EFIROM";
+    case Xbox:
+      return "Xbox";
+    case WindowsBootApplication:
+      return "WindowsBootApplication";
+    default:
+      return "Unknown";
   }
 }
 

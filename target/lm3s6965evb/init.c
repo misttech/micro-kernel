@@ -5,11 +5,12 @@
  * license that can be found in the LICENSE file or at
  * https://opensource.org/licenses/MIT
  */
-#include <lk/err.h>
-#include <lk/debug.h>
 #include <target.h>
-#include <lk/compiler.h>
+
 #include <dev/gpio.h>
+#include <lk/compiler.h>
+#include <lk/debug.h>
+#include <lk/err.h>
 #include <platform/gpio.h>
 
 #include "ti_driverlib.h"

@@ -56,8 +56,7 @@
  unsupported at runtime via an EFI_RT_PROPERTIES_TABLE configuration table.
 
  **/
-typedef EFI_STATUS (*EFI_GET_TIME)(EfiTime *Time,
-                                   EFI_TIME_CAPABILITIES *Capabilities);
+typedef EFI_STATUS (*EFI_GET_TIME)(EfiTime *Time, EFI_TIME_CAPABILITIES *Capabilities);
 
 /**
   Sets the current local time and date information.
@@ -95,8 +94,7 @@ the time the call is made. The platform should describe this runtime service as
 unsupported at runtime via an EFI_RT_PROPERTIES_TABLE configuration table.
 
 **/
-typedef EFI_STATUS (*EFI_GET_WAKEUP_TIME)(bool *Enabled, bool *Pending,
-                                          EfiTime *Time);
+typedef EFI_STATUS (*EFI_GET_WAKEUP_TIME)(bool *Enabled, bool *Pending, EfiTime *Time);
 
 /**
   Sets the system wakeup alarm clock time.
@@ -140,9 +138,9 @@ the time the call is made. The platform should describe this runtime service as
 unsupported at runtime via an EFI_RT_PROPERTIES_TABLE configuration table.
 
 **/
-typedef EFI_STATUS (*EFI_SET_VIRTUAL_ADDRESS_MAP)(
-    size_t MemoryMapSize, size_t DescriptorSize, uint32_t DescriptorVersion,
-    EfiMemoryDescriptor *VirtualMap);
+typedef EFI_STATUS (*EFI_SET_VIRTUAL_ADDRESS_MAP)(size_t MemoryMapSize, size_t DescriptorSize,
+                                                  uint32_t DescriptorVersion,
+                                                  EfiMemoryDescriptor *VirtualMap);
 
 /**
   Determines the new virtual address that is to be used on subsequent memory
@@ -164,8 +162,7 @@ the time the call is made. The platform should describe this runtime service as
 unsupported at runtime via an EFI_RT_PROPERTIES_TABLE configuration table.
 
 **/
-typedef EFI_STATUS (*EFI_CONVERT_POINTER)(size_t DebugDisposition,
-                                          void **Address);
+typedef EFI_STATUS (*EFI_CONVERT_POINTER)(size_t DebugDisposition, void **Address);
 
 /**
    Returns the value of a variable.
@@ -199,10 +196,8 @@ typedef EFI_STATUS (*EFI_CONVERT_POINTER)(size_t DebugDisposition,
  EFI_RT_PROPERTIES_TABLE configuration table.
 
  **/
-typedef EFI_STATUS (*EFI_GET_VARIABLE)(char16_t *VariableName,
-                                       EfiGuid *VendorGuid,
-                                       uint32_t *Attributes, size_t *DataSize,
-                                       void *Data);
+typedef EFI_STATUS (*EFI_GET_VARIABLE)(char16_t *VariableName, EfiGuid *VendorGuid,
+                                       uint32_t *Attributes, size_t *DataSize, void *Data);
 
 /**
   Enumerates the current variable names.
@@ -236,8 +231,7 @@ should describe this runtime service as unsupported at runtime via an
 EFI_RT_PROPERTIES_TABLE configuration table.
 
 **/
-typedef EFI_STATUS (*EFI_GET_NEXT_VARIABLE_NAME)(size_t *VariableNameSize,
-                                                 char16_t *VariableName,
+typedef EFI_STATUS (*EFI_GET_NEXT_VARIABLE_NAME)(size_t *VariableNameSize, char16_t *VariableName,
                                                  EfiGuid *VendorGuid);
 
 /**
@@ -283,9 +277,8 @@ the time the call is made. The platform should describe this runtime service as
 unsupported at runtime via an EFI_RT_PROPERTIES_TABLE configuration table.
 
 **/
-typedef EFI_STATUS (*EFI_SET_VARIABLE)(char16_t *VariableName,
-                                       EfiGuid *VendorGuid, uint32_t Attributes,
-                                       size_t DataSize, void *Data);
+typedef EFI_STATUS (*EFI_SET_VARIABLE)(char16_t *VariableName, EfiGuid *VendorGuid,
+                                       uint32_t Attributes, size_t DataSize, void *Data);
 
 /**
 Returns the next high 32 bits of the platform's monotonic counter.
@@ -354,8 +347,7 @@ ResetType of EfiResetPlatformSpecific the data buffer also starts with a
 Null-terminated string that is followed by an EfiGuid that describes the
 specific type of reset to perform.
 **/
-typedef void (*EFI_RESET_SYSTEM)(EFI_RESET_TYPE ResetType,
-                                 EFI_STATUS ResetStatus, size_t DataSize,
+typedef void (*EFI_RESET_SYSTEM)(EFI_RESET_TYPE ResetType, EFI_STATUS ResetStatus, size_t DataSize,
                                  void *ResetData);
 
 ///
@@ -423,9 +415,8 @@ the time the call is made. The platform should describe this runtime service as
 unsupported at runtime via an EFI_RT_PROPERTIES_TABLE configuration table.
 
 **/
-typedef EFI_STATUS (*EFI_UPDATE_CAPSULE)(
-    EFI_CAPSULE_HEADER **CapsuleHeaderArray, size_t CapsuleCount,
-    uint64_t ScatterGatherList);
+typedef EFI_STATUS (*EFI_UPDATE_CAPSULE)(EFI_CAPSULE_HEADER **CapsuleHeaderArray,
+                                         size_t CapsuleCount, uint64_t ScatterGatherList);
 
 /**
   Returns if the capsule can be supported via UpdateCapsule().
@@ -456,9 +447,10 @@ the time the call is made. The platform should describe this runtime service as
 unsupported at runtime via an EFI_RT_PROPERTIES_TABLE configuration table.
 
 **/
-typedef EFI_STATUS (*EFI_QUERY_CAPSULE_CAPABILITIES)(
-    EFI_CAPSULE_HEADER **CapsuleHeaderArray, size_t CapsuleCount,
-    uint64_t *MaximumCapsuleSize, EFI_RESET_TYPE *ResetType);
+typedef EFI_STATUS (*EFI_QUERY_CAPSULE_CAPABILITIES)(EFI_CAPSULE_HEADER **CapsuleHeaderArray,
+                                                     size_t CapsuleCount,
+                                                     uint64_t *MaximumCapsuleSize,
+                                                     EFI_RESET_TYPE *ResetType);
 
 /**
   Returns information about the EFI variables.
@@ -482,9 +474,10 @@ platform, and the MaximumVariableStorageSize, RemainingVariableStorageSize,
 MaximumVariableSize are undefined.
 
 **/
-typedef EFI_STATUS (*EFI_QUERY_VARIABLE_INFO)(
-    uint32_t Attributes, uint64_t *MaximumVariableStorageSize,
-    uint64_t *RemainingVariableStorageSize, uint64_t *MaximumVariableSize);
+typedef EFI_STATUS (*EFI_QUERY_VARIABLE_INFO)(uint32_t Attributes,
+                                              uint64_t *MaximumVariableStorageSize,
+                                              uint64_t *RemainingVariableStorageSize,
+                                              uint64_t *MaximumVariableSize);
 
 typedef struct {
   EfiTableHeader Hdr;

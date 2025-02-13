@@ -10,9 +10,8 @@
 #include <lib/fs.h>
 
 #define DEAULT_SPIFS_MOUNT_POINT "/spifs"
-#define DEAULT_SPIFS_NAME        "spifs"
+#define DEAULT_SPIFS_NAME "spifs"
 
 typedef struct {
-    uint32_t toc_pages;
+  uint32_t toc_pages;
 } spifs_format_args_t;
-

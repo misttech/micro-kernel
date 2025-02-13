@@ -7,27 +7,28 @@
  */
 #pragma once
 
-#include <lk/compiler.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/types.h>
+
+#include <lk/compiler.h>
 
 __BEGIN_CDECLS
 
 /* command args */
 typedef struct {
-    const char *str;
-    unsigned long u;
-    unsigned long long ull;
-    void *p;
-    long i;
-    bool b;
+  const char *str;
+  unsigned long u;
+  unsigned long long ull;
+  void *p;
+  long i;
+  bool b;
 } console_cmd_args;
 
 typedef int (*console_cmd_func)(int argc, const console_cmd_args *argv);
 
 #define CMD_AVAIL_NORMAL (0x1 << 0)
-#define CMD_AVAIL_PANIC  (0x1 << 1)
+#define CMD_AVAIL_PANIC (0x1 << 1)
 #define CMD_AVAIL_ALWAYS (CMD_AVAIL_NORMAL | CMD_AVAIL_PANIC)
 
 __END_CDECLS
@@ -51,6 +52,5 @@ __END_CDECLS
 
 #define STATIC_COMMAND(command_str, help_str, func)
 #define STATIC_COMMAND_MASKED(command_str, help_str, func, availability_mask)
-
 
 #endif

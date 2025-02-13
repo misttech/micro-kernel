@@ -7,31 +7,29 @@
  */
 #pragma once
 
+#include <arch/riscv/mmu.h>
 #include <lk/compiler.h>
 #include <lk/list.h>
-#include <arch/riscv/mmu.h>
 
 __BEGIN_CDECLS
 
 struct arch_aspace {
-    int magic;
+  int magic;
 
-    // pointer to the translation table
-    paddr_t pt_phys;
-    volatile riscv_pte_t *pt_virt;
+  // pointer to the translation table
+  paddr_t pt_phys;
+  volatile riscv_pte_t *pt_virt;
 
-    uint flags;
+  uint flags;
 
-    // list of page tables allocated for this aspace
-    struct list_node pt_list;
+  // list of page tables allocated for this aspace
+  struct list_node pt_list;
 
-    // range of address space
-    vaddr_t base;
-    size_t size;
+  // range of address space
+  vaddr_t base;
+  size_t size;
 };
 
 #define RISCV_ASPACE_MAGIC 'RVAS'
 
 __END_CDECLS
-
-

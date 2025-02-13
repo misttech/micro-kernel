@@ -15,14 +15,14 @@
 #include <sys/types.h>
 
 int strcasecmp(char const *cs, char const *ct) {
-    signed char __res;
+  signed char __res;
 
-    while (1) {
-        if ((__res = tolower(*cs) - tolower(*ct)) != 0 || !*cs)
-            break;
-        cs++;
-        ct++;
-    }
+  while (1) {
+    if ((__res = tolower(*cs) - tolower(*ct)) != 0 || !*cs)
+      break;
+    cs++;
+    ct++;
+  }
 
-    return __res;
+  return __res;
 }

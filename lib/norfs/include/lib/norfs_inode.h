@@ -7,12 +7,12 @@
  */
 #pragma once
 
-#include <lk/list.h>
 #include <stdint.h>
 
-struct norfs_inode {
-    struct list_node lnode;
-    uint32_t location;
-    uint32_t reference_count;
-};
+#include <lk/list.h>
 
+struct norfs_inode {
+  struct list_node lnode;
+  uint32_t location;
+  uint32_t reference_count;
+};

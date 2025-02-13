@@ -11,6 +11,7 @@
 
 __BEGIN_CDECLS
 
+// clang-format off
 /* Previously, this file was included to get access to defining a console
  * command. This logic has been moved into the following header, which is
  * what in almost every case what regular code wants to include instead of
@@ -18,6 +19,7 @@ __BEGIN_CDECLS
  */
 #include <lk/console_cmd.h>
 #include <lib/console/cmd.h>
+// clang-format on
 
 typedef struct console console_t;
 
@@ -30,9 +32,11 @@ console_t *console_create(bool with_history);
 void console_start(console_t *con);
 
 /* Routines to let code directly run commands in an existing console */
-/* NOTE: Passing null as first argument selects the current console associated with the current thread */
+/* NOTE: Passing null as first argument selects the current console associated with the current
+ * thread */
 int console_run_script(console_t *con, const char *string);
-int console_run_script_locked(console_t *con, const char *string); // special case from inside a command
+int console_run_script_locked(console_t *con,
+                              const char *string);  // special case from inside a command
 void console_abort_script(console_t *con);
 
 /* Get/set the current console in the thread's TLS slot reserved for it.
@@ -41,7 +45,7 @@ void console_abort_script(console_t *con);
  * TODO: use a ref count to keep the console from being destroyed from underneath it.
  */
 console_t *console_get_current(void);
-console_t *console_set_current(console_t *con); // returns old console pointer
+console_t *console_set_current(console_t *con);  // returns old console pointer
 
 console_cmd_func console_get_command_handler(const char *command);
 

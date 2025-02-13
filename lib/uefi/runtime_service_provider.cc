@@ -16,17 +16,18 @@
  */
 
 #include "runtime_service_provider.h"
-#include "types.h"
 
 #include <stdio.h>
 #include <string.h>
+
+#include "types.h"
 
 namespace {
 
 constexpr auto &&kSecureBoot = L"SecureBoot";
 
-EFI_STATUS GetVariable(char16_t *VariableName, EfiGuid *VendorGuid,
-                       uint32_t *Attributes, size_t *DataSize, void *Data) {
+EFI_STATUS GetVariable(char16_t *VariableName, EfiGuid *VendorGuid, uint32_t *Attributes,
+                       size_t *DataSize, void *Data) {
   char buffer[512];
   size_t i = 0;
   while (VariableName[i] && i < sizeof(buffer)) {
@@ -52,19 +53,18 @@ EFI_STATUS GetVariable(char16_t *VariableName, EfiGuid *VendorGuid,
 }
 
 EFI_STATUS SetVirtualAddressMap(size_t MemoryMapSize, size_t DescriptorSize,
-                                uint32_t DescriptorVersion,
-                                EfiMemoryDescriptor *VirtualMap) {
+                                uint32_t DescriptorVersion, EfiMemoryDescriptor *VirtualMap) {
   printf("%s is unsupported\n", __FUNCTION__);
   return UNSUPPORTED;
 }
 
-EFI_STATUS SetVariable(char16_t *VariableName, EfiGuid *VendorGuid,
-                       uint32_t Attributes, size_t DataSize, void *Data) {
+EFI_STATUS SetVariable(char16_t *VariableName, EfiGuid *VendorGuid, uint32_t Attributes,
+                       size_t DataSize, void *Data) {
   printf("%s is unsupported\n", __FUNCTION__);
   return UNSUPPORTED;
 }
 
-} // namespace
+}  // namespace
 
 void setup_runtime_service_table(EfiRuntimeService *service) {
   service->GetVariable = GetVariable;

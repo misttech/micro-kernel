@@ -8,9 +8,10 @@
  */
 #pragma once
 
-#include <lk/compiler.h>
 #include <lib/bio.h>
 #include <lib/fs.h>
+
+#include <lk/compiler.h>
 
 #include "fat_fs.h"
 
@@ -31,20 +32,20 @@ ssize_t fat_read_cluster(fat_fs *fat, void *buf, uint32_t cluster);
 
 // general directory apis outside of an object
 struct dir_entry {
-    fat_attribute attributes;
-    uint32_t length;
-    uint32_t start_cluster;
-    // TODO time
+  fat_attribute attributes;
+  uint32_t length;
+  uint32_t start_cluster;
+  // TODO time
 };
 
 // used as a key for a file/dir in the open file table
 struct dir_entry_location {
-    uint32_t starting_dir_cluster;
-    uint32_t dir_offset;
+  uint32_t starting_dir_cluster;
+  uint32_t dir_offset;
 };
 
 inline bool operator==(const dir_entry_location &a, const dir_entry_location &b) {
-    return (a.starting_dir_cluster == b.starting_dir_cluster && a.dir_offset == b.dir_offset);
+  return (a.starting_dir_cluster == b.starting_dir_cluster && a.dir_offset == b.dir_offset);
 }
 
 status_t fat_walk(fat_fs *fat, const char *path, dir_entry *out_entry, dir_entry_location *loc);

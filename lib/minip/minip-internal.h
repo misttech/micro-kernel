@@ -8,82 +8,82 @@
  */
 #pragma once
 
-#include <lib/minip.h>
-
-#include <lk/compiler.h>
 #include <endian.h>
-#include <lk/list.h>
+#include <lib/minip.h>
 #include <stdint.h>
 #include <string.h>
 
+#include <lk/compiler.h>
+#include <lk/list.h>
+
 /* Lib configuration */
-#define MINIP_USE_UDP_CHECKSUM    0
-#define MINIP_MTU_SIZE            1536
-#define MINIP_USE_ARP             1
+#define MINIP_USE_UDP_CHECKSUM 0
+#define MINIP_MTU_SIZE 1536
+#define MINIP_USE_ARP 1
 
 #pragma pack(push, 1)
 struct arp_pkt {
-    uint16_t htype;
-    uint16_t ptype;
-    uint8_t  hlen;
-    uint8_t  plen;
-    uint16_t oper;
-    uint8_t  sha[6];
-    uint32_t spa;
-    uint8_t  tha[6];
-    uint32_t tpa;
+  uint16_t htype;
+  uint16_t ptype;
+  uint8_t hlen;
+  uint8_t plen;
+  uint16_t oper;
+  uint8_t sha[6];
+  uint32_t spa;
+  uint8_t tha[6];
+  uint32_t tpa;
 };
 
 struct ipv4_hdr {
-    uint8_t  ver_ihl;
-    uint8_t  dscp_ecn;
-    uint16_t len;
-    uint16_t id;
-    uint16_t flags_frags;
-    uint8_t  ttl;
-    uint8_t  proto;
-    uint16_t chksum;
-    uint32_t src_addr;
-    uint32_t dst_addr;
-    uint8_t  data[];
+  uint8_t ver_ihl;
+  uint8_t dscp_ecn;
+  uint16_t len;
+  uint16_t id;
+  uint16_t flags_frags;
+  uint8_t ttl;
+  uint8_t proto;
+  uint16_t chksum;
+  uint32_t src_addr;
+  uint32_t dst_addr;
+  uint8_t data[];
 };
 
 struct icmp_pkt {
-    uint8_t  type;
-    uint8_t  code;
-    uint16_t chksum;
-    uint8_t  hdr_data[4];
-    uint8_t  data[];
+  uint8_t type;
+  uint8_t code;
+  uint16_t chksum;
+  uint8_t hdr_data[4];
+  uint8_t data[];
 };
 
 struct eth_hdr {
-    uint8_t dst_mac[6];
-    uint8_t src_mac[6];
-    uint16_t type;
+  uint8_t dst_mac[6];
+  uint8_t src_mac[6];
+  uint16_t type;
 };
 
 #pragma pack(pop)
 
 enum {
-    ICMP_ECHO_REPLY   = 0,
-    ICMP_ECHO_REQUEST = 8,
+  ICMP_ECHO_REPLY = 0,
+  ICMP_ECHO_REQUEST = 8,
 };
 
 enum {
-    IP_PROTO_ICMP = 0x1,
-    IP_PROTO_TCP  = 0x6,
-    IP_PROTO_UDP  = 0x11,
+  IP_PROTO_ICMP = 0x1,
+  IP_PROTO_TCP = 0x6,
+  IP_PROTO_UDP = 0x11,
 };
 
 enum {
-    ETH_TYPE_IPV4 = 0x0800,
-    ETH_TYPE_ARP  = 0x0806,
-    ETH_TYPE_IPV6 = 0x88dd,
+  ETH_TYPE_IPV4 = 0x0800,
+  ETH_TYPE_ARP = 0x0806,
+  ETH_TYPE_IPV6 = 0x88dd,
 };
 
 enum {
-    ARP_OPER_REQUEST = 0x0001,
-    ARP_OPER_REPLY   = 0x0002,
+  ARP_OPER_REQUEST = 0x0001,
+  ARP_OPER_REPLY = 0x0002,
 };
 
 extern tx_func_t minip_tx_handler;
@@ -93,8 +93,8 @@ typedef struct udp_hdr udp_hdr_t;
 static const uint8_t bcast_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 typedef uint32_t ipv4_addr;
 typedef union {
-    uint32_t u;
-    uint8_t b[4];
+  uint32_t u;
+  uint8_t b[4];
 } ipv4_t;
 
 // ARP cache
@@ -124,22 +124,21 @@ const uint8_t *get_dest_mac(uint32_t host);
 typedef void (*net_timer_callback_t)(void *);
 
 typedef struct net_timer {
-    struct list_node node;
+  struct list_node node;
 
-    lk_time_t sched_time;
+  lk_time_t sched_time;
 
-    net_timer_callback_t cb;
-    void *arg;
+  net_timer_callback_t cb;
+  void *arg;
 } net_timer_t;
 
 /* set a net timer. returns true if the timer was not set before and is now */
-bool net_timer_set(net_timer_t *, net_timer_callback_t, void *callback_args, lk_time_t delay) __NONNULL((1));
+bool net_timer_set(net_timer_t *, net_timer_callback_t, void *callback_args, lk_time_t delay)
+    __NONNULL((1));
 
 /* cancels a net timer. returns true if it was previously set and is not now */
 bool net_timer_cancel(net_timer_t *) __NONNULL();
 
 void net_timer_init(void);
 
-static inline void mac_addr_copy(uint8_t *dest, const uint8_t *src) {
-    memcpy(dest, src, 6);
-}
+static inline void mac_addr_copy(uint8_t *dest, const uint8_t *src) { memcpy(dest, src, 6); }

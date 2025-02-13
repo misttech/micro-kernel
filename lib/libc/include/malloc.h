@@ -7,10 +7,10 @@
  */
 #pragma once
 
-#include <sys/types.h>
-#include <lk/compiler.h>
 #include <stddef.h>
+#include <sys/types.h>
+
+#include <lk/compiler.h>
 
 /* lib/heap provides malloc/free definitions */
 #include <lib/heap.h>
-

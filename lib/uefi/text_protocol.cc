@@ -16,10 +16,10 @@
  */
 
 #include "text_protocol.h"
+
 #include <stdio.h>
 
-EfiStatus output_string(struct EfiSimpleTextOutputProtocol *self,
-                        char16_t *string) {
+EfiStatus output_string(struct EfiSimpleTextOutputProtocol *self, char16_t *string) {
   char buffer[512];
   size_t i = 0;
   while (string[i]) {

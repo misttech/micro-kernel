@@ -7,6 +7,4 @@
  */
 #include <lk/debug.h>
 
-extern "C" void __cxa_pure_virtual(void) {
-    panic("pure virtual called\n");
-}
+extern "C" void __cxa_pure_virtual(void) { panic("pure virtual called\n"); }

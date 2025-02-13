@@ -7,12 +7,13 @@
  */
 #pragma once
 
+#include <assert.h>
+#include <sys/types.h>
+
+#include <dev/bus/pci.h>
 #include <lk/cpp.h>
 #include <lk/err.h>
 #include <lk/trace.h>
-#include <assert.h>
-#include <sys/types.h>
-#include <dev/bus/pci.h>
 
 namespace pci {
 
@@ -32,4 +33,4 @@ uint8_t allocate_next_bus();
 // get a pointer to a bus based on number
 bus *lookup_bus(uint8_t bus_num);
 
-} // namespace pci
+}  // namespace pci

@@ -6,17 +6,18 @@
  * https://opensource.org/licenses/MIT
  */
 
-#include <dev/driver.h>
+#include <malloc.h>
+#include <platform.h>
+#include <string.h>
+#include <target.h>
+
 #include <dev/class/block.h>
 #include <dev/class/netif.h>
-#include <platform/uart.h>
+#include <dev/driver.h>
+#include <lk/debug.h>
 #include <platform/ide.h>
 #include <platform/pcnet.h>
-#include <platform.h>
-#include <target.h>
-#include <malloc.h>
-#include <string.h>
-#include <lk/debug.h>
+#include <platform/uart.h>
 
 #if 0
 static const struct platform_uart_config uart0_config = {
@@ -53,15 +54,13 @@ static const struct platform_ide_config pci_ide1_config = {
 DEVICE_INSTANCE(ide, pci_ide1, &pci_ide1_config, 0);
 
 void target_init(void) {
-    // initialize static devices
-    device_init_all();
+  // initialize static devices
+  device_init_all();
 
-    // try to initialize pci ide first
-    if (device_init(&__device_ide_pci_ide0) < 0 || device_init(&__device_ide_pci_ide1) < 0) {
-        // if that fails, initialize the legacy ISA IDE controllers
-        device_init(&__device_ide_ide0);
-        device_init(&__device_ide_ide1);
-    }
-
+  // try to initialize pci ide first
+  if (device_init(&__device_ide_pci_ide0) < 0 || device_init(&__device_ide_pci_ide1) < 0) {
+    // if that fails, initialize the legacy ISA IDE controllers
+    device_init(&__device_ide_ide0);
+    device_init(&__device_ide_ide1);
+  }
 }
-

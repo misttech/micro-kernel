@@ -15,23 +15,23 @@
  *
  */
 
-#include "boot_service.h"
-#include "boot_service_provider.h"
-#include "defer.h"
-#include "pe.h"
-
 #include <lib/bio.h>
 #include <lib/heap.h>
-#include <lk/console_cmd.h>
-#include <lk/debug.h>
-#include <lk/err.h>
-#include <lk/trace.h>
 #include <platform.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 
+#include <lk/console_cmd.h>
+#include <lk/debug.h>
+#include <lk/err.h>
+#include <lk/trace.h>
+
+#include "boot_service.h"
+#include "boot_service_provider.h"
 #include "configuration_table.h"
+#include "defer.h"
+#include "pe.h"
 #include "protocols/simple_text_output_protocol.h"
 #include "runtime_service.h"
 #include "runtime_service_provider.h"
@@ -41,14 +41,14 @@
 
 namespace {
 
-constexpr auto EFI_SYSTEM_TABLE_SIGNATURE =
-    static_cast<u64>(0x5453595320494249ULL);
+constexpr auto EFI_SYSTEM_TABLE_SIGNATURE = static_cast<u64>(0x5453595320494249ULL);
 
 // ASCII "PE\x0\x0"
 
 using EfiEntry = int (*)(void *, struct EfiSystemTable *);
 
-template <typename T> void fill(T *data, size_t skip, uint8_t begin = 0) {
+template <typename T>
+void fill(T *data, size_t skip, uint8_t begin = 0) {
   auto ptr = reinterpret_cast<char *>(data);
   for (size_t i = 0; i < sizeof(T); i++) {
     if (i < skip) {
@@ -84,9 +84,9 @@ uint16_t ThumbMovtImmediateAddress(const uint16_t *Instruction) {
   //         i    -> Bit26
   //         imm3 -> Bit14:Bit12
   //         imm8 -> Bit7:Bit0
-  Address = (uint16_t)(Movt & 0x000000ff);         // imm8
-  Address |= (uint16_t)((Movt >> 4) & 0x0000f700); // imm4 imm3
-  Address |= (((Movt & BIT26) != 0) ? BIT11 : 0);  // i
+  Address = (uint16_t)(Movt & 0x000000ff);          // imm8
+  Address |= (uint16_t)((Movt >> 4) & 0x0000f700);  // imm4 imm3
+  Address |= (((Movt & BIT26) != 0) ? BIT11 : 0);   // i
   return Address;
 }
 
@@ -103,11 +103,10 @@ uint32_t ThumbMovwMovtImmediateAddress(uint16_t *Instructions) {
   uint16_t *Word;
   uint16_t *Top;
 
-  Word = Instructions; // MOVW
-  Top = Word + 2;      // MOVT
+  Word = Instructions;  // MOVW
+  Top = Word + 2;       // MOVT
 
-  return (ThumbMovtImmediateAddress(Top) << 16) +
-         ThumbMovtImmediateAddress(Word);
+  return (ThumbMovtImmediateAddress(Top) << 16) + ThumbMovtImmediateAddress(Word);
 }
 
 /**
@@ -120,14 +119,14 @@ void ThumbMovtImmediatePatch(uint16_t *Instruction, uint16_t Address) {
   uint16_t Patch;
 
   // First 16-bit chunk of instruciton
-  Patch = ((Address >> 12) & 0x000f);              // imm4
-  Patch |= (((Address & BIT11) != 0) ? BIT10 : 0); // i
+  Patch = ((Address >> 12) & 0x000f);               // imm4
+  Patch |= (((Address & BIT11) != 0) ? BIT10 : 0);  // i
   // Mask out instruction bits and or in address
   *(Instruction) = (*Instruction & ~0x040f) | Patch;
 
   // Second 16-bit chunk of instruction
-  Patch = Address & 0x000000ff;           // imm8
-  Patch |= ((Address << 4) & 0x00007000); // imm3
+  Patch = Address & 0x000000ff;            // imm8
+  Patch |= ((Address << 4) & 0x00007000);  // imm3
   // Mask out instruction bits and or in address
   Instruction++;
   *Instruction = (*Instruction & ~0x70ff) | Patch;
@@ -143,8 +142,8 @@ void ThumbMovwMovtImmediatePatch(uint16_t *Instructions, uint32_t Address) {
   uint16_t *Word;
   uint16_t *Top;
 
-  Word = Instructions; // MOVW
-  Top = Word + 2;      // MOVT
+  Word = Instructions;  // MOVW
+  Top = Word + 2;       // MOVT
 
   ThumbMovtImmediatePatch(Word, (uint16_t)(Address & 0xffff));
   ThumbMovtImmediatePatch(Top, (uint16_t)(Address >> 16));
@@ -154,26 +153,22 @@ int relocate_image(char *image) {
   const auto dos_header = reinterpret_cast<IMAGE_DOS_HEADER *>(image);
   const auto pe_header = dos_header->GetPEHeader();
   const auto optional_header = &pe_header->OptionalHeader;
-  const auto reloc_directory =
-      optional_header->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+  const auto reloc_directory = optional_header->DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
   if (reloc_directory.Size == 0) {
     printf("Relocation section empty\n");
     return 0;
   }
-  auto RelocBase = reinterpret_cast<EFI_IMAGE_BASE_RELOCATION *>(
-      image + reloc_directory.VirtualAddress);
-  const auto RelocBaseEnd = reinterpret_cast<EFI_IMAGE_BASE_RELOCATION *>(
-      (char *)RelocBase + reloc_directory.Size);
-  const auto Adjust =
-      reinterpret_cast<size_t>(image - optional_header->ImageBase);
+  auto RelocBase =
+      reinterpret_cast<EFI_IMAGE_BASE_RELOCATION *>(image + reloc_directory.VirtualAddress);
+  const auto RelocBaseEnd =
+      reinterpret_cast<EFI_IMAGE_BASE_RELOCATION *>((char *)RelocBase + reloc_directory.Size);
+  const auto Adjust = reinterpret_cast<size_t>(image - optional_header->ImageBase);
   //
   // Run this relocation record
   //
   while (RelocBase < RelocBaseEnd) {
-    auto Reloc =
-        (uint16_t *)((char *)RelocBase + sizeof(EFI_IMAGE_BASE_RELOCATION));
-    auto RelocEnd = reinterpret_cast<uint16_t *>((char *)RelocBase +
-                                                 RelocBase->SizeOfBlock);
+    auto Reloc = (uint16_t *)((char *)RelocBase + sizeof(EFI_IMAGE_BASE_RELOCATION));
+    auto RelocEnd = reinterpret_cast<uint16_t *>((char *)RelocBase + RelocBase->SizeOfBlock);
     if (RelocBase->SizeOfBlock == 0) {
       printf("Found relocation block of size 0, this is wrong\n");
       return -1;
@@ -189,41 +184,41 @@ int relocate_image(char *image) {
       auto Fixup64 = reinterpret_cast<uint64_t *>(Fixup);
       uint32_t FixupVal = 0;
       switch ((*Reloc) >> 12) {
-      case EFI_IMAGE_REL_BASED_ABSOLUTE:
-        break;
+        case EFI_IMAGE_REL_BASED_ABSOLUTE:
+          break;
 
-      case EFI_IMAGE_REL_BASED_HIGH:
-        *Fixup16 = (uint16_t)(*Fixup16 + ((uint16_t)((uint32_t)Adjust >> 16)));
+        case EFI_IMAGE_REL_BASED_HIGH:
+          *Fixup16 = (uint16_t)(*Fixup16 + ((uint16_t)((uint32_t)Adjust >> 16)));
 
-        break;
+          break;
 
-      case EFI_IMAGE_REL_BASED_LOW:
-        *Fixup16 = (uint16_t)(*Fixup16 + ((uint16_t)Adjust & 0xffff));
+        case EFI_IMAGE_REL_BASED_LOW:
+          *Fixup16 = (uint16_t)(*Fixup16 + ((uint16_t)Adjust & 0xffff));
 
-        break;
+          break;
 
-      case EFI_IMAGE_REL_BASED_HIGHLOW:
-        *Fixup32 = *Fixup32 + (uint32_t)Adjust;
-        break;
+        case EFI_IMAGE_REL_BASED_HIGHLOW:
+          *Fixup32 = *Fixup32 + (uint32_t)Adjust;
+          break;
 
-      case EFI_IMAGE_REL_BASED_DIR64:
-        *Fixup64 = *Fixup64 + (uint64_t)Adjust;
-        break;
+        case EFI_IMAGE_REL_BASED_DIR64:
+          *Fixup64 = *Fixup64 + (uint64_t)Adjust;
+          break;
 
-      case EFI_IMAGE_REL_BASED_ARM_MOV32T:
-        FixupVal = ThumbMovwMovtImmediateAddress(Fixup16) + (uint32_t)Adjust;
-        ThumbMovwMovtImmediatePatch(Fixup16, FixupVal);
+        case EFI_IMAGE_REL_BASED_ARM_MOV32T:
+          FixupVal = ThumbMovwMovtImmediateAddress(Fixup16) + (uint32_t)Adjust;
+          ThumbMovwMovtImmediatePatch(Fixup16, FixupVal);
 
-        break;
+          break;
 
-      case EFI_IMAGE_REL_BASED_ARM_MOV32A:
-        printf("Unsupported relocation type: EFI_IMAGE_REL_BASED_ARM_MOV32A\n");
-        // break omitted - ARM instruction encoding not implemented
-        break;
+        case EFI_IMAGE_REL_BASED_ARM_MOV32A:
+          printf("Unsupported relocation type: EFI_IMAGE_REL_BASED_ARM_MOV32A\n");
+          // break omitted - ARM instruction encoding not implemented
+          break;
 
-      default:
-        printf("Unsupported relocation type: %d\n", (*Reloc) >> 12);
-        return -1;
+        default:
+          printf("Unsupported relocation type: %d\n", (*Reloc) >> 12);
+          return -1;
       }
 
       //
@@ -237,8 +232,7 @@ int relocate_image(char *image) {
   return 0;
 }
 
-int load_sections_and_execute(bdev_t *dev,
-                              const IMAGE_NT_HEADERS64 *pe_header) {
+int load_sections_and_execute(bdev_t *dev, const IMAGE_NT_HEADERS64 *pe_header) {
   const auto file_header = &pe_header->FileHeader;
   const auto optional_header = &pe_header->OptionalHeader;
   const auto sections = file_header->NumberOfSections;
@@ -251,17 +245,15 @@ int load_sections_and_execute(bdev_t *dev,
   }
   for (size_t i = 0; i < sections; i++) {
     if (section_header[i].NumberOfRelocations != 0) {
-      printf("Section %s requires relocation, which is not supported.\n",
-             section_header[i].Name);
+      printf("Section %s requires relocation, which is not supported.\n", section_header[i].Name);
       return -6;
     }
   }
   const auto &last_section = section_header[sections - 1];
-  const auto virtual_size =
-      last_section.VirtualAddress + last_section.Misc.VirtualSize;
-  const auto image_base = reinterpret_cast<char *>(
-      alloc_page(reinterpret_cast<void *>(optional_header->ImageBase),
-                 virtual_size, 21 /* Kernel requires 2MB alignment */));
+  const auto virtual_size = last_section.VirtualAddress + last_section.Misc.VirtualSize;
+  const auto image_base =
+      reinterpret_cast<char *>(alloc_page(reinterpret_cast<void *>(optional_header->ImageBase),
+                                          virtual_size, 21 /* Kernel requires 2MB alignment */));
   if (image_base == nullptr) {
     return -7;
   }
@@ -273,11 +265,10 @@ int load_sections_and_execute(bdev_t *dev,
     bio_read(dev, image_base + section.VirtualAddress, section.PointerToRawData,
              section.SizeOfRawData);
   }
-  printf("Relocating image from 0x%llx to %p\n", optional_header->ImageBase,
-         image_base);
+  printf("Relocating image from 0x%llx to %p\n", optional_header->ImageBase, image_base);
   relocate_image(image_base);
-  auto entry = reinterpret_cast<int (*)(void *, void *)>(
-      image_base + optional_header->AddressOfEntryPoint);
+  auto entry =
+      reinterpret_cast<int (*)(void *, void *)>(image_base + optional_header->AddressOfEntryPoint);
   printf("Entry function located at %p\n", entry);
 
   EfiSystemTable &table = *static_cast<EfiSystemTable *>(alloc_page(PAGE_SIZE));
@@ -293,15 +284,13 @@ int load_sections_and_execute(bdev_t *dev,
   table.header.revision = 2 << 16;
   EfiSimpleTextOutputProtocol console_out = get_text_output_protocol();
   table.con_out = &console_out;
-  table.configuration_table =
-      reinterpret_cast<EfiConfigurationTable *>(alloc_page(PAGE_SIZE));
+  table.configuration_table = reinterpret_cast<EfiConfigurationTable *>(alloc_page(PAGE_SIZE));
   setup_configuration_table(&table);
 
   constexpr size_t kStackSize = 8 * 1024ul * 1024;
   auto stack = reinterpret_cast<char *>(alloc_page(kStackSize, 23));
   memset(stack, 0, kStackSize);
-  printf("Calling kernel with stack [%p, %p]\n", stack,
-         stack + kStackSize - 1);
+  printf("Calling kernel with stack [%p, %p]\n", stack, stack + kStackSize - 1);
   return call_with_stack(stack + kStackSize, entry, image_base, &table);
 }
 
@@ -321,8 +310,8 @@ int load_pe_file(const char *blkdev) {
   uint8_t *address = static_cast<uint8_t *>(malloc(kBlocKSize));
   ssize_t err = bio_read(dev, static_cast<void *>(address), 0, kBlocKSize);
   t = current_time() - t;
-  dprintf(INFO, "bio_read returns %d, took %u msecs (%d bytes/sec)\n", (int)err,
-          (uint)t, (uint32_t)((uint64_t)err * 1000 / t));
+  dprintf(INFO, "bio_read returns %d, took %u msecs (%d bytes/sec)\n", (int)err, (uint)t,
+          (uint32_t)((uint64_t)err * 1000 / t));
 
   const auto dos_header = reinterpret_cast<const IMAGE_DOS_HEADER *>(address);
   if (!dos_header->CheckMagic()) {
@@ -330,9 +319,8 @@ int load_pe_file(const char *blkdev) {
     return -2;
   }
   if (dos_header->e_lfanew > kBlocKSize - sizeof(IMAGE_FILE_HEADER)) {
-    printf(
-        "Invalid PE header offset %d exceeds maximum read size of %zu - %zu\n",
-        dos_header->e_lfanew, kBlocKSize, sizeof(IMAGE_FILE_HEADER));
+    printf("Invalid PE header offset %d exceeds maximum read size of %zu - %zu\n",
+           dos_header->e_lfanew, kBlocKSize, sizeof(IMAGE_FILE_HEADER));
     return -3;
   }
   const auto pe_header = dos_header->GetPEHeader();
@@ -341,12 +329,10 @@ int load_pe_file(const char *blkdev) {
     printf("COFF Magic check failed %x\n", LE32(file_header->Signature));
     return -4;
   }
-  printf("PE header machine type: %x\n",
-         static_cast<int>(file_header->Machine));
+  printf("PE header machine type: %x\n", static_cast<int>(file_header->Machine));
   if (file_header->SizeOfOptionalHeader > sizeof(IMAGE_OPTIONAL_HEADER64) ||
       file_header->SizeOfOptionalHeader <
-          sizeof(IMAGE_OPTIONAL_HEADER64) -
-              sizeof(IMAGE_OPTIONAL_HEADER64::DataDirectory)) {
+          sizeof(IMAGE_OPTIONAL_HEADER64) - sizeof(IMAGE_OPTIONAL_HEADER64::DataDirectory)) {
     printf("Unexpected size of optional header %d, expected %zu\n",
            file_header->SizeOfOptionalHeader, sizeof(IMAGE_OPTIONAL_HEADER64));
     return -5;
@@ -375,4 +361,4 @@ STATIC_COMMAND_START
 STATIC_COMMAND("uefi_load", "load UEFI application and run it", &cmd_uefi_load)
 STATIC_COMMAND_END(uefi);
 
-} // namespace
+}  // namespace

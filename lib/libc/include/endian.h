@@ -41,11 +41,26 @@ static inline uint16_t SWAP_16(uint16_t x) { return __builtin_bswap16(x); }
 #define BE16(val) SWAP_16(val)
 #endif
 
-#define LE32SWAP(var) do { (var) = LE32(var); } while (0)
-#define LE16SWAP(var) do { (var) = LE16(var); } while (0)
-#define BE64SWAP(var) do { (var) = BE64(var); } while (0)
-#define BE32SWAP(var) do { (var) = BE32(var); } while (0)
-#define BE16SWAP(var) do { (var) = BE16(var); } while (0)
+#define LE32SWAP(var)  \
+  do {                 \
+    (var) = LE32(var); \
+  } while (0)
+#define LE16SWAP(var)  \
+  do {                 \
+    (var) = LE16(var); \
+  } while (0)
+#define BE64SWAP(var)  \
+  do {                 \
+    (var) = BE64(var); \
+  } while (0)
+#define BE32SWAP(var)  \
+  do {                 \
+    (var) = BE32(var); \
+  } while (0)
+#define BE16SWAP(var)  \
+  do {                 \
+    (var) = BE16(var); \
+  } while (0)
 
 /* classic network byte swap stuff */
 #define ntohs(n) BE16(n)
@@ -56,4 +71,3 @@ static inline uint16_t SWAP_16(uint16_t x) { return __builtin_bswap16(x); }
 /* 64-bit network byte swap stuff */
 #define htobe64(h) BE64(h)
 #define be64toh(b) BE64(b)
-

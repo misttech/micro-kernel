@@ -9,13 +9,11 @@
 #include <string.h>
 #include <sys/types.h>
 
-char *
-strerror(int errnum) {
-    /* The C standard requires a non-const return type for backwards compat. */
-    if (errnum < 0) {
-        return (char *)"General Error";
-    } else {
-        return (char *)"No Error";
-    }
+char *strerror(int errnum) {
+  /* The C standard requires a non-const return type for backwards compat. */
+  if (errnum < 0) {
+    return (char *)"General Error";
+  } else {
+    return (char *)"No Error";
+  }
 }
-

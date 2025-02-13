@@ -16,11 +16,13 @@
  */
 
 #include "configuration_table.h"
+
+#include <string.h>
+
 #include "boot_service_provider.h"
 #include "libfdt.h"
 #include "platform.h"
 #include "system_table.h"
-#include <string.h>
 
 void setup_configuration_table(EfiSystemTable *table) {
   auto &rng = table->configuration_table[table->number_of_table_entries++];

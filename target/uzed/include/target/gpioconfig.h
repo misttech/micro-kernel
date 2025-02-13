@@ -8,5 +8,4 @@
 #pragma once
 
 /* gpios on the microzed target */
-#define GPIO_LEDR       (47)
-
+#define GPIO_LEDR (47)

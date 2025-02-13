@@ -7,24 +7,24 @@
  */
 #pragma once
 
-#include <lk/list.h>
-#include <lk/compiler.h>
 #include <dev/driver.h>
+#include <lk/compiler.h>
+#include <lk/list.h>
 
 struct netstack_state;
 struct pbuf;
 
 /* netif interface */
 struct netif_ops {
-    struct driver_ops std;
+  struct driver_ops std;
 
-    status_t (*set_state)(struct device *dev, struct netstack_state *state);
-    ssize_t (*get_hwaddr)(struct device *dev, void *buf, size_t max_len);
-    ssize_t (*get_mtu)(struct device *dev);
+  status_t (*set_state)(struct device *dev, struct netstack_state *state);
+  ssize_t (*get_hwaddr)(struct device *dev, void *buf, size_t max_len);
+  ssize_t (*get_mtu)(struct device *dev);
 
-    status_t (*set_status)(struct device *dev, bool up);
-    status_t (*output)(struct device *dev, struct pbuf *p);
-    status_t (*mcast_filter)(struct device *dev, const uint8_t *mac, int action);
+  status_t (*set_status)(struct device *dev, bool up);
+  status_t (*output)(struct device *dev, struct pbuf *p);
+  status_t (*mcast_filter)(struct device *dev, const uint8_t *mac, int action);
 };
 
 __BEGIN_CDECLS
@@ -45,4 +45,3 @@ status_t class_netstack_input(struct device *dev, struct netstack_state *state, 
 status_t class_netstack_wait_for_network(lk_time_t timeout);
 
 __END_CDECLS
-

@@ -7,21 +7,22 @@
  */
 #pragma once
 
-#include <lk/compiler.h>
+#include <iovec.h>
 #include <sys/types.h>
+
 #include <kernel/event.h>
 #include <kernel/spinlock.h>
-#include <iovec.h>
+#include <lk/compiler.h>
 
 __BEGIN_CDECLS
 
 typedef struct cbuf {
-    uint head;
-    uint tail;
-    uint len_pow2;
-    char *buf;
-    event_t event;
-    spin_lock_t lock;
+  uint head;
+  uint tail;
+  uint len_pow2;
+  char *buf;
+  event_t event;
+  spin_lock_t lock;
 } cbuf_t;
 
 /**
@@ -125,9 +126,7 @@ size_t cbuf_space_used(cbuf_t *cbuf);
  *
  * @return The size of the cbuf's underlying data buffer.
  */
-static inline size_t cbuf_size(cbuf_t *cbuf) {
-    return (1UL << cbuf->len_pow2);
-}
+static inline size_t cbuf_size(cbuf_t *cbuf) { return (1UL << cbuf->len_pow2); }
 
 /**
  * cbuf_reset
@@ -137,13 +136,10 @@ static inline size_t cbuf_size(cbuf_t *cbuf) {
  *
  * @param[in] cbuf The cbuf instance to reset.
  */
-static inline void cbuf_reset(cbuf_t *cbuf) {
-    cbuf_read(cbuf, NULL, cbuf_size(cbuf), false);
-}
+static inline void cbuf_reset(cbuf_t *cbuf) { cbuf_read(cbuf, NULL, cbuf_size(cbuf), false); }
 
 /* special cases for dealing with a single char of data */
 size_t cbuf_read_char(cbuf_t *cbuf, char *c, bool block);
 size_t cbuf_write_char(cbuf_t *cbuf, char c, bool canreschedule);
 
 __END_CDECLS
-

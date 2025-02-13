@@ -46,9 +46,10 @@
  */
 #pragma once
 
-#include <lk/compiler.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include <lk/compiler.h>
 
 __BEGIN_CDECLS
 
@@ -56,48 +57,45 @@ __BEGIN_CDECLS
  * Pool type.
  */
 typedef struct {
-    // Private:
-    void *next_free;
+  // Private:
+  void *next_free;
 } pool_t;
 
 /**
  * Helper macro, not for public usage.
  */
-#define _MAX(a,b) \
-    ((a) > (b) ? (a) : (b))
+#define _MAX(a, b) ((a) > (b) ? (a) : (b))
 
 /**
  * Helper macro, not for public usage.
  */
-#define _PAD(size, align) \
-    (((size) + (align) - 1) / (align) * (align))
+#define _PAD(size, align) (((size) + (align) - 1) / (align) * (align))
 
 /**
  * Calculates the required alignment for the pool storage given the size and alignment of the object
  * type.
  */
-#define POOL_STORAGE_ALIGN(object_size, object_align) \
-    (_MAX(__alignof(void *), object_align))
+#define POOL_STORAGE_ALIGN(object_size, object_align) (_MAX(__alignof(void *), object_align))
 
 /**
  * Helper macro, not for public usage.
  */
 #define POOL_PADDED_OBJECT_SIZE(object_size, object_align) \
-    _PAD(_MAX(sizeof(void *), object_size), POOL_STORAGE_ALIGN(object_size, object_align))
+  _PAD(_MAX(sizeof(void *), object_size), POOL_STORAGE_ALIGN(object_size, object_align))
 
 /**
  * Calculates the size of the pool storage given the size and alignment of the object type and the
  * total number of objects in the pool.
  */
 #define POOL_STORAGE_SIZE(object_size, object_align, object_count) \
-    ((object_count) * POOL_PADDED_OBJECT_SIZE(object_size, object_align))
+  ((object_count) * POOL_PADDED_OBJECT_SIZE(object_size, object_align))
 
 /**
  * Convenience macro for static allocation of pool storage.
  */
 #define DEFINE_POOL_STORAGE(name, object_size, object_align, object_count) \
-    uint8_t name[POOL_STORAGE_SIZE(object_size, object_align, object_count)] \
-    __attribute__((aligned(POOL_STORAGE_ALIGN(object_size, object_align))))
+  uint8_t name[POOL_STORAGE_SIZE(object_size, object_align, object_count)] \
+      __attribute__((aligned(POOL_STORAGE_ALIGN(object_size, object_align))))
 
 /**
  * Initialize the pool object.
@@ -106,10 +104,7 @@ typedef struct {
  * The DEFINE_POOL_STORAGE(...) makes this process simple for cases when the storage is to be
  * statically allocated.
  */
-void pool_init(pool_t *pool,
-               size_t object_size,
-               size_t object_align,
-               size_t object_count,
+void pool_init(pool_t *pool, size_t object_size, size_t object_align, size_t object_count,
                void *storage);
 
 /**
@@ -131,21 +126,18 @@ void pool_free(pool_t *pool, void *object);
  */
 
 #define TYPED_POOL_STORAGE_SIZE(type, object_count) \
-    POOL_STORAGE_SIZE(sizeof(type), __alignof(type), object_count)
+  POOL_STORAGE_SIZE(sizeof(type), __alignof(type), object_count)
 
-#define TYPED_POOL_STORAGE_ALIGN(type) \
-    POOL_STORAGE_ALIGN(sizeof(type), __alignof(type))
+#define TYPED_POOL_STORAGE_ALIGN(type) POOL_STORAGE_ALIGN(sizeof(type), __alignof(type))
 
 #define DEFINE_TYPED_POOL_STORAGE(type, name, count) \
-    DEFINE_POOL_STORAGE(name, sizeof(type), __alignof(type), count)
+  DEFINE_POOL_STORAGE(name, sizeof(type), __alignof(type), count)
 
 #define TYPED_POOL_INIT(type, pool, count, storage) \
-    pool_init(pool, sizeof(type), __alignof(type), count, storage)
+  pool_init(pool, sizeof(type), __alignof(type), count, storage)
 
-#define TYPED_POOL_ALLOC(type, pool) \
-    ((type*) pool_alloc(pool))
+#define TYPED_POOL_ALLOC(type, pool) ((type *)pool_alloc(pool))
 
-#define TYPED_POOL_FREE(type, pool, object) \
-    pool_free(pool, object)
+#define TYPED_POOL_FREE(type, pool, object) pool_free(pool, object)
 
 __END_CDECLS

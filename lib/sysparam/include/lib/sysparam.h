@@ -7,9 +7,9 @@
  */
 #pragma once
 
+#include <lib/bio.h>
 #include <stdbool.h>
 #include <sys/types.h>
-#include <lib/bio.h>
 
 #ifndef SYSPARAM_ALLOW_WRITE
 #define SYSPARAM_ALLOW_WRITE 0
@@ -30,4 +30,3 @@ status_t sysparam_remove(const char *name);
 status_t sysparam_lock(const char *name);
 status_t sysparam_write(void);
 #endif
-

@@ -6,20 +6,18 @@
  * https://opensource.org/licenses/MIT
  */
 #include <app.h>
-#include <lk/debug.h>
 #include <lib/console.h>
 
+#include <lk/debug.h>
+
 static void shell_entry(const struct app_descriptor *app, void *args) {
-    console_t *con = console_create(true);
-    if (!con)
-        return;
+  console_t *con = console_create(true);
+  if (!con)
+    return;
 
-    console_start(con);
+  console_start(con);
 
-    // TODO: destroy console and free resources
+  // TODO: destroy console and free resources
 }
 
-APP_START(shell)
-.entry = shell_entry,
-APP_END
-
+APP_START(shell).entry = shell_entry, APP_END

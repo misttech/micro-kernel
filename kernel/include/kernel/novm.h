@@ -10,6 +10,7 @@
 #include <arch.h>
 #include <stddef.h>
 #include <stdlib.h>
+
 #include <lk/compiler.h>
 
 __BEGIN_CDECLS
@@ -19,7 +20,7 @@ __BEGIN_CDECLS
 
 // arena bitmaps for novm_alloc_pages
 #define NOVM_ARENA_ANY (UINT32_MAX)
-#define NOVM_ARENA_MAIN (1<<0)
+#define NOVM_ARENA_MAIN (1 << 0)
 #define NOVM_ARENA_SECONDARY (~NOVM_ARENA_MAIN)
 
 void *novm_alloc_pages(size_t pages, uint32_t arena_bitmap);
@@ -33,8 +34,8 @@ void *novm_alloc_unaligned(size_t *size_return);
 void novm_add_arena(const char *name, uintptr_t arena_start, uintptr_t arena_size);
 
 struct page_range {
-    void *address;
-    size_t size;
+  void *address;
+  size_t size;
 };
 
 int novm_get_arenas(struct page_range *ranges, int number_of_ranges);

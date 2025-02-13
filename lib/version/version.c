@@ -6,11 +6,11 @@
  * https://opensource.org/licenses/MIT
  */
 #include <lib/version.h>
-
-#include <lk/debug.h>
 #include <stdio.h>
-#include <lk/init.h>
+
 #include <lk/console_cmd.h>
+#include <lk/debug.h>
+#include <lk/init.h>
 
 /* generated for us */
 #include <buildid.h>
@@ -22,27 +22,25 @@
 #define BUILDID ""
 #endif
 
-const lk_version_t lk_version = {
-    .struct_version = VERSION_STRUCT_VERSION,
-    .arch = ARCH,
-    .platform = PLATFORM,
-    .target = TARGET,
-    .project = PROJECT,
-    .buildid = BUILDID
-};
+const lk_version_t lk_version = {.struct_version = VERSION_STRUCT_VERSION,
+                                 .arch = ARCH,
+                                 .platform = PLATFORM,
+                                 .target = TARGET,
+                                 .project = PROJECT,
+                                 .buildid = BUILDID};
 
 void print_version(void) {
-    printf("version:\n");
-    printf("\tarch:     %s\n", lk_version.arch);
-    printf("\tplatform: %s\n", lk_version.platform);
-    printf("\ttarget:   %s\n", lk_version.target);
-    printf("\tproject:  %s\n", lk_version.project);
-    printf("\tbuildid:  %s\n", lk_version.buildid);
+  printf("version:\n");
+  printf("\tarch:     %s\n", lk_version.arch);
+  printf("\tplatform: %s\n", lk_version.platform);
+  printf("\ttarget:   %s\n", lk_version.target);
+  printf("\tproject:  %s\n", lk_version.project);
+  printf("\tbuildid:  %s\n", lk_version.buildid);
 }
 
 static int cmd_version(int argc, const console_cmd_args *argv) {
-    print_version();
-    return 0;
+  print_version();
+  return 0;
 }
 
 STATIC_COMMAND_START

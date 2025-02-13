@@ -8,8 +8,8 @@
 #pragma once
 
 #include <sys/types.h>
-#include <dev/usbc.h>
+
 #include <dev/usb.h>
+#include <dev/usbc.h>
 
 status_t usb_class_bulktest_init(uint interface_num, ep_t epin, ep_t epout);
-
