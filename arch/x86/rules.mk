@@ -54,6 +54,8 @@ MODULE_SRCS += \
 GLOBAL_DEFINES += \
 	X86_WITH_FPU=1
 
+MODULE_DEPS += lib/pretty
+
 include $(LOCAL_DIR)/toolchain.mk
 
 # set the default toolchain to x86 elf and set a #define

@@ -20,6 +20,7 @@ include make/macros.mk
 BUILDROOT ?= .
 DEBUG ?= 2
 DEBUG_HARD ?= false
+DEBUG_PRINT_LEVEL ?= 2
 USE_CLANG ?=
 USE_ZIG_CC ?=
 USE_LLD ?= $(USE_CLANG) $(USE_ZIG_CC)
@@ -345,6 +346,11 @@ GLOBAL_DEFINES += \
 ifneq ($(DEBUG),)
 GLOBAL_DEFINES += \
 	LK_DEBUGLEVEL=$(DEBUG)
+endif
+
+ifneq ($(DEBUG_PRINT_LEVEL),)
+GLOBAL_DEFINES += \
+	DEBUG_PRINT_LEVEL=$(DEBUG_PRINT_LEVEL)
 endif
 
 # allow additional defines from outside the build system
