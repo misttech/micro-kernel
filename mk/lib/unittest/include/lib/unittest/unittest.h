@@ -5,7 +5,6 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT
 
-123
 #ifndef ZIRCON_KERNEL_LIB_UNITTEST_INCLUDE_LIB_UNITTEST_UNITTEST_H_
 #define ZIRCON_KERNEL_LIB_UNITTEST_INCLUDE_LIB_UNITTEST_UNITTEST_H_
 /*
@@ -70,12 +69,10 @@
 
 #include <ktl/iterator.h>
 
-    // This function will help terminate the static analyzer when it reaches
-    // an assertion failure site. The bugs discovered by the static analyzer will
-    // be suppressed as they are expected by the test cases.
-    __ANALYZER_CREATE_SINK static inline void
-    unittest_fails(void) {
-}
+// This function will help terminate the static analyzer when it reaches
+// an assertion failure site. The bugs discovered by the static analyzer will
+// be suppressed as they are expected by the test cases.
+__ANALYZER_CREATE_SINK static inline void unittest_fails(void) {}
 
 /*
  * Printf dedicated to the unittest library

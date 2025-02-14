@@ -9,6 +9,7 @@ MODULE_SRCS := \
   $(LOCAL_DIR)/user_memory_tests.cc \
   $(LOCAL_DIR)/user_memory.cc \
 
-# MODULE_DEPS += lib/fit
+MODULE_DEPS += lib/fit
+MODULE_DEPS += lib/special-sections
 
 include make/module.mk
