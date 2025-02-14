@@ -7,7 +7,7 @@
 # https://opensource.org/licenses/MIT
 
 LKMAKEROOT ?= .
-LKROOT ?= .
+LKROOT ?= mk
 LKINC ?=
 BUILDROOT ?= .
 DEFAULT_PROJECT ?= x64
@@ -19,11 +19,7 @@ LKINC := $(LKROOT) $(LKINC)
 endif
 
 # add the external path to LKINC
-ifneq ($(LKROOT),.)
-LKINC += $(LKROOT)/external
-else
-LKINC += external
-endif
+LKINC += third_party
 
 export LKMAKEROOT
 export LKROOT
