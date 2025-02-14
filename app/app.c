@@ -88,7 +88,7 @@ static void list_apps(void) {
   }
 }
 
-static int cmd_app(int argc, const console_cmd_args *argv) {
+static int cmd_app(int argc, const cmd_args *argv, uint32_t flags) {
   if (argc == 1) {
   usage:
     printf("%s subcommands:\n", argv[0].str);
@@ -112,7 +112,7 @@ static int cmd_app(int argc, const console_cmd_args *argv) {
   return NO_ERROR;
 }
 
-static int cmd_start(int argc, const console_cmd_args *argv) {
+static int cmd_start(int argc, const cmd_args *argv, uint32_t flags) {
   if (argc == 1) {
     printf("not enough args\n");
     return ERR_INVALID_ARGS;

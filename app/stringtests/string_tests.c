@@ -280,7 +280,7 @@ static void validate_memset(void) {
   }
 }
 
-static int string_tests(int argc, const console_cmd_args *argv) {
+static int string_tests(int argc, const cmd_args *argv, uint32_t flags) {
   src = memalign(64, BUFFER_SIZE + 256);
   dst = memalign(64, BUFFER_SIZE + 256);
   src2 = memalign(64, BUFFER_SIZE + 256);

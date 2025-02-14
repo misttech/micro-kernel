@@ -15,6 +15,9 @@
 
 #include <arch/atomic.h>
 #include <arch/ops.h>
+
+#include <arch/atomic.h>
+#include <arch/ops.h>
 #include <kernel/mutex.h>
 #include <kernel/semaphore.h>
 #include <lk/compiler.h>
@@ -1290,7 +1293,7 @@ out:
 }
 
 /* debug stuff */
-static int cmd_tcp(int argc, const console_cmd_args *argv) {
+static int cmd_tcp(int argc, const cmd_args *argv, uint32_t flags) {
   if (argc < 2) {
   notenoughargs:
     printf("ERROR not enough arguments\n");

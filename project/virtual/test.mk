@@ -1,7 +1,6 @@
 # common libraries for -test variants
 
 MODULES += \
-  app/shell \
   app/stringtests \
   app/tests \
   arch/test \

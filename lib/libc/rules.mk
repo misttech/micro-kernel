@@ -32,6 +32,15 @@ ifeq ($(call TOBOOL,WITH_TESTS),true)
 MODULE_DEPS += $(LOCAL_DIR)/test
 endif
 
+# libc/include is before toolchain headers because it needs to be able to
+# override some libc++ headers that won't work in the kernel context.
+# However, libc/include/limits.h punts to the toolchain via #include_next
+# <limits.h> and the toolchain's limits.h does the same to get the "system"
+# libc <limits.h>, so we need another include directory after the toolchain
+# headers that has a limits.h for that to find, even though in the kernel
+# there is nothing to add to the toolchain's <limits.h> content.
+GLOBAL_COMPILEFLAGS += -idirafter $(LOCAL_DIR)/include-after
+
 include $(LOCAL_DIR)/string/rules.mk
 
 include make/module.mk

@@ -38,7 +38,7 @@ void print_version(void) {
   printf("\tbuildid:  %s\n", lk_version.buildid);
 }
 
-static int cmd_version(int argc, const console_cmd_args *argv) {
+static int cmd_version(int argc, const cmd_args *argv, uint32_t flags) {
   print_version();
   return 0;
 }

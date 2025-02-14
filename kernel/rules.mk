@@ -11,8 +11,8 @@ MODULE := $(LOCAL_DIR)
 
 MODULE_DEPS := \
 	lib/libc \
-	lib/debug \
-	lib/heap
+	lib/heap \
+	lib/ktl
 
 MODULE_SRCS := \
 	$(LOCAL_DIR)/debug.c \
@@ -31,8 +31,11 @@ else
 MODULE_DEPS += kernel/novm
 endif
 
-MODULE_COMPILEFLAGS += -include kernel/hidden.h
+MODULE_COMPILEFLAGS += -include hidden.h
 
 MODULE_OPTIONS := extra_warnings
+
+# Visibility annotations conflict with kernel/hidden.h.
+MODULE_COMPILEFLAGS += -D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS
 
 include make/module.mk

@@ -24,19 +24,19 @@
 #include <kernel/vm.h>
 #endif
 
-static int cmd_display_mem(int argc, const console_cmd_args *argv);
-static int cmd_modify_mem(int argc, const console_cmd_args *argv);
-static int cmd_fill_mem(int argc, const console_cmd_args *argv);
-static int cmd_reset(int argc, const console_cmd_args *argv);
-static int cmd_memtest(int argc, const console_cmd_args *argv);
-static int cmd_copy_mem(int argc, const console_cmd_args *argv);
-static int cmd_chain(int argc, const console_cmd_args *argv);
-static int cmd_sleep(int argc, const console_cmd_args *argv);
-static int cmd_time(int argc, const console_cmd_args *argv);
-static int cmd_timeh(int argc, const console_cmd_args *argv);
-static int cmd_crash(int argc, const console_cmd_args *argv);
-static int cmd_panic(int argc, const console_cmd_args *argv);
-static int cmd_stackstomp(int argc, const console_cmd_args *argv);
+static int cmd_display_mem(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_modify_mem(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_fill_mem(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_reset(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_memtest(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_copy_mem(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_chain(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_sleep(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_time(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_timeh(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_crash(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_panic(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_stackstomp(int argc, const cmd_args *argv, uint32_t flags);
 
 STATIC_COMMAND_START
 #if LK_DEBUGLEVEL > 0
@@ -104,7 +104,7 @@ static int check_address_mapped(unsigned long start, unsigned long *stop) {
 }
 #endif
 
-static int cmd_display_mem(int argc, const console_cmd_args *argv) {
+static int cmd_display_mem(int argc, const cmd_args *argv, uint32_t flags) {
   /* save the last address and len so we can continue where we left off */
   static unsigned long address;
   static size_t len;
@@ -210,7 +210,7 @@ static int cmd_display_mem(int argc, const console_cmd_args *argv) {
   return 0;
 }
 
-static int cmd_modify_mem(int argc, const console_cmd_args *argv) {
+static int cmd_modify_mem(int argc, const cmd_args *argv, uint32_t flags) {
   uint32_t size;
   unsigned long address = 0;
   unsigned int val = 0;
@@ -290,7 +290,7 @@ static int cmd_modify_mem(int argc, const console_cmd_args *argv) {
   return 0;
 }
 
-static int cmd_fill_mem(int argc, const console_cmd_args *argv) {
+static int cmd_fill_mem(int argc, const cmd_args *argv, uint32_t flags) {
   uint32_t size;
 
   if (argc < 4) {
@@ -339,7 +339,7 @@ static int cmd_fill_mem(int argc, const console_cmd_args *argv) {
   return 0;
 }
 
-static int cmd_copy_mem(int argc, const console_cmd_args *argv) {
+static int cmd_copy_mem(int argc, const cmd_args *argv, uint32_t flags) {
   if (argc < 4) {
     printf("not enough arguments\n");
     printf("%s <source address> <target address> <len>\n", argv[0].str);
@@ -355,7 +355,7 @@ static int cmd_copy_mem(int argc, const console_cmd_args *argv) {
   return 0;
 }
 
-static int cmd_memtest(int argc, const console_cmd_args *argv) {
+static int cmd_memtest(int argc, const cmd_args *argv, uint32_t flags) {
   if (argc < 3) {
     printf("not enough arguments\n");
     printf("%s <base> <len>\n", argv[0].str);
@@ -387,7 +387,7 @@ static int cmd_memtest(int argc, const console_cmd_args *argv) {
   return 0;
 }
 
-static int cmd_chain(int argc, const console_cmd_args *argv) {
+static int cmd_chain(int argc, const cmd_args *argv, uint32_t flags) {
   if (argc < 2) {
     printf("not enough arguments\n");
     printf("%s <address>\n", argv[0].str);
@@ -399,7 +399,7 @@ static int cmd_chain(int argc, const console_cmd_args *argv) {
   return 0;
 }
 
-static int cmd_sleep(int argc, const console_cmd_args *argv) {
+static int cmd_sleep(int argc, const cmd_args *argv, uint32_t flags) {
   lk_time_t t = 1000; /* default to 1 second */
 
   if (argc >= 2) {
@@ -413,52 +413,53 @@ static int cmd_sleep(int argc, const console_cmd_args *argv) {
   return 0;
 }
 
-static int cmd_time(int argc, const console_cmd_args *argv) {
+static int cmd_time(int argc, const cmd_args *argv, uint32_t flags) {
   lk_time_t t = current_time();
   printf("Current time: %u\n", t);
 
   return 0;
 }
 
-static int cmd_timeh(int argc, const console_cmd_args *argv) {
+static int cmd_timeh(int argc, const cmd_args *argv, uint32_t flags) {
   lk_bigtime_t t = current_time_hires();
   printf("Current time hires: %llu\n", t);
 
   return 0;
 }
 
-/* fix warning for the near-null pointer dereference below with gcc 12.x+ */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-static int cmd_crash(int argc, const console_cmd_args *argv) {
-#if ARCH_ARM && ARM_ONLY_THUMB
-  /* a branch directly to an aligned address should trigger a fault */
-  asm("bx %0" ::"r"(0));
-#else
+static int crash_thread(void *arg) {
   /* should crash */
-  volatile uint32_t *ptr = (void *)1;
+  volatile uint32_t *ptr = (volatile uint32_t *)1u;
   *ptr = 1;
-#endif
+
+  return 0;
+}
+
+static int cmd_crash(int argc, const cmd_args *argv, uint32_t flags) {
+  crash_thread(NULL);
 
   /* if it didn't, panic the system */
   panic("crash");
 
   return 0;
 }
-#pragma GCC diagnostic pop
 
-static int cmd_panic(int argc, const console_cmd_args *argv) {
+static int cmd_panic(int argc, const cmd_args *argv, uint32_t flags) {
   panic("Test panic\n");
   return 0;
 }
 
-static int cmd_stackstomp(int argc, const console_cmd_args *argv) {
-  for (size_t i = 0; i < DEFAULT_STACK_SIZE * 2; i++) {
-    uint8_t death[i];
+__attribute__((noinline)) static void stomp_stack(size_t size) {
+  // -Wvla prevents VLAs but not explicit alloca.
+  // Neither is allowed anywhere in the kernel outside this test code.
+  void *death = __builtin_alloca(size);  // OK in test-only code.
+  memset(death, 0xaa, size);
+  thread_sleep(1);
+}
 
-    memset(death, 0xaa, i);
-    thread_sleep(1);
-  }
+static int cmd_stackstomp(int argc, const cmd_args *argv, uint32_t flags) {
+  for (size_t i = 0; i < DEFAULT_STACK_SIZE * 2; i++)
+    stomp_stack(i);
 
   printf("survived.\n");
 

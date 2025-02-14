@@ -36,7 +36,7 @@ static mutex_t lock = MUTEX_INITIAL_VALUE(lock);
 #define ADDRESS_IN_ARENA(address, arena) \
   ((address) >= (arena)->base && (address) <= (arena)->base + (arena)->size - 1)
 
-struct list_node *get_arena_list() { return &arena_list; }
+struct list_node *get_arena_list(void) { return &arena_list; }
 
 static inline bool page_is_free(const vm_page_t *page) {
   return !(page->flags & VM_PAGE_FLAG_NONFREE);
@@ -402,7 +402,7 @@ static void dump_arena(const pmm_arena_t *arena, bool dump_pages) {
   }
 }
 
-static int cmd_pmm(int argc, const console_cmd_args *argv) {
+static int cmd_pmm(int argc, const cmd_args *argv, uint32_t flags) {
   if (argc < 2) {
   notenoughargs:
     printf("not enough arguments\n");
@@ -506,7 +506,5 @@ static int cmd_pmm(int argc, const console_cmd_args *argv) {
 }
 
 STATIC_COMMAND_START
-#if LK_DEBUGLEVEL > 0
 STATIC_COMMAND("pmm", "physical memory manager", &cmd_pmm)
-#endif
 STATIC_COMMAND_END(pmm);

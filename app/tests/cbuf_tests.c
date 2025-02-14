@@ -34,7 +34,7 @@
     }                                                                            \
   } while (0);
 
-int cbuf_tests(int argc, const console_cmd_args *argv) {
+int cbuf_tests(int argc, const cmd_args *argv, uint32_t flags) {
   cbuf_t cbuf;
 
   printf("running basic tests...\n");

@@ -20,6 +20,7 @@ include make/macros.mk
 BUILDROOT ?= .
 DEBUG ?= 2
 DEBUG_HARD ?= false
+DEBUG_PRINT_LEVEL ?= 2
 USE_CLANG ?=
 USE_ZIG_CC ?=
 USE_LLD ?= $(USE_CLANG) $(USE_ZIG_CC)
@@ -98,6 +99,12 @@ GLOBAL_CPPFLAGS := --std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics
 GLOBAL_ASMFLAGS := -DASSEMBLY
 GLOBAL_LDFLAGS := -nostdlib -z noexecstack
 
+# Build with --build-id to generate a build ID for the kernel
+# FIXME(mist): This is breaking the build with zig cc
+ifeq ($(call TOBOOL,$(USE_ZIG_CC)),false)
+GLOBAL_LDFLAGS += --build-id
+endif
+
 ifeq ($(UBSAN), 1)
 # Inject lib/ubsan directly into MODULE_DEPS
 # lib/ubsan will itself add the needed CFLAGS
@@ -144,7 +151,7 @@ ARCH_OBJDUMP_FLAGS :=
 THUMBCFLAGS := # optional compile switches set by arm architecture when compiling in thumb mode
 
 # top level rule
-all:: $(OUTBIN) $(OUTELF).lst $(OUTELF).debug.lst $(OUTELF).sym $(OUTELF).sym.sorted $(OUTELF).size $(OUTELF).dump $(BUILDDIR)/srcfiles.txt $(BUILDDIR)/include_paths.txt
+all:: $(OUTBIN) $(OUTELF).lst $(OUTELF).debug.lst $(OUTELF).sym $(OUTELF).sym.sorted $(OUTELF).size $(OUTELF).dump $(BUILDDIR)/srcfiles.txt $(BUILDDIR)/include_paths.txt $(BUILDROOT)/compile_commands.json
 
 # master module object list
 ALLMODULE_OBJS :=
@@ -162,7 +169,7 @@ LINKER_SCRIPT :=
 GENERATED := $(CONFIGHEADER)
 
 # anything added to GLOBAL_DEFINES will be put into $(BUILDDIR)/config.h
-GLOBAL_DEFINES := LK=1
+GLOBAL_DEFINES := LK=1 _KERNEL=1
 
 # Anything added to GLOBAL_SRCDEPS will become a dependency of every source file in the system.
 # Useful for header files that may be included by one or more source files.
@@ -232,6 +239,7 @@ SIZE := $(CLANG_TOOLCHAIN_PREFIX)llvm-size
 NM := $(CLANG_TOOLCHAIN_PREFIX)llvm-nm
 OBJCOPY := $(CLANG_TOOLCHAIN_PREFIX)llvm-objcopy
 STRIP := $(CLANG_TOOLCHAIN_PREFIX)llvm-objcopy --strip-sections
+GLOBAL_OPTFLAGS += -MJ $(@:%o=%o.json)
 else
 ifeq ($(call TOBOOL,$(USE_ZIG_CC)),true)
 CC ?= $(ZIG_TOOLCHAIN_PREFIX)zig cc
@@ -242,6 +250,7 @@ SIZE := $(CLANG_TOOLCHAIN_PREFIX)llvm-size
 NM := $(CLANG_TOOLCHAIN_PREFIX)llvm-nm
 OBJCOPY := $(CLANG_TOOLCHAIN_PREFIX)llvm-objcopy
 STRIP := $(CLANG_TOOLCHAIN_PREFIX)llvm-objcopy --strip-sections
+GLOBAL_OPTFLAGS += -MJ $(@:%o=%json)
 else
 CC ?= $(CCACHE) $(TOOLCHAIN_PREFIX)gcc
 LD ?= $(TOOLCHAIN_PREFIX)ld
@@ -345,6 +354,11 @@ GLOBAL_DEFINES += \
 ifneq ($(DEBUG),)
 GLOBAL_DEFINES += \
 	LK_DEBUGLEVEL=$(DEBUG)
+endif
+
+ifneq ($(DEBUG_PRINT_LEVEL),)
+GLOBAL_DEFINES += \
+	DEBUG_PRINT_LEVEL=$(DEBUG_PRINT_LEVEL)
 endif
 
 # allow additional defines from outside the build system

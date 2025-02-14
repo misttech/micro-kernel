@@ -3,5 +3,3 @@
 ARCH ?= x86
 SUBARCH ?= x86-32
 TARGET := pc-x86
-MODULES += \
-	app/shell \

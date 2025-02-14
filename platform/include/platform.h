@@ -16,6 +16,8 @@
 
 __BEGIN_CDECLS
 
+#define BOOT_CPU_ID 0
+
 typedef enum {
   HALT_ACTION_HALT = 0,  // Spin forever.
   HALT_ACTION_REBOOT,    // Reset the CPU.
@@ -25,7 +27,9 @@ typedef enum {
 const char *platform_halt_action_string(platform_halt_action action);
 
 typedef enum {
-  HALT_REASON_UNKNOWN = 0,
+  HALT_REASON_INVALID = 0,
+  HALT_REASON_UNKNOWN,      // Unknown reason
+  HALT_REASON_NO_CRASH,     // No crash
   HALT_REASON_POR,          // Cold-boot
   HALT_REASON_HW_WATCHDOG,  // HW watchdog timer
   HALT_REASON_LOWVOLTAGE,   // LV/Brownout condition

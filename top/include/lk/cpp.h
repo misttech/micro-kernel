@@ -12,6 +12,8 @@
 
 #include <type_traits>
 
+#include <ktl/move.h>
+
 // Helper routines used in C++ code in LK
 
 // Macro used to simplify the task of deleting all of the default copy
@@ -40,13 +42,13 @@ namespace lk {
 template <typename T>
 class auto_call {
  public:
-  constexpr explicit auto_call(T c) : call_(std::move(c)) {}
+  constexpr explicit auto_call(T c) : call_(ktl::move(c)) {}
   ~auto_call() { call(); }
 
-  auto_call(auto_call&& c) : call_(std::move(c.call_)), armed_(c.armed_) { c.cancel(); }
+  auto_call(auto_call&& c) : call_(ktl::move(c.call_)), armed_(c.armed_) { c.cancel(); }
   auto_call& operator=(auto_call&& c) {
     call();
-    call_ = std::move(c.call_);
+    call_ = ktl::move(c.call_);
     armed_ = c.armed_;
     c.cancel();
     return *this;
@@ -70,7 +72,7 @@ class auto_call {
 
 template <typename T>
 inline auto_call<T> make_auto_call(T c) {
-  return auto_call<T>(std::move(c));
+  return auto_call<T>(ktl::move(c));
 }
 
 }  // namespace lk
