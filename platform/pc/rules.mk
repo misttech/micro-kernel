@@ -28,7 +28,11 @@ MODULE_SRCS += \
     $(LOCAL_DIR)/timer.c \
     $(LOCAL_DIR)/uart.c \
 
-LK_HEAP_IMPLEMENTATION ?= dlmalloc
+LK_HEAP_IMPLEMENTATION ?= cmpctmalloc
+
+# Underlying kernel heap only has default alignment of 8 bytes, so pass
+# this to the compiler as the default new alignment.
+GLOBAL_COMPILEFLAGS += -faligned-new=8
 
 include make/module.mk
 
