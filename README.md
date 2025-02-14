@@ -43,6 +43,14 @@ USE_CLANG=true ./scripts/do-qemux86 -6
 USE_ZIG_CC=true ./scripts/do-qemux86 -6
 ```
 
+# Development Setup
+
+When contributing to the project, install Git hooks:
+
+```bash
+./scripts/setup-hooks
+```
+
 ## License
 
 The LK Kernel is under an MIT-style license, copies of which may be found in [LICENSE.lk](LICENSE.lk).

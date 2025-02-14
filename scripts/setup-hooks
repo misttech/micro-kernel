@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Copyright 2025 Mist Tecnologia Ltda. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# fail on error
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# Create symbolic link to the pre-commit hook
+ln -sf "${REPO_ROOT}/scripts/git-hooks/pre-commit" "${REPO_ROOT}/.git/hooks/pre-commit"
+
+echo "Git hooks installed successfully!"
