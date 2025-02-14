@@ -1,4 +1,5 @@
 /*
+ * Copyright 2025 Mist Tecnologia Ltda. All rights reserved.
  * Copyright (c) 2020 Travis Geiselbrecht
  *
  * Use of this source code is governed by a MIT-style
@@ -7,7 +8,7 @@
  */
 #if ARCH_HAS_MMU
 
-#include <lib/unittest.h>
+#include <lib/unittest/unittest.h>
 
 #include <arch/mmu.h>
 #include <kernel/vm.h>
@@ -235,11 +236,11 @@ static bool context_switch(void) {
   END_TEST;
 }
 
-BEGIN_TEST_CASE(arch_mmu_tests)
-RUN_TEST(create_user_aspace);
-RUN_TEST(map_user_pages);
-RUN_TEST(map_query_pages);
-RUN_TEST(context_switch);
-END_TEST_CASE(arch_mmu_tests)
+UNITTEST_START_TESTCASE(arch_mmu_tests)
+UNITTEST("create_user_aspace", create_user_aspace)
+UNITTEST("map_user_pages", map_user_pages)
+UNITTEST("map_query_pages", map_query_pages)
+UNITTEST("context_switch", context_switch)
+UNITTEST_END_TESTCASE(arch_mmu_tests, "mmu", "MMU tests")
 
 #endif  // ARCH_HAS_MMU
