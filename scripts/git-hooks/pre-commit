@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Copyright 2025 Mist Tecnologia Ltda. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Exit on error
+set -e
+
+# Reference the format script
+REPO_ROOT="$(git rev-parse --git-dir)/.."
+SCRIPTS_DIR="$(cd "$REPO_ROOT/scripts" && pwd)"
+
+echo "Running pre-commit checks..."
+
+# Run clang-format check
+"${SCRIPTS_DIR}/format" -c
+
+# Check if any files failed formatting
+if [ $? -ne 0 ]; then
+    echo "Error: Code formatting check failed."
+    echo "Please run './scripts/format' to format your code before committing."
+    exit 1
+fi
+
+exit 0

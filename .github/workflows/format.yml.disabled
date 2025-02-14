@@ -32,4 +32,4 @@ jobs:
         run: ./scripts/download-prebuilt
 
       - name: Check formatting
-        run: ./scripts/format -c
+        run: ./scripts/format -ic
