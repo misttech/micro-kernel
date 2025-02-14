@@ -29,17 +29,34 @@ SECTIONS
     . = %KERNEL_BASE% + %KERNEL_LOAD_OFFSET%;
 
     .text : AT(%MEMBASE% + %KERNEL_LOAD_OFFSET%) {
-        __code_start = .;
+        PROVIDE_HIDDEN(__code_start = .);
         KEEP(*(.text.boot))
         *(.text* .sram.text)
-        *(.gnu.linkonce.t.*)
-        __code_end = .;
+        PROVIDE_HIDDEN(__code_end = .);
     } =0x9090
 
-    .rodata : ALIGN(4096) {
-        __rodata_start = .;
+    /*
+     * This symbol marks the beginning of the read-only data (RODATA) segment,
+     * from here to __rodata_end.
+     *
+     * The RODATA segment comes first so it can start with the ELF file and
+     * program headers, which are always at the beginning of the file anyway.
+     * That means the next available space is not page-aligned, so it's best to
+     * stuff in non-aligned bits there to minimize the zero-padding required to
+     * align the RODATA sections that need to be page-aligned.
+     */
+    .rodata : ALIGN(CONSTANT(MAXPAGESIZE)) {
+        PROVIDE_HIDDEN(__rodata_start = .);
+
+        PROVIDE_HIDDEN(__start_commands = .);
+        *(commands)
+        PROVIDE_HIDDEN(__stop_commands = .);
+
+        PROVIDE_HIDDEN(__start_lk_init = .);
+        *(lk_init)
+        PROVIDE_HIDDEN(__stop_lk_init = .);
+
         *(.rodata*)
-        *(.gnu.linkonce.r.*)
         . = ALIGN(8);
     }
 
@@ -49,10 +66,10 @@ SECTIONS
      * but not aligned to the next section necessarily.
      */
     .dummy_post_rodata : {
-        __rodata_end = .;
+        PROVIDE_HIDDEN(__rodata_end = .);
     }
 
-    .data : ALIGN(4096) {
+    .data : ALIGN(CONSTANT(MAXPAGESIZE)) {
         __data_start = .;
         *(.data .data.* .gnu.linkonce.d.*)
     }
@@ -77,19 +94,18 @@ SECTIONS
      * but not aligned to the next section necessarily.
      */
     .dummy_post_data : {
-        __data_end = .;
+        PROVIDE_HIDDEN(__data_end = .);
     }
 
     .bss : ALIGN(4096) {
-        __bss_start = .;
+        PROVIDE_HIDDEN(__bss_start = .);
         *(.bss*)
-        *(.gnu.linkonce.b.*)
         *(COMMON)
         . = ALIGN(8);
         __bss_end = .;
     }
 
-    _end = .;
+    PROVIDE_HIDDEN(_end = .);
 
     /* put a symbol arbitrarily 4MB past the end of the kernel */
     /* used by the heap and other early boot time allocators */
