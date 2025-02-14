@@ -36,5 +36,4 @@
 #define ZX_MIN_PAGE_SIZE ((uintptr_t)(1u << ZX_MIN_PAGE_SHIFT))
 #define ZX_MAX_PAGE_SIZE ((uintptr_t)(1u << ZX_MAX_PAGE_SHIFT))
 
-
 #endif  // TOP_INCLUDE_ZIRCON_LIMITS_H_

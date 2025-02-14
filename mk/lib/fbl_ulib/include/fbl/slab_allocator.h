@@ -934,7 +934,7 @@ using UnlockedStaticSlabAllocatorTraits =
 #define DECLARE_STATIC_SLAB_ALLOCATOR_STORAGE(ALLOC_TRAITS, ...) \
   template <>                                                    \
   ::fbl::SlabAllocator<ALLOC_TRAITS>::InternalAllocatorType      \
-      fbl::SlabAllocator<ALLOC_TRAITS>::allocator_(__VA_ARGS__)
+  fbl::SlabAllocator<ALLOC_TRAITS>::allocator_(__VA_ARGS__)
 
 // Shorthand for forward declaring the existance of the storage required to use
 // a static slab allocator.  Use this macro in your header file if your static

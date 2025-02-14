@@ -201,24 +201,24 @@ TEST(ArrayTraitsTest, BoundedUnboundedArrayIsOk) {
   static_assert(cpp20::is_bounded_array_v<void> == false, "");
   static_assert(cpp20::is_bounded_array_v<int> == false, "");
   static_assert(cpp20::is_bounded_array_v<int*> == false, "");
-  static_assert(cpp20::is_bounded_array_v<int(*)[]> == false, "");
-  static_assert(cpp20::is_bounded_array_v<int(&)[]> == false, "");
-  static_assert(cpp20::is_bounded_array_v<int(&&)[]> == false, "");
-  static_assert(cpp20::is_bounded_array_v<int(*)[10]> == false, "");
-  static_assert(cpp20::is_bounded_array_v<int(&)[10]> == false, "");
-  static_assert(cpp20::is_bounded_array_v<int(&&)[10]> == false, "");
+  static_assert(cpp20::is_bounded_array_v<int (*)[]> == false, "");
+  static_assert(cpp20::is_bounded_array_v<int (&)[]> == false, "");
+  static_assert(cpp20::is_bounded_array_v<int (&&)[]> == false, "");
+  static_assert(cpp20::is_bounded_array_v<int (*)[10]> == false, "");
+  static_assert(cpp20::is_bounded_array_v<int (&)[10]> == false, "");
+  static_assert(cpp20::is_bounded_array_v<int (&&)[10]> == false, "");
   static_assert(cpp20::is_bounded_array_v<int[10]> == true, "");
   static_assert(cpp20::is_bounded_array_v<int[]> == false, "");
 
   static_assert(cpp20::is_unbounded_array_v<void> == false, "");
   static_assert(cpp20::is_unbounded_array_v<int> == false, "");
   static_assert(cpp20::is_unbounded_array_v<int*> == false, "");
-  static_assert(cpp20::is_unbounded_array_v<int(*)[]> == false, "");
-  static_assert(cpp20::is_unbounded_array_v<int(&)[]> == false, "");
-  static_assert(cpp20::is_unbounded_array_v<int(&&)[]> == false, "");
-  static_assert(cpp20::is_unbounded_array_v<int(*)[10]> == false, "");
-  static_assert(cpp20::is_unbounded_array_v<int(&)[10]> == false, "");
-  static_assert(cpp20::is_unbounded_array_v<int(&&)[10]> == false, "");
+  static_assert(cpp20::is_unbounded_array_v<int (*)[]> == false, "");
+  static_assert(cpp20::is_unbounded_array_v<int (&)[]> == false, "");
+  static_assert(cpp20::is_unbounded_array_v<int (&&)[]> == false, "");
+  static_assert(cpp20::is_unbounded_array_v<int (*)[10]> == false, "");
+  static_assert(cpp20::is_unbounded_array_v<int (&)[10]> == false, "");
+  static_assert(cpp20::is_unbounded_array_v<int (&&)[10]> == false, "");
   static_assert(cpp20::is_unbounded_array_v<int[10]> == false, "");
   static_assert(cpp20::is_unbounded_array_v<int[]> == true, "");
 }

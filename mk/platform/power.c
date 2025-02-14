@@ -13,7 +13,6 @@
 #include <lk/debug.h>
 #include <lk/err.h>
 #include <platform/debug.h>
-#include <kernel/thread.h>
 
 #if WITH_LIB_CONSOLE
 #include <lib/console.h>

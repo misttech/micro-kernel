@@ -8,6 +8,7 @@
 #ifdef __cplusplus
 
 #include <zircon/compiler.h>
+
 #include <fbl/macros.h>
 
 // Notes about class Mutex

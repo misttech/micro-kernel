@@ -6,8 +6,8 @@
 #define FBL_STRING_PRINTF_H_
 
 #include <stdarg.h>
-
 #include <zircon/compiler.h>
+
 #include <fbl/string.h>
 
 namespace fbl {

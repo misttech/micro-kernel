@@ -338,12 +338,24 @@ TEST(IntrusiveContainerNodeTest, MultipleDifferentTaggedNodes) {
   // Mismatching the type and the tag should not work.  Any of these statements should fail to
   // compile.
 #if TEST_WILL_NOT_COMPILE || 0
-  { auto& [[maybe_unused]] node = FindSLLNode<TagType2>(test_obj); }
-  { auto& [[maybe_unused]] node = FindSLLNode<TagType3>(test_obj); };
-  { auto& [[maybe_unused]] node = FindDLLNode<TagType1>(test_obj); };
-  { auto& [[maybe_unused]] node = FindDLLNode<TagType3>(test_obj); };
-  { auto& [[maybe_unused]] node = FindWAVLNode<TagType1>(test_obj); };
-  { auto& [[maybe_unused]] node = FindWAVLNode<TagType2>(test_obj); };
+  {
+    auto& [[maybe_unused]] node = FindSLLNode<TagType2>(test_obj);
+  }
+  {
+    auto& [[maybe_unused]] node = FindSLLNode<TagType3>(test_obj);
+  };
+  {
+    auto& [[maybe_unused]] node = FindDLLNode<TagType1>(test_obj);
+  };
+  {
+    auto& [[maybe_unused]] node = FindDLLNode<TagType3>(test_obj);
+  };
+  {
+    auto& [[maybe_unused]] node = FindWAVLNode<TagType1>(test_obj);
+  };
+  {
+    auto& [[maybe_unused]] node = FindWAVLNode<TagType2>(test_obj);
+  };
 #endif
 
   // Make sure that we can instantiate containers which use these nodes.

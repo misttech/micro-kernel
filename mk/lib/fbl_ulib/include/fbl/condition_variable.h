@@ -15,10 +15,10 @@
 #ifndef _KERNEL
 
 #include <threads.h>
+#include <zircon/compiler.h>
 
 #include <fbl/macros.h>
 #include <fbl/mutex.h>
-#include <zircon/compiler.h>
 
 namespace fbl {
 

@@ -38,7 +38,7 @@ static const int uart_irq =
 
 cbuf_t console_input_buf;
 
-static enum handler_return uart_irq_handler(void *arg) {
+static enum handler_return uart_irq_handler(void* arg) {
   unsigned char c;
   bool resched = false;
 
@@ -86,17 +86,15 @@ static void debug_uart_putc(char c) {
 }
 
 void platform_dputs_thread(const char* str, size_t len) {
-    for (size_t i = 0; i < len; i++) {
-        debug_uart_putc(str[i]);
-    }
+  for (size_t i = 0; i < len; i++) {
+    debug_uart_putc(str[i]);
+  }
 }
 
 void platform_dputs_irq(const char* str, size_t len) {
-    for (size_t i = 0; i < len; i++) {
-        debug_uart_putc(str[i]);
-    }
+  for (size_t i = 0; i < len; i++) {
+    debug_uart_putc(str[i]);
+  }
 }
 
-int platform_dgetc(char* c, bool wait) {
-    return cbuf_read_char(&console_input_buf, c, wait);
-}
+int platform_dgetc(char* c, bool wait) { return cbuf_read_char(&console_input_buf, c, wait); }

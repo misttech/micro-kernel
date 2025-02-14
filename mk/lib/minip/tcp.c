@@ -15,9 +15,6 @@
 
 #include <arch/atomic.h>
 #include <arch/ops.h>
-
-#include <arch/atomic.h>
-#include <arch/ops.h>
 #include <kernel/mutex.h>
 #include <kernel/semaphore.h>
 #include <lk/compiler.h>
