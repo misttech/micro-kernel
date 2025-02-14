@@ -71,7 +71,7 @@ static void arm_float_instruction_trap_test(void) {
 }
 #endif
 
-static int float_tests(int argc, const console_cmd_args *argv) {
+static int float_tests(int argc, const cmd_args *argv, uint32_t flags) {
   printf("floating point test:\n");
 
   /* test lazy fpu load on separate thread */

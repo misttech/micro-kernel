@@ -139,6 +139,9 @@ static int bootstrap2(void *arg) {
   lk_primary_cpu_init_level(LK_INIT_LEVEL_PLATFORM, LK_INIT_LEVEL_TARGET - 1);
   target_init();
 
+  // Give the kernel shell an opportunity to run. If it exits this function, continue booting.
+  kernel_shell_init();
+
   dprintf(SPEW, "initializing apps\n");
   lk_primary_cpu_init_level(LK_INIT_LEVEL_TARGET, LK_INIT_LEVEL_APPS - 1);
   apps_init();

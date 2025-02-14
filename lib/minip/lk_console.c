@@ -12,9 +12,13 @@
 #include <string.h>
 
 #include <kernel/thread.h>
+
+#include <kernel/thread.h>
 #include <kernel/timer.h>
 #include <lk/console_cmd.h>
 #include <lk/err.h>
+
+#include "minip-internal.h"
 
 #include "minip-internal.h"
 
@@ -41,7 +45,7 @@ static void arp_usage(void) {
   printf("arp query <ipv4 address>        query arp address\n");
 }
 
-static int cmd_arp(int argc, const console_cmd_args *argv) {
+static int cmd_arp(int argc, const cmd_args *argv, uint32_t flags) {
   if (argc == 1) {
     arp_usage();
     return -1;
@@ -62,7 +66,7 @@ static int cmd_arp(int argc, const console_cmd_args *argv) {
   return 0;
 }
 
-static int cmd_minip(int argc, const console_cmd_args *argv) {
+static int cmd_minip(int argc, const cmd_args *argv, uint32_t flags) {
   if (argc == 1) {
   minip_usage:
     printf("minip commands\n");

@@ -16,7 +16,7 @@
 #include <kernel/thread.h>
 #include <lk/err.h>
 
-int clock_tests(int argc, const console_cmd_args *argv) {
+int clock_tests(int argc, const cmd_args *argv, uint32_t flags) {
   ulong c;
   lk_time_t t;
   lk_bigtime_t t2;

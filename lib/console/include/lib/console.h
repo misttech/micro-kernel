@@ -1,60 +1,82 @@
-/*
- * Copyright (c) 2008-2009 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
-#pragma once
+// Copyright 2025 Mist Tecnologia Ltda
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2008-2009 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
-#include <lk/compiler.h>
+#ifndef LIB_CONSOLE_INCLUDE_LIB_CONSOLE_H_
+#define LIB_CONSOLE_INCLUDE_LIB_CONSOLE_H_
+
+#include <debug.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <sys/types.h>
+
+#include <kernel/mutex.h>
+#include <kernel/spinlock.h>
+#include <kernel/timer.h>
 
 __BEGIN_CDECLS
 
-// clang-format off
-/* Previously, this file was included to get access to defining a console
- * command. This logic has been moved into the following header, which is
- * what in almost every case what regular code wants to include instead of
- * this file.
- */
-#include <lk/console_cmd.h>
-#include <lib/console/cmd.h>
-// clang-format on
+/* command args */
+typedef struct {
+  const char* str;
+  unsigned long u;
+  void* p;
+  long i;
+  bool b;
+} cmd_args;
 
-typedef struct console console_t;
+typedef int console_cmd(int argc, const cmd_args* argv, uint32_t flags);
 
-/* create an instance of the console */
-/* TODO: actually implement the history option. Currently always implements history according
- * to the build variable CONSOLE_ENABLE_HISTORY. */
-console_t *console_create(bool with_history);
+#define CMD_AVAIL_NORMAL (0x1 << 0)
+#define CMD_AVAIL_PANIC (0x1 << 1)
+#define CMD_AVAIL_ALWAYS (CMD_AVAIL_NORMAL | CMD_AVAIL_PANIC)
 
-/* Run the main console loop. Will set the current console TLS pointer as a side effect */
-void console_start(console_t *con);
+/* command is happening at crash time */
+#define CMD_FLAG_PANIC (0x1 << 0)
 
-/* Routines to let code directly run commands in an existing console */
-/* NOTE: Passing null as first argument selects the current console associated with the current
- * thread */
-int console_run_script(console_t *con, const char *string);
-int console_run_script_locked(console_t *con,
-                              const char *string);  // special case from inside a command
-void console_abort_script(console_t *con);
+/* a block of commands to register */
+typedef struct {
+  const char* cmd_str;
+  const char* help_str;
+  console_cmd* cmd_callback;
+  uint8_t availability_mask;
+} cmd;
 
-/* Get/set the current console in the thread's TLS slot reserved for it.
- * New threads will inherit the pointer from the parent thread.
- *
- * TODO: use a ref count to keep the console from being destroyed from underneath it.
- */
-console_t *console_get_current(void);
-console_t *console_set_current(console_t *con);  // returns old console pointer
-
-console_cmd_func console_get_command_handler(const char *command);
-
-/* panic shell api */
-void panic_shell_start(void);
+/* register a static block of commands at init time */
 
 /* enable the panic shell if we're being built */
 #if !defined(ENABLE_PANIC_SHELL) && PLATFORM_SUPPORTS_PANIC_SHELL
 #define ENABLE_PANIC_SHELL 1
 #endif
 
+#define STATIC_COMMAND_START __USED __SECTION("commands") static const cmd _cmd_list[] = {
+#define STATIC_COMMAND_END(name) \
+  }                              \
+  ;
+
+#define STATIC_COMMAND(command_str, help_str, func) {command_str, help_str, func, CMD_AVAIL_NORMAL},
+#define STATIC_COMMAND_MASKED(command_str, help_str, func, availability_mask) \
+  {command_str, help_str, func, availability_mask},
+
+/* external api */
+int console_run_script(const char* string);
+int console_run_script_locked(const char* string);  // special case from inside a command
+console_cmd* console_get_command_handler(const char* command);
+void console_abort_script(void);
+
+/* panic shell api */
+void panic_shell_start(void);
+
+// Attempt to start the kernel shell.
+// Will return if shell is not started or if shell exits.
+void kernel_shell_init(void);
+
+extern int lastresult;
+
 __END_CDECLS
+
+#endif  // LIB_CONSOLE_INCLUDE_LIB_CONSOLE_H_

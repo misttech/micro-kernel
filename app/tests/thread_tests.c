@@ -624,7 +624,7 @@ static void spinlock_test(void) {
 #undef COUNT
 }
 
-int thread_tests(int argc, const console_cmd_args *argv) {
+int thread_tests(int argc, const cmd_args *argv, uint32_t flags) {
   mutex_test();
   semaphore_test();
   event_test();
@@ -649,7 +649,7 @@ static int spinner_thread(void *arg) {
   return 0;
 }
 
-int spinner(int argc, const console_cmd_args *argv) {
+int spinner(int argc, const cmd_args *argv, uint32_t flags) {
   if (argc < 2) {
     printf("not enough args\n");
     printf("usage: %s <priority> <rt>\n", argv[0].str);

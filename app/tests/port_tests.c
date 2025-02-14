@@ -698,7 +698,7 @@ static int group_waiting(void) {
   if (result)       \
   goto fail
 
-int port_tests(int argc, const console_cmd_args *argv) {
+int port_tests(int argc, const cmd_args *argv, uint32_t flags) {
   int result;
   int count = 3;
   while (count--) {

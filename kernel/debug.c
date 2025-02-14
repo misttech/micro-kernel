@@ -27,11 +27,11 @@
 #include <lk/debug.h>
 #include <lk/err.h>
 
-static int cmd_threads(int argc, const console_cmd_args *argv);
-static int cmd_threads_panic(int argc, const console_cmd_args *argv);
-static int cmd_threadstats(int argc, const console_cmd_args *argv);
-static int cmd_threadload(int argc, const console_cmd_args *argv);
-static int cmd_kevlog(int argc, const console_cmd_args *argv);
+static int cmd_threads(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_threads_panic(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_threadstats(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_threadload(int argc, const cmd_args *argv, uint32_t flags);
+static int cmd_kevlog(int argc, const cmd_args *argv, uint32_t flags);
 
 STATIC_COMMAND_START
 #if LK_DEBUGLEVEL > 1
@@ -48,14 +48,14 @@ STATIC_COMMAND_MASKED("kevlog", "dump kernel event log", &cmd_kevlog, CMD_AVAIL_
 STATIC_COMMAND_END(kernel);
 
 #if LK_DEBUGLEVEL > 1
-static int cmd_threads(int argc, const console_cmd_args *argv) {
+static int cmd_threads(int argc, const cmd_args *argv, uint32_t flags) {
   printf("thread list:\n");
   dump_all_threads();
 
   return 0;
 }
 
-static int cmd_threads_panic(int argc, const console_cmd_args *argv) {
+static int cmd_threads_panic(int argc, const cmd_args *argv, uint32_t flags) {
   /* call the unsafe version of the thread dump routine since the
    * thread lock may be held at crash time.
    */
@@ -67,7 +67,7 @@ static int cmd_threads_panic(int argc, const console_cmd_args *argv) {
 #endif
 
 #if THREAD_STATS
-static int cmd_threadstats(int argc, const console_cmd_args *argv) {
+static int cmd_threadstats(int argc, const cmd_args *argv, uint32_t flags) {
   for (uint i = 0; i < SMP_MAX_CPUS; i++) {
     if (!mp_is_cpu_active(i))
       continue;
@@ -141,7 +141,7 @@ static enum handler_return threadload(struct timer *t, lk_time_t now, void *arg)
   return INT_NO_RESCHEDULE;
 }
 
-static int cmd_threadload(int argc, const console_cmd_args *argv) {
+static int cmd_threadload(int argc, const cmd_args *argv, uint32_t flags) {
   static bool showthreadload = false;
   static timer_t tltimer;
 

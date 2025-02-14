@@ -131,7 +131,7 @@ vmm_aspace_t *vaddr_to_aspace(void *ptr) {
   }
 }
 
-static int cmd_vm(int argc, const console_cmd_args *argv) {
+static int cmd_vm(int argc, const cmd_args *argv, uint32_t flags) {
   if (argc < 2) {
   notenoughargs:
     printf("not enough arguments\n");
@@ -200,9 +200,7 @@ static int cmd_vm(int argc, const console_cmd_args *argv) {
 }
 
 STATIC_COMMAND_START
-#if LK_DEBUGLEVEL > 0
 STATIC_COMMAND("vm", "vm commands", &cmd_vm)
-#endif
 STATIC_COMMAND_END(vm);
 
 LK_INIT_HOOK(vm_preheap, &vm_init_preheap, LK_INIT_LEVEL_HEAP - 1);

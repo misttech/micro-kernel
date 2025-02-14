@@ -71,7 +71,7 @@ bool run_all_tests(void) {
   return all_success;
 }
 
-static int do_unittests(int argc, const console_cmd_args *argv) {
+static int do_unittests(int argc, const cmd_args *argv, uint32_t flags) {
   if (argc < 2) {
   usage:
     printf("usage:\n");

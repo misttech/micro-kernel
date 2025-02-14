@@ -156,7 +156,7 @@ out:
   printf("done with tests\n");
 }
 
-static int mem_test(int argc, const console_cmd_args *argv) {
+static int mem_test(int argc, const cmd_args *argv, uint32_t flags) {
   if (argc < 2) {
     printf("not enough arguments\n");
   usage:

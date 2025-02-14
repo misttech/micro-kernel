@@ -13,6 +13,7 @@
 #include <lk/debug.h>
 #include <lk/err.h>
 #include <platform/debug.h>
+#include <kernel/thread.h>
 
 #if WITH_LIB_CONSOLE
 #include <lib/console.h>
@@ -97,23 +98,22 @@ const char *platform_halt_reason_string(platform_halt_reason reason) {
       return "software panic";
     case HALT_REASON_SW_UPDATE:
       return "software update";
+    default:
+      return "invalid";
   }
-  return "unknown";
 }
 
-static int cmd_reboot(int argc, const console_cmd_args *argv) {
+static int cmd_reboot(int argc, const cmd_args *argv, uint32_t flags) {
   platform_halt(HALT_ACTION_REBOOT, HALT_REASON_SW_RESET);
   return 0;
 }
 
-static int cmd_poweroff(int argc, const console_cmd_args *argv) {
+static int cmd_poweroff(int argc, const cmd_args *argv, uint32_t flags) {
   platform_halt(HALT_ACTION_SHUTDOWN, HALT_REASON_SW_RESET);
   return 0;
 }
 
 STATIC_COMMAND_START
-#if LK_DEBUGLEVEL > 1
 STATIC_COMMAND("reboot", "soft reset", &cmd_reboot)
 STATIC_COMMAND("poweroff", "powerdown", &cmd_poweroff)
-#endif
 STATIC_COMMAND_END(platform_power);

@@ -85,7 +85,7 @@ int v9p_tests(int argc, const console_cmd_args *argv) {
   return NO_ERROR;
 }
 #else
-int v9p_tests(int argc, const console_cmd_args *argv) {
+int v9p_tests(int argc, const cmd_args *argv, uint32_t flags) {
   LOGF("platform didn't have dev/virtio/9p supported\n");
   return ERR_NOT_SUPPORTED;
 }
