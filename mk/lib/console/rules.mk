@@ -10,11 +10,10 @@ LOCAL_DIR := $(GET_LOCAL_DIR)
 
 MODULE := $(LOCAL_DIR)
 
-MODULE_SRCS += \
-	$(LOCAL_DIR)/console.cc
+MODULE_SRCS += $(LOCAL_DIR)/console.cc
 
 MODULE_DEPS += lib/zircon-internal
-MODULE_DEPS += lib/fbl_ulib
+MODULE_DEPS += ulib/fbl
 
 MODULE_DEFINES += BOOT_TEST_SUCCESS_STRING="\"***Boot-test-successful!-MDd7/O65SuVZ23yGAaQG4CedYQGH9E1/58r73pSAVK0=***\""
 
