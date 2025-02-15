@@ -14,16 +14,15 @@ MODULE_DEPS := \
 	lib/heap \
 	lib/ktl
 
-MODULE_SRCS := \
-	$(LOCAL_DIR)/debug.c \
-	$(LOCAL_DIR)/event.c \
-	$(LOCAL_DIR)/init.c \
-	$(LOCAL_DIR)/mutex.c \
-	$(LOCAL_DIR)/thread.c \
-	$(LOCAL_DIR)/timer.c \
-	$(LOCAL_DIR)/semaphore.c \
-	$(LOCAL_DIR)/mp.c \
-	$(LOCAL_DIR)/port.c
+MODULE_SRCS += $(LOCAL_DIR)/debug.c
+MODULE_SRCS += $(LOCAL_DIR)/event.c
+MODULE_SRCS += $(LOCAL_DIR)/init.cc
+MODULE_SRCS += $(LOCAL_DIR)/mutex.c
+MODULE_SRCS += $(LOCAL_DIR)/thread.c
+MODULE_SRCS += $(LOCAL_DIR)/timer.c
+MODULE_SRCS += $(LOCAL_DIR)/semaphore.c
+MODULE_SRCS += $(LOCAL_DIR)/mp.c
+MODULE_SRCS += $(LOCAL_DIR)/port.c
 
 ifeq ($(WITH_KERNEL_VM),1)
 MODULE_DEPS += kernel/vm
