@@ -31,7 +31,7 @@ struct mmu_initial_mapping mmu_initial_mappings[] = {
     /* 64GB of memory mapped where the kernel lives */
     {.phys = MEMBASE,
      .virt = KERNEL_ASPACE_BASE,
-     .size = PHYSMAP_SIZE, /* x86-64 maps first 64GB by default, 1GB on x86-32 */
+     .size = ARCH_PHYSMAP_SIZE, /* x86-64 maps first 64GB by default, 1GB on x86-32 */
      .flags = 0,
      .name = "physmap"},
 #endif

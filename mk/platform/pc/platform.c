@@ -88,15 +88,15 @@ static status_t parse_multiboot_mmap(const memory_map_t *mmap, const size_t mmap
       /* ignore everything that extends past the size PHYSMAP maps into the kernel.
        * see arch/x86/arch.c mmu_initial_mappings
        */
-      if (base >= PHYSMAP_SIZE) {
+      if (base >= ARCH_PHYSMAP_SIZE) {
         continue;
       }
       uint64_t end = base + length;
-      if (end > PHYSMAP_SIZE) {
-        end = PHYSMAP_SIZE;
+      if (end > ARCH_PHYSMAP_SIZE) {
+        end = ARCH_PHYSMAP_SIZE;
         DEBUG_ASSERT(end > base);
         length = end - base;
-        dprintf(INFO, "PC: trimmed memory to %" PRIu64 " bytes\n", PHYSMAP_SIZE);
+        dprintf(INFO, "PC: trimmed memory to %" PRIu64 " bytes\n", ARCH_PHYSMAP_SIZE);
       }
 
       /* initialize a new pmm arena */
