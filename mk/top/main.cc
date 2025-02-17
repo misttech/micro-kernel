@@ -143,7 +143,7 @@ void lk_main(ulong arg0, ulong arg1, ulong arg2, ulong arg3) {
 }
 
 static int bootstrap2(void *arg) {
-  DEBUG_ASSERT(arch_curr_cpu_num() == BOOT_CPU_ID);
+  DEBUG_ASSERT(lk_arch_curr_cpu_num() == BOOT_CPU_ID);
 
   dprintf(SPEW, "top of bootstrap2()\n");
 

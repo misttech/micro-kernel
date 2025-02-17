@@ -91,7 +91,7 @@ static void timer_set(timer_t *timer, lk_time_t delay, lk_time_t period, timer_c
   spin_lock_saved_state_t state;
   spin_lock_irqsave(&timer_lock, state);
 
-  uint cpu = arch_curr_cpu_num();
+  uint cpu = lk_arch_curr_cpu_num();
   insert_timer_in_queue(cpu, timer);
 
 #if PLATFORM_HAS_DYNAMIC_TIMER
@@ -204,7 +204,7 @@ static enum handler_return timer_tick(void *arg, lk_time_t now) {
   THREAD_STATS_INC(timer_ints);
   //  KEVLOG_TIMER_TICK(); // enable only if necessary
 
-  uint cpu = arch_curr_cpu_num();
+  uint cpu = lk_arch_curr_cpu_num();
 
   LTRACEF("cpu %u now %u, sp %p\n", cpu, now, __GET_FRAME());
 

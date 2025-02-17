@@ -471,7 +471,7 @@ void thread_resched(void) {
   thread_t *newthread;
 
   thread_t *current_thread = get_current_thread();
-  uint cpu = arch_curr_cpu_num();
+  uint cpu = lk_arch_curr_cpu_num();
 
   DEBUG_ASSERT(arch_ints_disabled());
   DEBUG_ASSERT(spin_lock_held(&thread_lock));
@@ -778,7 +778,7 @@ void thread_sleep(lk_time_t delay) {
 void thread_init_early(void) {
   int i;
 
-  DEBUG_ASSERT(arch_curr_cpu_num() == 0);
+  DEBUG_ASSERT(lk_arch_curr_cpu_num() == 0);
 
   /* initialize the run queues */
   for (i = 0; i < NUM_PRIORITIES; i++)
@@ -869,10 +869,10 @@ void thread_become_idle(void) {
   /* mark ourself as idle */
   t->priority = IDLE_PRIORITY;
   t->flags |= THREAD_FLAG_IDLE;
-  thread_set_pinned_cpu(t, arch_curr_cpu_num());
+  thread_set_pinned_cpu(t, lk_arch_curr_cpu_num());
 
   mp_set_curr_cpu_active(true);
-  mp_set_cpu_idle(arch_curr_cpu_num());
+  mp_set_cpu_idle(lk_arch_curr_cpu_num());
 
   /* enable interrupts and start the scheduler */
   arch_enable_ints();
@@ -887,7 +887,7 @@ void thread_secondary_cpu_init_early(void) {
   DEBUG_ASSERT(arch_ints_disabled());
 
   /* construct an idle thread to cover our cpu */
-  uint cpu = arch_curr_cpu_num();
+  uint cpu = lk_arch_curr_cpu_num();
   thread_t *t = idle_thread(cpu);
 
   char name[16];
@@ -912,7 +912,7 @@ void thread_secondary_cpu_init_early(void) {
 }
 
 void thread_secondary_cpu_entry(void) {
-  uint cpu = arch_curr_cpu_num();
+  uint cpu = lk_arch_curr_cpu_num();
   thread_t *t = get_current_thread();
   t->priority = IDLE_PRIORITY;
 
