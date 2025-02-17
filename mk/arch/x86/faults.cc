@@ -24,7 +24,7 @@
 #define INT_MF 0x10
 #define INT_XM 0x13
 
-extern enum handler_return platform_irq(x86_iframe_t *frame);
+extern "C" enum handler_return platform_irq(x86_iframe_t *frame);
 
 static void dump_fault_frame(x86_iframe_t *frame) {
 #if ARCH_X86_32
@@ -144,7 +144,7 @@ static void x86_pfe_handler(x86_iframe_t *frame) {
 }
 
 /* top level x86 exception handler for most exceptions and irqs, called from asm */
-void x86_exception_handler(x86_iframe_t *frame);
+extern "C" void x86_exception_handler(x86_iframe_t *frame);
 void x86_exception_handler(x86_iframe_t *frame) {
   // get the current vector
   unsigned int vector = frame->vector;

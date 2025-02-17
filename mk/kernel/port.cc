@@ -146,7 +146,7 @@ status_t port_create(const char *name, port_mode_t mode, port_t *port) {
   THREAD_UNLOCK(state1);
 
   // not found, create the write port and the circular buffer.
-  wp = calloc(1, sizeof(write_port_t));
+  wp = (write_port_t *)calloc(1, sizeof(write_port_t));
   if (!wp)
     return ERR_NO_MEMORY;
 
@@ -176,7 +176,7 @@ status_t port_open(const char *name, void *ctx, port_t *port) {
     return ERR_INVALID_ARGS;
 
   // assume success; create the read port and buffer now.
-  read_port_t *rp = calloc(1, sizeof(read_port_t));
+  read_port_t *rp = (read_port_t *)calloc(1, sizeof(read_port_t));
   if (!rp)
     return ERR_NO_MEMORY;
 
@@ -252,7 +252,7 @@ status_t port_group(port_t *ports, size_t count, port_t *group) {
     return ERR_INVALID_ARGS;
 
   // assume success; create port group now.
-  port_group_t *pg = calloc(1, sizeof(port_group_t));
+  port_group_t *pg = (port_group_t *)calloc(1, sizeof(port_group_t));
   if (!pg)
     return ERR_NO_MEMORY;
 

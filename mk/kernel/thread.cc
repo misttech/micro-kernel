@@ -103,10 +103,11 @@ static void wakeup_cpu_for_thread(thread_t *t) {
   /* Wake up the core to which this thread is pinned
    * or wake up all if thread is unpinned */
   int pinned_cpu = thread_pinned_cpu(t);
-  if (pinned_cpu < 0)
+  if (pinned_cpu < 0) {
     mp_reschedule(MP_CPU_ALL_BUT_LOCAL, 0);
-  else
+  } else {
     mp_reschedule(1U << pinned_cpu, 0);
+  }
 }
 
 static void init_thread_struct(thread_t *t, const char *name) {
@@ -146,11 +147,10 @@ static void init_thread_struct(thread_t *t, const char *name) {
 thread_t *thread_create_etc(thread_t *t, const char *name, thread_start_routine entry, void *arg,
                             int priority, void *stack, size_t stack_size) {
   unsigned int flags = 0;
-
   if (!t) {
-    t = malloc(sizeof(thread_t));
+    t = static_cast<thread_t *>(malloc(sizeof(thread_t)));
     if (!t)
-      return NULL;
+      return nullptr;
     flags |= THREAD_FLAG_FREE_STRUCT;
   }
 
@@ -160,7 +160,7 @@ thread_t *thread_create_etc(thread_t *t, const char *name, thread_start_routine 
   t->arg = arg;
   t->priority = priority;
   t->state = THREAD_SUSPENDED;
-  t->blocking_wait_queue = NULL;
+  t->blocking_wait_queue = nullptr;
   t->wait_queue_block_ret = NO_ERROR;
   thread_set_curr_cpu(t, -1);
 
@@ -168,7 +168,7 @@ thread_t *thread_create_etc(thread_t *t, const char *name, thread_start_routine 
   wait_queue_init(&t->retcode_wait_queue);
 
 #if WITH_KERNEL_VM
-  t->aspace = NULL;
+  t->aspace = nullptr;
 #endif
 
   /* create the stack */
@@ -181,7 +181,7 @@ thread_t *thread_create_etc(thread_t *t, const char *name, thread_start_routine 
     if (!t->stack) {
       if (flags & THREAD_FLAG_FREE_STRUCT)
         free(t);
-      return NULL;
+      return nullptr;
     }
     flags |= THREAD_FLAG_FREE_STACK;
 #if THREAD_STACK_BOUNDS_CHECK
@@ -192,7 +192,7 @@ thread_t *thread_create_etc(thread_t *t, const char *name, thread_start_routine 
   }
 #if THREAD_STACK_HIGHWATER
   if (flags & THREAD_FLAG_DEBUG_STACK_BOUNDS_CHECK) {
-    memset(t->stack + THREAD_STACK_PADDING_SIZE, STACK_DEBUG_BYTE,
+    memset(static_cast<uint8_t *>(t->stack) + THREAD_STACK_PADDING_SIZE, STACK_DEBUG_BYTE,
            stack_size - THREAD_STACK_PADDING_SIZE);
   } else {
     memset(t->stack, STACK_DEBUG_BYTE, stack_size);
@@ -951,7 +951,7 @@ static size_t thread_stack_used(thread_t *t) {
   size_t stack_size;
   size_t i;
 
-  stack_base = t->stack;
+  stack_base = (uint8_t *)t->stack;
   stack_size = t->stack_size;
 
   for (i = 0; i < stack_size; i++) {
@@ -1215,7 +1215,7 @@ int wait_queue_wake_all(wait_queue_t *wait, bool reschedule, status_t wait_queue
     DEBUG_ASSERT(t->state == THREAD_BLOCKED);
     t->state = THREAD_READY;
     t->wait_queue_block_ret = wait_queue_error;
-    t->blocking_wait_queue = NULL;
+    t->blocking_wait_queue = nullptr;
     int pinned_cpu = thread_pinned_cpu(t);
     if (pinned_cpu < 0) {
       /* assumes MP_CPU_ALL_BUT_LOCAL is defined as all bits on */

@@ -20,7 +20,7 @@
 #include <lk/err.h>
 
 void sem_init(semaphore_t *sem, unsigned int value) {
-  *sem = (semaphore_t)SEMAPHORE_INITIAL_VALUE(*sem, value);
+  *sem = (semaphore_t)SEMAPHORE_INITIAL_VALUE(*sem, static_cast<int>(value));
 }
 
 void sem_destroy(semaphore_t *sem) {

@@ -1,4 +1,3 @@
-
 // Copyright 2025 Mist Tecnologia Ltda
 // Copyright (c) 2008-2014 Travis Geiselbrecht
 // Copyright (c) 2012 Shantanu Gupta
@@ -55,7 +54,7 @@ __END_CDECLS
 
 #ifdef __cplusplus
 
-#include <lk/cpp.h>
+#include <fbl/macros.h>
 
 // C++ wrapper object
 class Mutex {

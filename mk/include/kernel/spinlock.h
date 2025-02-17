@@ -1,10 +1,9 @@
-/*
- * Copyright (c) 2014 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
+// Copyright 2025 Mist Tecnologia Ltda
+// Copyright (c) 2014 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
 #ifndef MK_INCLUDE_KERNEL_SPINLOCK_H_
 #define MK_INCLUDE_KERNEL_SPINLOCK_H_
@@ -63,7 +62,7 @@ __END_CDECLS
 
 #include <assert.h>
 
-#include <lk/cpp.h>
+#include <fbl/macros.h>
 
 // C++ wrapper around a C spinlock_t
 class SpinLock {
@@ -138,6 +137,5 @@ class AutoSpinLockNoIrqSave {
 };
 
 #endif  // __cplusplus
-
 
 #endif  // MK_INCLUDE_KERNEL_SPINLOCK_H_

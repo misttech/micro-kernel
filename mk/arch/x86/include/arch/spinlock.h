@@ -1,11 +1,12 @@
-/*
- * Copyright (c) 2015 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
-#pragma once
+// Copyright 2025 Mist Tecnologia Ltda
+// Copyright (c) 2015 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
+
+#ifndef MK_ARCH_X86_INCLUDE_ARCH_SPINLOCK_H_
+#define MK_ARCH_X86_INCLUDE_ARCH_SPINLOCK_H_
 
 #include <stdbool.h>
 
@@ -43,3 +44,5 @@ static inline void arch_interrupt_restore(spin_lock_saved_state_t old_state,
                                           spin_lock_save_flags_t flags) {
   x86_restore_flags(old_state);
 }
+
+#endif  // MK_ARCH_X86_INCLUDE_ARCH_SPINLOCK_H_
