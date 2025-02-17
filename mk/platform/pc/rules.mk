@@ -4,29 +4,25 @@ MODULE := $(LOCAL_DIR)
 
 # two implementations, modern and legacy
 # legacy implies older hardware, pre pentium, pre pci
-CPU ?= modern
+CPU = modern
 
-MODULE_DEPS += \
-    lib/acpi_lite \
-    lib/bio \
-    lib/cbuf
+MODULE_DEPS += lib/acpi_lite 
+MODULE_DEPS += lib/bio 
+MODULE_DEPS += lib/cbuf
 
-ifneq ($(CPU),legacy)
 MODULE_DEPS += dev/bus/pci/drivers
-endif
 
-MODULE_SRCS += \
-    $(LOCAL_DIR)/cmos.c \
-    $(LOCAL_DIR)/console.c \
-    $(LOCAL_DIR)/debug.c \
-    $(LOCAL_DIR)/ide.c \
-    $(LOCAL_DIR)/interrupts.c \
-    $(LOCAL_DIR)/keyboard.c \
-    $(LOCAL_DIR)/lapic.c \
-    $(LOCAL_DIR)/pic.c \
-    $(LOCAL_DIR)/platform.c \
-    $(LOCAL_DIR)/timer.c \
-    $(LOCAL_DIR)/uart.c \
+MODULE_SRCS += $(LOCAL_DIR)/cmos.cc
+MODULE_SRCS += $(LOCAL_DIR)/console.cc
+MODULE_SRCS += $(LOCAL_DIR)/debug.cc
+MODULE_SRCS += $(LOCAL_DIR)/ide.c
+MODULE_SRCS += $(LOCAL_DIR)/interrupts.cc
+MODULE_SRCS += $(LOCAL_DIR)/keyboard.cc
+MODULE_SRCS += $(LOCAL_DIR)/lapic.cc
+MODULE_SRCS += $(LOCAL_DIR)/pic.cc
+MODULE_SRCS += $(LOCAL_DIR)/platform.cc
+MODULE_SRCS += $(LOCAL_DIR)/timer.cc
+MODULE_SRCS += $(LOCAL_DIR)/uart.cc
 
 LK_HEAP_IMPLEMENTATION ?= cmpctmalloc
 

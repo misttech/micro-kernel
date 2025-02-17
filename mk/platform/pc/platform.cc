@@ -129,7 +129,8 @@ static status_t platform_parse_multiboot_info(size_t *found_mem_arenas) {
 
   /* bump the multiboot pointer up to the kernel mapping */
   /* TODO: test that it's within range of the kernel mapping */
-  const multiboot_info_t *multiboot_info = (void *)((uintptr_t)_multiboot_info + KERNEL_BASE);
+  const multiboot_info_t *multiboot_info =
+      reinterpret_cast<const multiboot_info_t *>((uintptr_t)_multiboot_info + KERNEL_BASE);
 
   dprintf(SPEW, "\tflags %#x\n", multiboot_info->flags);
 
@@ -154,7 +155,7 @@ static status_t platform_parse_multiboot_info(size_t *found_mem_arenas) {
   // more modern multiboot mmap array
   if (multiboot_info->flags & MB_INFO_MMAP) {
     const memory_map_t *mmap = (const memory_map_t *)(uintptr_t)multiboot_info->mmap_addr;
-    mmap = (void *)((uintptr_t)mmap + KERNEL_BASE);
+    mmap = (const memory_map_t *)((uintptr_t)mmap + KERNEL_BASE);
 
     dprintf(SPEW, "PC: multiboot memory map, length %u:\n", multiboot_info->mmap_length);
     parse_multiboot_mmap(mmap, multiboot_info->mmap_length, found_mem_arenas);
@@ -185,8 +186,10 @@ void platform_early_init(void) {
   /* get the debug output working */
   platform_init_debug_early();
 
+#if WITH_LEGACY_PC_CONSOLE
   /* get the text console working */
   platform_init_console();
+#endif
 
   /* initialize the interrupt controller */
   platform_init_interrupts();
@@ -220,21 +223,24 @@ void platform_early_init(void) {
 }
 
 void local_apic_callback(const void *_entry, size_t entry_len) {
-  const struct acpi_madt_local_apic_entry *entry = _entry;
+  const struct acpi_madt_local_apic_entry *entry =
+      reinterpret_cast<const struct acpi_madt_local_apic_entry *>(_entry);
 
   printf("\tLOCAL APIC id %d, processor id %d, flags %#x\n", entry->apic_id, entry->processor_id,
          entry->flags);
 }
 
 void io_apic_callback(const void *_entry, size_t entry_len) {
-  const struct acpi_madt_io_apic_entry *entry = _entry;
+  const struct acpi_madt_io_apic_entry *entry =
+      reinterpret_cast<const struct acpi_madt_io_apic_entry *>(_entry);
 
   printf("\tIO APIC id %d, address %#x gsi base %u\n", entry->io_apic_id, entry->io_apic_address,
          entry->global_system_interrupt_base);
 }
 
 void int_source_override_callback(const void *_entry, size_t entry_len) {
-  const struct acpi_madt_int_source_override_entry *entry = _entry;
+  const struct acpi_madt_int_source_override_entry *entry =
+      reinterpret_cast<const struct acpi_madt_int_source_override_entry *>(_entry);
 
   printf("\tINT OVERRIDE bus %u, source %u, gsi %u, flags %#x\n", entry->bus, entry->source,
          entry->global_sys_interrupt, entry->flags);
@@ -264,7 +270,8 @@ void platform_init(void) {
         (const struct acpi_mcfg_table *)acpi_get_table_by_sig(ACPI_MCFG_SIG);
     if (table) {
       if (table->header.length >= sizeof(*table) + sizeof(struct acpi_mcfg_entry)) {
-        const struct acpi_mcfg_entry *entry = (const void *)(table + 1);
+        const struct acpi_mcfg_entry *entry =
+            reinterpret_cast<const struct acpi_mcfg_entry *>(table + 1);
         printf("PCI MCFG: segment %#hx bus [%hhu...%hhu] address %#llx\n", entry->segment,
                entry->start_bus, entry->end_bus, entry->base_address);
 
@@ -292,8 +299,9 @@ void platform_init(void) {
 }
 
 #if WITH_LIB_MINIP
+extern "C" status_t e1000_register_with_minip(void);
+
 void _start_minip(uint level) {
-  extern status_t e1000_register_with_minip(void);
   status_t err = e1000_register_with_minip();
   if (err == NO_ERROR) {
     minip_start_dhcp();

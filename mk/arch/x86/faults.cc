@@ -24,7 +24,7 @@
 #define INT_MF 0x10
 #define INT_XM 0x13
 
-extern "C" enum handler_return platform_irq(x86_iframe_t *frame);
+extern enum handler_return platform_irq(x86_iframe_t *frame);
 
 static void dump_fault_frame(x86_iframe_t *frame) {
 #if ARCH_X86_32
