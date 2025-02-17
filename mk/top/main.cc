@@ -87,30 +87,51 @@ void lk_main(ulong arg0, ulong arg1, ulong arg2, ulong arg3) {
   platform_early_init();
 
   // do any super early target initialization
-  lk_primary_cpu_init_level(LK_INIT_LEVEL_PLATFORM_EARLY, LK_INIT_LEVEL_TARGET_EARLY - 1);
+  lk_primary_cpu_init_level(LK_INIT_LEVEL_PLATFORM_EARLY, LK_INIT_LEVEL_ARCH_PREVM - 1);
   target_early_init();
 
-#if WITH_SMP
-  dprintf(INFO, "\nwelcome to lk/MP\n\n");
-#else
-  dprintf(INFO, "\nwelcome to lk\n\n");
-#endif
+  // At this point, the kernel command line and serial are set up.
+
+  dprintf(INFO, "\nwelcome to mk\n\n");
+
+  // dprintf(SPEW, "KASLR: Kernel image at %p\n", __executable_start);
+
   dprintf(INFO, "boot args 0x%lx 0x%lx 0x%lx 0x%lx\n", lk_boot_args[0], lk_boot_args[1],
           lk_boot_args[2], lk_boot_args[3]);
 
+  // Perform any additional arch and platform-specific set up that needs to be done
+  // before virtual memory or the heap are set up.
+  dprintf(SPEW, "initializing vm pre-heap\n");
+  // arch_prevm_init();
+  lk_primary_cpu_init_level(LK_INIT_LEVEL_ARCH_PREVM, LK_INIT_LEVEL_PLATFORM_PREVM - 1);
+  dprintf(SPEW, "initializing platform pre-vm\n");
+  // platform_prevm_init();
+  lk_primary_cpu_init_level(LK_INIT_LEVEL_PLATFORM_PREVM, LK_INIT_LEVEL_VM_PREHEAP - 1);
+
+  // perform basic virtual memory setup
+  dprintf(SPEW, "initializing vm pre-heap\n");
+  // vm_init_preheap();
+  lk_primary_cpu_init_level(LK_INIT_LEVEL_VM_PREHEAP, LK_INIT_LEVEL_HEAP - 1);
+
   // bring up the kernel heap
-  lk_primary_cpu_init_level(LK_INIT_LEVEL_TARGET_EARLY, LK_INIT_LEVEL_HEAP - 1);
   dprintf(SPEW, "initializing heap\n");
   heap_init();
+  lk_primary_cpu_init_level(LK_INIT_LEVEL_HEAP, LK_INIT_LEVEL_VM - 1);
 
-  // initialize the kernel
-  lk_primary_cpu_init_level(LK_INIT_LEVEL_HEAP, LK_INIT_LEVEL_KERNEL - 1);
+  // enable virtual memory
+  dprintf(SPEW, "initializing vm\n");
+  // vm_init();
+  lk_primary_cpu_init_level(LK_INIT_LEVEL_VM, LK_INIT_LEVEL_TOPOLOGY - 1);
+
+  // initialize other parts of the kernel
+  dprintf(SPEW, "initializing kernel\n");
   kernel_init();
-
   lk_primary_cpu_init_level(LK_INIT_LEVEL_KERNEL, LK_INIT_LEVEL_THREADING - 1);
 
-  // create a thread to complete system initialization
+  // Mark the current CPU as being active, then create a thread to complete
+  // system initialization
   dprintf(SPEW, "creating bootstrap completion thread\n");
+  // Scheduler::SetCurrCpuActive(true);
   thread_t *t =
       thread_create("bootstrap2", &bootstrap2, NULL, DEFAULT_PRIORITY, DEFAULT_STACK_SIZE);
   thread_set_pinned_cpu(t, 0);
@@ -128,27 +149,32 @@ static int bootstrap2(void *arg) {
 
   lk_primary_cpu_init_level(LK_INIT_LEVEL_THREADING, LK_INIT_LEVEL_ARCH - 1);
   arch_init();
-
-  // initialize the rest of the platform
-  dprintf(SPEW, "initializing platform\n");
   lk_primary_cpu_init_level(LK_INIT_LEVEL_ARCH, LK_INIT_LEVEL_PLATFORM - 1);
-  platform_init();
 
-  // initialize the target
-  dprintf(SPEW, "initializing target\n");
-  lk_primary_cpu_init_level(LK_INIT_LEVEL_PLATFORM, LK_INIT_LEVEL_TARGET - 1);
+  dprintf(SPEW, "initializing platform\n");
+  platform_init();
+  lk_primary_cpu_init_level(LK_INIT_LEVEL_PLATFORM, LK_INIT_LEVEL_ARCH_LATE - 1);
+
+  // At this point, other cores in the system have been started (though may
+  // not yet be online).  Signal that the boot CPU is ready.
+  // mp_signal_curr_cpu_ready();
+
+  // Perform per-CPU set up on the boot CPU.
+  dprintf(SPEW, "initializing late arch\n");
   target_init();
+  // arch_late_init_percpu();
+  lk_primary_cpu_init_level(LK_INIT_LEVEL_ARCH_LATE, LK_INIT_LEVEL_USER - 1);
 
   // Give the kernel shell an opportunity to run. If it exits this function, continue booting.
   kernel_shell_init();
 
   dprintf(SPEW, "initializing apps\n");
-  lk_primary_cpu_init_level(LK_INIT_LEVEL_TARGET, LK_INIT_LEVEL_APPS - 1);
   apps_init();
 
   dprintf(SPEW, "moving to last init level\n");
-  lk_primary_cpu_init_level(LK_INIT_LEVEL_APPS, LK_INIT_LEVEL_LAST);
+  lk_primary_cpu_init_level(LK_INIT_LEVEL_USER, LK_INIT_LEVEL_LAST);
 
+  // timeline_init.Set(current_mono_ticks());
   return 0;
 }
 

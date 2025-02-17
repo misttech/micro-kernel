@@ -300,5 +300,5 @@ void _start_minip(uint level) {
   }
 }
 
-LK_INIT_HOOK(start_minip, _start_minip, LK_INIT_LEVEL_APPS - 1);
+LK_INIT_HOOK(start_minip, _start_minip, LK_INIT_LEVEL_USER - 1);
 #endif
