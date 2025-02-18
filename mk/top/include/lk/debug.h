@@ -25,5 +25,4 @@ static inline FILE *get_panic_fd(void) { return NULL; }
 
 __END_CDECLS
 
-
 #endif  // TOP_INCLUDE_LK_DEBUG_H_

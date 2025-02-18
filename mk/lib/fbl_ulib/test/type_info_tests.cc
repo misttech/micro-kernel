@@ -40,7 +40,7 @@ TEST(TypeInfoTest, Basic) {
   char array[10];
   EXPECT_STREQ(fbl::TypeInfo<decltype(array)>::Name(), "char[10]");
 
-  char(&array_reference)[10] = array;
+  char (&array_reference)[10] = array;
   EXPECT_STREQ(fbl::TypeInfo<decltype(array_reference)>::Name(), "char (&)[10]");
 }
 

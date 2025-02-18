@@ -30,7 +30,7 @@ CHECK_ONLY=0
 INFO=0
 VERBOSE=0
 
-while getopts cvh FLAG; do
+while getopts civh FLAG; do
     case $FLAG in
         c) CHECK_ONLY=1;;
         i) INFO=1;;
@@ -80,7 +80,7 @@ FILES=$(find . \
     \) \
     -not -path "./build-*/*" \
     -not -path "./prebuilt/*" \
-    -not -path "./external/*" \
+    -not -path "./third_party/*" \
     -not -path "./.*/*")
 
 FAILED=""

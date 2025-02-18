@@ -4,18 +4,16 @@
 
 #pragma once
 
-#include <stdint.h>
 #include <lib/zircon-internal/fnv1hash.h>
+#include <stdint.h>
 
 // Xorshift32 and Xorshift64
 //
 // https://www.jstatsoft.org/article/view/v008i14
 // https://en.wikipedia.org/wiki/Xorshift
 
-#define RAND32SEED(n) \
-  { (n) }
-#define RAND63SEED(n) \
-  { (n) }
+#define RAND32SEED(n) {(n)}
+#define RAND63SEED(n) {(n)}
 
 typedef struct {
   uint32_t n;

@@ -12,8 +12,8 @@
 namespace ktl {
 
 using std::pair;
-using std::piecewise_construct_t;
 using std::piecewise_construct;
+using std::piecewise_construct_t;
 
 }  // namespace ktl
 

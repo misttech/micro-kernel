@@ -277,9 +277,9 @@ struct ContainableBaseClassEnumerator<Containable<PtrType, Options, TagType>, Re
   using ContainableTypes = decltype(std::tuple_cat(
       std::declval<std::tuple<Containable<PtrType, Options, TagType>>>(),
       std::declval<typename ContainableBaseClassEnumerator<Rest...>::ContainableTypes>()));
-  using TagTypes = decltype(
-      std::tuple_cat(std::declval<std::tuple<TagType>>(),
-                     std::declval<typename ContainableBaseClassEnumerator<Rest...>::TagTypes>()));
+  using TagTypes = decltype(std::tuple_cat(
+      std::declval<std::tuple<TagType>>(),
+      std::declval<typename ContainableBaseClassEnumerator<Rest...>::TagTypes>()));
 
   static constexpr size_t BaseClassCount =
       1 + ContainableBaseClassEnumerator<Rest...>::BaseClassCount;

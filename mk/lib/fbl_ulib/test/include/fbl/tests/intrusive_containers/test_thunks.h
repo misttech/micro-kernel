@@ -94,12 +94,10 @@ struct TestThunks {
 // Macro which declare static storage for things like custom deleters for each
 // tested container type.  If new static storage is needed for testing custom
 // pointer type or custom deleters, it should be declared here.
-#define DECLARE_TEST_STORAGE(_container_type)                                              \
-  template <>                                                                              \
-  std::atomic<size_t>                                                                      \
-      TestCustomDeleter<UniquePtrCustomDeleter##_container_type##TestObj>::delete_count_ { \
-    0                                                                                      \
-  }
+#define DECLARE_TEST_STORAGE(_container_type) \
+  template <>                                 \
+  std::atomic<size_t>                         \
+      TestCustomDeleter<UniquePtrCustomDeleter##_container_type##TestObj>::delete_count_{0}
 
 #define DEFINE_TEST_OBJECTS(_container_type)                             \
   DEFINE_TEST_OBJECT(_container_type, Unmanaged, TestObj);               \

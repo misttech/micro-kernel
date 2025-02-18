@@ -28,10 +28,9 @@ static inline void platform_dputc(char c) { platform_dputs_thread(&c, 1); }
 // The "p" variants should be available even if the system has panicked.
 
 // Polls for a character.  Returns 0 on success, negative value on error.
-int platform_pgetc(char *c, bool wait);
+int platform_pgetc(char* c, bool wait);
 
 void platform_pputc(char c);
-
 
 __END_CDECLS
 

@@ -81,15 +81,9 @@ class __OWNER(T) RingBuffer {
   }
 
  private:
-  inline T* GetIndex(uint32_t index) {
-    return reinterpret_cast<T*>(data_) + index;
-  }
-  static inline uint32_t Previous(uint32_t index) {
-    return (index == 0) ? (N - 1) : (index - 1);
-  }
-  static inline uint32_t Next(uint32_t index) {
-    return (index == (N - 1)) ? 0 : (index + 1);
-  }
+  inline T* GetIndex(uint32_t index) { return reinterpret_cast<T*>(data_) + index; }
+  static inline uint32_t Previous(uint32_t index) { return (index == 0) ? (N - 1) : (index - 1); }
+  static inline uint32_t Next(uint32_t index) { return (index == (N - 1)) ? 0 : (index + 1); }
   alignas(alignof(T)) uint8_t data_[sizeof(T) * N];
 
   // |head_| is the index offset to the oldest element in the buffer.

@@ -60,7 +60,7 @@ struct template_matcher {
 };
 
 template <typename T, template <typename...> class U, typename = bool>
-struct is_match : decltype(template_matcher<U>::match(std::declval<T>())) {};
+struct is_match : decltype(template_matcher<U>::match(std::declval<T>())){};
 
 template <typename T, template <typename...> class U>
 struct is_match<T, U, requires_conditions<std::is_void<T>>> : std::false_type {};

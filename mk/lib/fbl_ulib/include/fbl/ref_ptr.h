@@ -74,12 +74,12 @@ class RefPtr final {
   // @see the notes in unique_ptr.h
   template <typename U, typename = std::enable_if_t<std::is_convertible_v<U*, T*>>>
   RefPtr(const RefPtr<U>& r) : RefPtr(r.ptr_) {
-    static_assert((std::is_class_v<T> == std::is_class_v<U>)&&(!std::is_class_v<T> ||
-                                                               std::has_virtual_destructor_v<T> ||
-                                                               std::is_same_v<T, const U>),
-                  "Cannot convert RefPtr<U> to RefPtr<T> unless neither T "
-                  "nor U are class/struct types, or T has a virtual destructor,"
-                  "or T == const U.");
+    static_assert(
+        (std::is_class_v<T> == std::is_class_v<U>) &&
+            (!std::is_class_v<T> || std::has_virtual_destructor_v<T> || std::is_same_v<T, const U>),
+        "Cannot convert RefPtr<U> to RefPtr<T> unless neither T "
+        "nor U are class/struct types, or T has a virtual destructor,"
+        "or T == const U.");
   }
 
   // Assignment
@@ -104,12 +104,12 @@ class RefPtr final {
   // @see the notes in RefPtr.h
   template <typename U, typename = std::enable_if_t<std::is_convertible_v<U*, T*>>>
   RefPtr(RefPtr<U>&& r) : ptr_(r.ptr_) {
-    static_assert((std::is_class_v<T> == std::is_class_v<U>)&&(!std::is_class_v<T> ||
-                                                               std::has_virtual_destructor_v<T> ||
-                                                               std::is_same_v<T, const U>),
-                  "Cannot convert RefPtr<U> to RefPtr<T> unless neither T "
-                  "nor U are class/struct types, or T has a virtual destructor,"
-                  "or T == const U");
+    static_assert(
+        (std::is_class_v<T> == std::is_class_v<U>) &&
+            (!std::is_class_v<T> || std::has_virtual_destructor_v<T> || std::is_same_v<T, const U>),
+        "Cannot convert RefPtr<U> to RefPtr<T> unless neither T "
+        "nor U are class/struct types, or T has a virtual destructor,"
+        "or T == const U");
 
     r.ptr_ = nullptr;
   }

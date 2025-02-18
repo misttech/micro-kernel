@@ -148,8 +148,7 @@ void _clear(char c, char attr, int x1, int y1, int x2, int y2) {
 }
 
 void clear(void) {
-    _clear(' ', curr_attr, view_window.x1, view_window.y1, view_window.x2,
-           view_window.y2);
+  _clear(' ', curr_attr, view_window.x1, view_window.y1, view_window.x2, view_window.y2);
 }
 
 void _scroll(char attr, int x1, int y1, int x2, int y2) {

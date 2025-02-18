@@ -5,15 +5,16 @@
 #ifndef FBL_VECTOR_H_
 #define FBL_VECTOR_H_
 
-#include <new>
 #include <string.h>
+#include <zircon/assert.h>
+
+#include <initializer_list>
+#include <new>
+#include <type_traits>
+#include <utility>
 
 #include <fbl/alloc_checker.h>
 #include <fbl/macros.h>
-#include <initializer_list>
-#include <type_traits>
-#include <utility>
-#include <zircon/assert.h>
 
 namespace fbl {
 

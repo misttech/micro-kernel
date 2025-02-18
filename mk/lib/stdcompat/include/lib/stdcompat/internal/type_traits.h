@@ -51,30 +51,30 @@ static constexpr bool invoke_pmd_other =
 // Just internal forward declarations for SFINAE; cpp20::invoke is defined in
 // lib/stdcompat/functional.h
 template <typename MemFn, typename Class, typename T, typename... Args>
-constexpr auto invoke(MemFn Class::*f, T&& obj, Args&&... args)
+constexpr auto invoke(MemFn Class::* f, T&& obj, Args&&... args)
     -> std::enable_if_t<invoke_pmf_base<MemFn, Class, T>,
                         decltype((std::forward<T>(obj).*f)(std::forward<Args>(args)...))>;
 
 template <typename MemFn, typename Class, typename T, typename... Args>
-constexpr auto invoke(MemFn Class::*f, T&& obj, Args&&... args)
+constexpr auto invoke(MemFn Class::* f, T&& obj, Args&&... args)
     -> std::enable_if_t<invoke_pmf_refwrap<MemFn, Class, T>,
                         decltype((obj.get().*f)(std::forward<Args>(args)...))>;
 
 template <typename MemFn, typename Class, typename T, typename... Args>
-constexpr auto invoke(MemFn Class::*f, T&& obj, Args&&... args)
+constexpr auto invoke(MemFn Class::* f, T&& obj, Args&&... args)
     -> std::enable_if_t<invoke_pmf_other<MemFn, Class, T>,
                         decltype(((*std::forward<T>(obj)).*f)(std::forward<Args>(args)...))>;
 
 template <typename MemObj, typename Class, typename T>
-constexpr auto invoke(MemObj Class::*f, T&& obj)
+constexpr auto invoke(MemObj Class::* f, T&& obj)
     -> std::enable_if_t<invoke_pmd_base<MemObj, Class, T>, decltype(std::forward<T>(obj).*f)>;
 
 template <typename MemObj, typename Class, typename T>
-constexpr auto invoke(MemObj Class::*f, T&& obj)
+constexpr auto invoke(MemObj Class::* f, T&& obj)
     -> std::enable_if_t<invoke_pmd_refwrap<MemObj, Class, T>, decltype(obj.get().*f)>;
 
 template <typename MemObj, typename Class, typename T>
-constexpr auto invoke(MemObj Class::*f, T&& obj)
+constexpr auto invoke(MemObj Class::* f, T&& obj)
     -> std::enable_if_t<invoke_pmd_other<MemObj, Class, T>, decltype((*std::forward<T>(obj)).*f)>;
 
 template <typename F, typename... Args>

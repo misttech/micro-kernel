@@ -26,8 +26,7 @@ typedef struct {
 static const format_size_test_case_t format_size_test_cases[] = {
 // Declare a test case that uses a unit of 0,
 // picking a natural unit for the size.
-#define TC0(i, o) \
-  { .input = i, .unit = 0, .expected_output = o }
+#define TC0(i, o) {.input = i, .unit = 0, .expected_output = o}
 
     // Whole multiples don't print decimals,
     // and always round up to their largest unit.
@@ -87,8 +86,7 @@ static const format_size_test_case_t format_size_test_cases[] = {
     TC0(18389097998479209268u, "16.0E"),  // 18389097998479209268 / 1E == ~15.9500000000000000016
 
 // Declare a test case fixed to the specified unit.
-#define TCF(i, u, o) \
-  { .input = i, .unit = u, .expected_output = o }
+#define TCF(i, u, o) {.input = i, .unit = u, .expected_output = o}
 
     // When fixed, we can see a lot more digits.
     TCF(UINT64_MAX, 'B', "18446744073709551615B"),

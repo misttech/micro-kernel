@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <lib/zircon-internal/device/cpu-trace/perf-mon.h>
 #include <lib/zircon-internal/device/cpu-trace/common-pm.h>
+#include <lib/zircon-internal/device/cpu-trace/perf-mon.h>
 
 // MSRs
 
@@ -95,17 +95,17 @@
 
 // Bits in the IA32_FIXED_CTR_CTRL MSR.
 
-#define IA32_FIXED_CTR_CTRL_EN_SHIFT(ctr) (0 + (ctr)*4)
+#define IA32_FIXED_CTR_CTRL_EN_SHIFT(ctr) (0 + (ctr) * 4)
 #define IA32_FIXED_CTR_CTRL_EN_LEN (2)
 #define IA32_FIXED_CTR_CTRL_EN_MASK(ctr) \
   IPM_MSR_MASK(IA32_FIXED_CTR_CTRL_EN_LEN, IA32_FIXED_CTR_CTRL_EN_SHIFT(ctr))
 
-#define IA32_FIXED_CTR_CTRL_ANY_SHIFT(ctr) (2 + (ctr)*4)
+#define IA32_FIXED_CTR_CTRL_ANY_SHIFT(ctr) (2 + (ctr) * 4)
 #define IA32_FIXED_CTR_CTRL_ANY_LEN (1)
 #define IA32_FIXED_CTR_CTRL_ANY_MASK(ctr) \
   IPM_MSR_MASK(IA32_FIXED_CTR_CTRL_ANY_LEN, IA32_FIXED_CTR_CTRL_ANY_SHIFT(ctr))
 
-#define IA32_FIXED_CTR_CTRL_PMI_SHIFT(ctr) (3 + (ctr)*4)
+#define IA32_FIXED_CTR_CTRL_PMI_SHIFT(ctr) (3 + (ctr) * 4)
 #define IA32_FIXED_CTR_CTRL_PMI_LEN (1)
 #define IA32_FIXED_CTR_CTRL_PMI_MASK(ctr) \
   IPM_MSR_MASK(IA32_FIXED_CTR_CTRL_PMI_LEN, IA32_FIXED_CTR_CTRL_PMI_SHIFT(ctr))

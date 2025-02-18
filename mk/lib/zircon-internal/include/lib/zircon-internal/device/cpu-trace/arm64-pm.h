@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include <lib/zircon-internal/device/cpu-trace/perf-mon.h>
 #include <lib/zircon-internal/device/cpu-trace/common-pm.h>
+#include <lib/zircon-internal/device/cpu-trace/perf-mon.h>
 
 #define ARM64_PMU_MASK(len, shift) (((1U << (len)) - 1) << (shift))
 

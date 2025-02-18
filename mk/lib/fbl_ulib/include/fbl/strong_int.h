@@ -120,7 +120,7 @@ class StrongInt {
   friend constexpr StrongInt operator op(const StrongInt& lhs, const StrongInt& rhs) { \
     return StrongInt(lhs.value_ op rhs.value_);                                        \
   }                                                                                    \
-  constexpr StrongInt& operator op##=(const StrongInt& other) {                        \
+  constexpr StrongInt& operator op##=(const StrongInt & other) {                       \
     value_ op## = other.value_;                                                        \
     return *this;                                                                      \
   }
@@ -137,7 +137,7 @@ class StrongInt {
   friend constexpr StrongInt operator op(const StrongInt& lhs, const T& rhs) { \
     return StrongInt(lhs.value_ op rhs);                                       \
   }                                                                            \
-  constexpr StrongInt& operator op##=(const T& other) {                        \
+  constexpr StrongInt& operator op##=(const T & other) {                       \
     value_ op## = other;                                                       \
     return *this;                                                              \
   }

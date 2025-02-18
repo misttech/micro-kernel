@@ -29,8 +29,9 @@ class __OWNER(T) InlineArray {
  public:
   InlineArray(fbl::AllocChecker* ac, size_t count)
       : count_(count),
-        ptr_(!count_ ? nullptr
-                     : is_inline() ? reinterpret_cast<T*>(inline_storage_) : new (ac) T[count_]) {
+        ptr_(!count_       ? nullptr
+             : is_inline() ? reinterpret_cast<T*>(inline_storage_)
+                           : new(ac) T[count_]) {
     if (is_inline()) {
       // Arm the AllocChecker even if we didn't allocate -- the user should check it
       // regardless!
