@@ -47,6 +47,9 @@
       "ms-python.black-formatter",
       "ms-python.vscode-pylance",
 
+      // The GN language server from Microsoft
+      "msedge-dev.gnls",
+
       // The official Clang LSP for C/C++.
       "llvm-vs-code-extensions.vscode-clangd",
 
@@ -69,6 +72,9 @@
       // Conflicts with vscode-clangd intellisense, and vscode-clangd is the
       // preferred C++ extension.
       "ms-vscode.cpptools",
+
+      // Redundant and conflicts with gnls, which is preferred.
+      "npclaudiu.vscode-gn",
     ]
   },
 

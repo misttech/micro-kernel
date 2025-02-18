@@ -1,0 +1,68 @@
+# Copyright 2025 Mist Tecnologia LTDA. All rights reserved.
+# Copyright 2016 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# This file directs GN to all the other key files.
+
+# The location of the build configuration file.
+buildconfig = "//build/config/BUILDCONFIG.gn"
+
+# The secondary source root is a parallel directory tree where GN build files are placed when they
+# can not be placed directly in the source tree, e.g. for third party source trees.
+secondary_source = "//build/secondary/"
+
+# https://fxbug.dev/363930634: set this to true once all actions in the build have been fixed,
+# of if we decide to create depfile parent directories in Ninja.
+no_stamp_files = true
+
+# Only instantiate targets in the default toolchain that are dependencies
+# of any target defined in //BUILD.gn, to significantly reduce the size of the
+# GN build graph and of the Ninja build plan.
+root_patterns = [
+  # All targets defined in //BUILD.gn
+  "//:*",
+]
+
+# The executable used to execute scripts in action and exec_script. This is often an interpreter for
+# projects that use a primary scripting language. In this project, we use several different kinds of
+# programs including scripts in different languages and native binaries. An empty script_executable
+# string tells GN to directly run the "script".
+script_executable = ""
+
+# Require Ninja 1.10.0 to support multiple outputs from a rule with a depfile.
+ninja_required_version = "1.10.0"
+
+# Enable checking for all source code we control.
+no_check_targets = [ "//third_party/*" ]
+
+# Use of `exec_script()` is discouraged for performance reasons.
+# See: https://fuchsia.dev/fuchsia-src/development/build/build_system/best_practices_templates#exec-script
+exec_script_whitelist = [
+  "//build/config/mac/mac_sdk.gni",
+  "//build/toolchain/default_concurrent_jobs.gni",
+  "//build/toolchain/mk/mk_toolchain.gni",
+  "//build/config/clang/clang_toolchain_info.gni",
+]
+
+check_system_includes = true
+
+# Causes a Clang compilation database to be written to $root_build_dir/compile_commands.json. It
+# will contain the compilation commands for these patterns and all of their recursive dependencies.
+export_compile_commands = [ "//:default" ]
+
+# These arguments override the default values for items in a declare_args block. "gn args" in turn
+# can override these.
+#
+# In general the value for a build arg in a declare_args block should be the default. In some
+# cases, a third party dependency will want different defaults for being built as part of Fuchsia
+# vs. being built standalone. In this case, the Fuchsia defaults should go here. There should be no
+# overrides here for values declared in the main Fuchsia repository.
+#
+# Important note for defining defaults: This file is executed before the BUILDCONFIG.gn file. That
+# file sets up the global variables like "target_os". This means that the default_args can not depend
+# on the platform, architecture, or other build parameters. If you really need that, the other repo
+# should define a flag that toggles on a behavior that implements the additional logic required by
+# Fuchsia to set the variables.
+default_args = {
+}

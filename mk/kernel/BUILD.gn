@@ -1,0 +1,51 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+source_set("kernel") {
+  sources = [
+    "debug.c",
+    "event.c",
+    "init.c",
+    "mp.c",
+    "mutex.c",
+    "port.c",
+    "semaphore.c",
+    "thread.c",
+    "timer.c",
+  ]
+
+  deps = [
+    "//mk/lib/fit",
+    "//mk/lib/heap",
+    "//mk/lib/ktl",
+    "//mk/lib/libc",
+    "//mk/kernel/vm",
+  ]
+
+  # TODO(https://fxbug.dev/42101573): This dependency is conditional because when built
+  # with GCC the kernel uses function scoped statics requiring dynamic
+  # initialization. Once https://fxbug.dev/42101573 is fixed, this dependency can be made
+  # unconditional.
+  if (!is_gcc) {
+    deps += [ "//mk/lib/cxxabi-dynamic-init" ]
+  }
+}
+
+source_set("tests") {
+  # TODO: testonly = true
+  sources = [
+    "mutex_tests.cc",
+    "semaphore_tests.cc",
+    "spinlock_tests.cc",
+    "thread_test.cc",
+  ]
+  deps = [
+    "//zircon/kernel/lib/arch",
+    "//zircon/kernel/lib/console",
+    "//zircon/kernel/lib/unittest",
+    "//zircon/system/ulib/zircon-internal",
+  ]
+}

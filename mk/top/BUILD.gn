@@ -1,0 +1,26 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/mk/mk_cpu.gni")
+
+source_set("top") {
+  sources = [
+    "debug.cc",
+    "init.cc",
+    "main.cc",
+  ]
+  deps = [
+    "//mk/app",
+    "//mk/arch",
+    "//mk/dev",
+    "//mk/kernel",
+    "//mk/platform",
+    "//mk/target",
+  ]
+
+  # TODO(https://fxbug.dev/374753100): Remove this after soft transition.
+  defines = [ "_LIBCPP_VERBOSE_ABORT_NOT_NOEXCEPT" ]
+}
