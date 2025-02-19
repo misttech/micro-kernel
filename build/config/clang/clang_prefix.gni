@@ -3,7 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-default_clang_prefix = "//prebuilt/downloads/clang/bin"
+default_clang_prefix = "//prebuilt/third_party/clang/${host_os}-${host_cpu}/bin"
 
 declare_args() {
   # The default clang toolchain provided by the prebuilt. 

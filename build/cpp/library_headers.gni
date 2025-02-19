@@ -152,7 +152,7 @@ template("library_headers") {
       if (!defined(public_deps)) {
         public_deps = []
       }
-      public_deps += [ "//zircon/system/public" ]
+      #public_deps += [ "//zircon/system/public" ]
     }
   }
 }

@@ -99,7 +99,7 @@ config("compiler") {
     if (is_gcc) {
       # This is predefined by Clang --target=*-fuchsia.
       # But the GCC toolchain is the generic --target=*-elf one.
-      defines += [ "__Fuchsia__" ]
+      #defines += [ "__Fuchsia__" ]
 
       # These are done by default in the Clang toolchain.
       cflags += [ "-fasynchronous-unwind-tables" ]

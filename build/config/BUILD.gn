@@ -877,7 +877,9 @@ config("symbol_no_undefined") {
 }
 
 config("shared_library_config") {
-  if (current_os == "linux") {
+  if (current_os == "mk") {
+    configs = [ "//build/config/mk:shared_library_config" ]
+  } else if (current_os == "linux") {
     cflags = [ "-fPIC" ]
   } else if (current_os == "mac") {
     configs = [ "//build/config/mac:mac_dynamic_flags" ]
@@ -887,7 +889,9 @@ config("shared_library_config") {
 config("executable_config") {
   configs = []
 
-  if (current_os == "mac") {
+  if (current_os == "mk") {
+    configs += [ "//build/config/mk:executable_config" ]
+  } else if (current_os == "mac") {
     configs += [
       "//build/config/mac:mac_dynamic_flags",
       "//build/config/mac:mac_executable_flags",
@@ -912,6 +916,10 @@ config("werror") {
 
     asmflags = [ "-Wa,--fatal-warnings" ]
     cflags += asmflags
+
+    if (current_os == "win") {
+      ldflags = [ "-Wl,/WX" ]
+    }
 
     # New versions of C++ often include new deprecations, so treat them as
     # warnings by default.

@@ -19,7 +19,7 @@ assert(
 ### Top-level targets.
 ###
 group("default") {
-  deps = []
+  deps = [ "//mk:kernel" ]
 }
 
 # A GN pool matching the special Ninja 'console' pool. Any action() that

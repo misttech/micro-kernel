@@ -4,11 +4,12 @@
 # license that can be found in the LICENSE file or at
 # https://opensource.org/licenses/MIT
 
-import("//build/config/mk/levels.gni")
+import("//build/config/kernel/levels.gni")
+
 #import("//build/testing/environments.gni")
 
 # TODO(https://fxbug.dev/42146261): Get rid of mk_disable_asserts
-import("//build/mk/build_args.gni")
+import("//build/kernel/build_args.gni")
 _kernel_debug_level = mk_assert_level
 if (mk_kernel_disable_asserts) {
   _kernel_debug_level = 0
@@ -117,4 +118,3 @@ declare_args() {
   # disabled.
   enable_lock_dep_tests = enable_lock_dep
 }
-
