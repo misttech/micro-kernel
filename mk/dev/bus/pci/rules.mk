@@ -15,7 +15,7 @@ MODULE_SRCS += $(LOCAL_DIR)/backend/ecam.cc
 MODULE_SRCS += $(LOCAL_DIR)/backend/bios32.cc
 MODULE_SRCS += $(LOCAL_DIR)/backend/type1.cc
 
-MODULE_DEPS += lib/libcpp
+MODULE_DEPS += lib/libc
 
 MODULE_CPPFLAGS += -Wno-invalid-offsetof
 MODULE_COMPILEFLAGS += -Wmissing-declarations

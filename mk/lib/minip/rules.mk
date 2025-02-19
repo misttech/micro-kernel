@@ -5,7 +5,7 @@ MODULE := $(LOCAL_DIR)
 MODULE_DEPS := \
 	lib/cbuf \
 	lib/iovec \
-	lib/libcpp \
+	lib/libc \
 	lib/pool
 
 MODULE_SRCS += \
