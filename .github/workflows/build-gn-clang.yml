@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-name: Build (Clang)
+name: Build wih Clang (GN/Ninja)
 
 on:
   push:
@@ -34,8 +34,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y curl build-essential
 
-      - name: Download prebuilt binaries
-        run: ./scripts/download-prebuilt
+      - name: Bootstrap Jiri
+        run: |
+          curl -s "https://fuchsia.googlesource.com/jiri/+/HEAD/scripts/bootstrap_jiri?format=TEXT" | base64 --decode | bash -s $PWD
 
-      - name: Build with Clang
-        run: NOECHO= USE_CLANG=true ./scripts/make-parallel ${{ matrix.platform }}
+      - name: Download prebuilt binaries
+        run: |
+          export PATH=$PWD/.jiri_root/bin:$PATH
+          jiri import -name=integration mk https://github.com/misttech/mk-integration
+          jiri fetch-packages
+
+      - name: Build
+        run: |
+          ./prebuilt/third_party/gn/linux-x64/gn gen build-x64
+          ./prebuilt/third_party/ninja/linux-x64/ninja -C build-x64
