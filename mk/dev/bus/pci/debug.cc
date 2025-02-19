@@ -17,7 +17,7 @@
 #include <lk/console_cmd.h>
 #include <lk/debug.h>
 #include <lk/err.h>
-
+#include <pretty/hexdump.h>
 /*
  * enumerates pci devices
  */

@@ -15,6 +15,7 @@
 #include <lk/debug.h>
 #include <lk/err.h>
 #include <lk/trace.h>
+#include <pretty/hexdump.h>
 
 // uses the vm to map in ACPI tables as they are found
 static_assert(WITH_KERNEL_VM, "");

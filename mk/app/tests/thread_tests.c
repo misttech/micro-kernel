@@ -19,6 +19,7 @@
 #include <lk/debug.h>
 #include <lk/err.h>
 #include <lk/trace.h>
+#include <pretty/hexdump.h>
 
 static int sleep_thread(void *arg) {
   for (;;) {
