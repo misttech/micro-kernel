@@ -1,0 +1,27 @@
+# Copyright 2025 Mist Tecnologia Ltda
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/zx_library.gni")
+
+# The test runners have no better way to determine that a boot test succeeded
+# than to look for an exact string in the console log output.  zbi_test()
+# targets produce metadata to drive the test runners, which tells them to
+# match this particular string.  When booted in standalone mode, userboot
+# prints this message after the initial process exits iff its return_code was
+# zero, but shutting down.  This string includes some random data that
+# shouldn't appear elsewhere, to avoid false-positive matches.
+boot_test_success_string =
+    "***Boot-test-successful!-MDd7/O65SuVZ23yGAaQG4CedYQGH9E1/58r73pSAVK0=***"
+
+zx_library("console") {
+  sources = [ "console.cc" ]
+  defines = [ "BOOT_TEST_SUCCESS_STRING=\"$boot_test_success_string\"" ]
+  deps = [
+    "//mk/lib/fbl_ulib",
+    "//mk/lib/zircon-internal",
+  ]
+}

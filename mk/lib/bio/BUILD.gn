@@ -1,0 +1,19 @@
+# Copyright 2025 Mist Tecnologia Ltda. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//build/kernel/zx_library.gni")
+
+zx_library("bio") {
+  sources = [
+    "bio.c",
+    "debug.c",
+    "mem.c",
+    "subdev.c",
+  ]
+
+  deps = [
+    "//mk/lib/console",
+    "//mk/lib/pretty",
+  ]
+}

@@ -1,0 +1,118 @@
+# Copyright 2025 Mist Tecnologia Ltda
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/zx_library.gni")
+import("//build/toolchain/toolchain_environment.gni")
+
+# These set the ABI contract between C++ and assembly code.
+# This is kept consistent between the kernel proper and phys
+# so (pure PIC) code should be callable from the kernel proper.
+config("abi") {
+  cflags = [
+    "-mno-red-zone",
+
+    # context switch routines conditionally use these instructions.
+    "-mfsgsbase",
+
+    # Hard disable floating point in the kernel.
+    "-msoft-float",
+    "-mno-mmx",
+    "-mno-sse",
+    "-mno-sse2",
+    "-mno-3dnow",
+    "-mno-avx",
+    "-mno-avx2",
+  ]
+
+  if (is_gcc) {
+    cflags += [
+      # Optimization: Since FPU is disabled, do not pass flag in %rax to
+      # varargs routines that floating point args are in use.
+      "-mskip-rax-setup",
+    ]
+  } else if (toolchain_environment != "kernel.phys32") {
+    # Clang needs -mcmodel=kernel to tell it to use the right safe-stack
+    # ABI for the kernel.
+    cflags += [ "-mcmodel=kernel" ]
+  }
+
+  # This is not part of the ABI contract per se, but it's part of the
+  # "expected resilience of generated code" contract that should be uniform
+  # across all the privileged code.
+  configs = [
+    #"//build/config/x64:harden_sls",
+    #":retpoline",
+    #":skylake_jcc",
+  ]
+}
+
+config("retpoline") {
+  visibility = [ ":*" ]
+  if (is_gcc) {
+    cflags = [
+      "-mindirect-branch=thunk-inline",
+      "-mindirect-branch-register",
+    ]
+  } else {
+    cflags = [ "-mretpoline" ]
+    if (toolchain_environment == "kernel") {
+      # The kernel proper uses its own optimized thunks, but phys and
+      # multiboot can just use the compiler's safe default thunks.
+      cflags += [ "-mretpoline-external-thunk" ]
+    }
+  }
+  defines = [ "KERNEL_RETPOLINE=1" ]
+}
+
+# Mitigate errata in Intel Skylake family of CPUs that cause control transfer instructions to
+# execute incorrectly when they end at or cross 32-byte boundaries. (https://fxbug.dev/42120593)
+config("skylake_jcc") {
+  visibility = [ ":*" ]
+  defines = [ "X64_KERNEL_JCC_WORKAROUND" ]
+  configs = [ "//build/config/x64:mitigate_skylake_jcc" ]
+}
+
+# This is used pervasively throughout the kernel on x86.
+config("kernel") {
+  defines = [
+    "ARCH_X86_64",
+    "WITH_KERNEL_VM=1",
+  ]
+
+  # For #include <arch/foo.h>.
+  include_dirs = [ "include" ]
+
+  # TODO(digit): Once the dependencies below have been migrated to the Fuchsia
+  # build, only use configs to add the include paths.
+  include_dirs += []
+}
+
+# TODO(https://fxbug.dev/42136423): Remove conditional when all dependencies below have been
+# migrated to the Fuchsia build.
+# NOTE: Bad indentation is intentional, to make code reviews easier.
+zx_library("x86") {
+  sources = [
+    "arch.c",
+    "asm.S",
+    "cache.c",
+    "descriptor.c",
+    "exceptions.S",
+    "faults.c",
+    "feature.c",
+    "fpu.c",
+    "gdt.S",
+    "mmu.c",
+    "ops.S",
+    "start.S",
+    "thread.c",
+  ]
+  deps = [
+    "//mk/dev",
+    "//mk/lib/pretty",
+  ]
+  public_deps = []
+}

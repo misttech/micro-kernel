@@ -1,0 +1,33 @@
+# Copyright 2025 Mist Tecnologia Ltda
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/cpp/library_headers.gni")
+
+library_headers("headers") {
+  headers = [ "lib/heap.h" ]
+}
+
+library_headers("headers.internal") {
+  visibility = [ "./*" ]
+
+  headers = [ "lib/page_alloc.h" ]
+}
+
+source_set("heap") {
+  public_deps = [ ":headers" ]
+
+  sources = [
+    "heap_wrapper.c",
+    "page_alloc.c",
+  ]
+  defines = [ "WITH_LIB_HEAP_CMPCTMALLOC=1" ]
+  deps = [
+    ":headers.internal",
+    "cmpctmalloc",
+    "//mk/lib/console",
+  ]
+}

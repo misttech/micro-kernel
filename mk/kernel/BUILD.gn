@@ -1,3 +1,4 @@
+# Copyright 2025 Mist Tecnologia Ltda
 # Copyright 2019 The Fuchsia Authors
 #
 # Use of this source code is governed by a MIT-style
@@ -18,11 +19,14 @@ source_set("kernel") {
   ]
 
   deps = [
+    "//mk/kernel/vm",
+    "//mk/lib/console",
     "//mk/lib/fit",
     "//mk/lib/heap",
     "//mk/lib/ktl",
     "//mk/lib/libc",
-    "//mk/kernel/vm",
+    "//mk/lib/pretty",
+    "//mk/target",
   ]
 
   # TODO(https://fxbug.dev/42101573): This dependency is conditional because when built
@@ -32,20 +36,4 @@ source_set("kernel") {
   if (!is_gcc) {
     deps += [ "//mk/lib/cxxabi-dynamic-init" ]
   }
-}
-
-source_set("tests") {
-  # TODO: testonly = true
-  sources = [
-    "mutex_tests.cc",
-    "semaphore_tests.cc",
-    "spinlock_tests.cc",
-    "thread_test.cc",
-  ]
-  deps = [
-    "//zircon/kernel/lib/arch",
-    "//zircon/kernel/lib/console",
-    "//zircon/kernel/lib/unittest",
-    "//zircon/system/ulib/zircon-internal",
-  ]
 }

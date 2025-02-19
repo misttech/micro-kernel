@@ -11,9 +11,9 @@ library_headers("headers") {
 
   # <ktl/bit.h> has #include <lib/stdcompat/bit.h>.
   if (is_kernel) {
-    public_deps = [ "//sdk/lib/stdcompat:headers" ]
+    public_deps = [ "//mk/lib/stdcompat:headers" ]
   } else {
-    public_deps = [ "//sdk/lib/stdcompat" ]
+    public_deps = [ "//mk/lib/stdcompat" ]
   }
 
   # ktl headers come before libc++ headers so they can override a few.  But
@@ -43,8 +43,8 @@ static_library("ktl") {
 
     deps = [
       ":headers",  # Necessary to put ktl includes before libc.
-      "//sdk/lib/stdcompat:headers",
-      "//zircon/kernel/lib/libc:headers",
+      "//mk/lib/libc:headers",
+      "//mk/lib/stdcompat:headers",
     ]
   }
 }
