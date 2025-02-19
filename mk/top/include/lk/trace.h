@@ -5,6 +5,6 @@
 #ifndef TOP_INCLUDE_LK_TRACE_H_
 #define TOP_INCLUDE_LK_TRACE_H_
 
-#include_next <trace.h>
+#include <trace.h>
 
 #endif  // TOP_INCLUDE_LK_TRACE_H_
