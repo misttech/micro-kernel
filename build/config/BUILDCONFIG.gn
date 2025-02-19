@@ -445,7 +445,7 @@ if (kernel_toolchain == false) {
     "//build/config:relative_paths",
     "//build/config:symbol_visibility_hidden",
     "//build/config:thread_safety_annotations",
-    "//build/config:werror",
+    #"//build/config:werror",
     "//build/config:no-template-backtrace-limit",
     "//build/config/kernel:compiler",
     "//build/config/kernel:machine",
