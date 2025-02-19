@@ -49,8 +49,11 @@ if (current_toolchain == default_toolchain) {
         "//mk/lib/fit:headers.config",
         "//mk/lib/stdcompat:headers.config",
 
+        # <stdio.h> has #include <lib/io.h>.
+        "//mk/lib/io:headers.config",
+
         # <stdlib.h> has #include <lib/heap.h>.
-        #"//mk/lib/heap:headers.config",
+        "//mk/lib/heap:headers.config",
 
         # <lib/lockup_detector.h> is included by some "low-level" headers.
         #"//mk/lib/lockup_detector:headers.config",
@@ -69,7 +72,7 @@ if (current_toolchain == default_toolchain) {
         #"//mk/ulib/concurrent:headers.config",
 
         # <kernel/thread.h> has #include <vm/kstack.h>.
-        #"//mk/kernel/vm:headers.config",
+        "//mk/kernel/vm:headers.config",
 
         # <vm/page.h> has #include <vm/phys/arena.h>
         #"//zircon/kernel/vm/phys:headers.config",
@@ -234,11 +237,11 @@ config("standalone") {
     }
   }
 
-  if (is_gcc && (current_os == "fuchsia" || current_os == "mistos")) {
-    cflags += [ "-fpie" ]
+  if (is_gcc && current_os == "mk") {
+    #cflags += [ "-fpie" ]
   }
 
-  if (!is_gcc && (current_os == "fuchsia" || current_os == "mistos")) {
+  if (!is_gcc && current_os == "mk") {
     # In the Fuchsia-target toolchains there's no way to prevent the
     # compiler driver from passing -pie, so negate it.  BFD ld doesn't
     # have --no-pie, but arm64-elf-gcc doesn't pass -pie either.
@@ -252,10 +255,19 @@ if (is_kernel) {
   # These are needed both in kernel sources (pervasively) and in the linker
   # scripts.
   kernel_defines = [
-    # TODO: should not be needed in C, but is in one place now.
-    "KERNEL_BASE=$kernel_base",
+    "IS_64BIT=1",
+    "MEMBASE=0",
+    "X86_LEGACY=0",
 
-    "SMP_MAX_CPUS=$smp_max_cpus",
+    "KERNEL_BASE=0xffffffff80000000",
+    "KERNEL_LOAD_OFFSET=0x00200000",
+    "KERNEL_ASPACE_BASE=0xffffff8000000000",
+    "KERNEL_ASPACE_SIZE=0x0000008000000000",
+    "USER_ASPACE_BASE=0x0000000000000000",
+    "USER_ASPACE_SIZE=0x0000800000000000",
+
+    "SMP_MAX_CPUS=1",
+    "ARCH_HAS_MMU=1",
   ]
 
   config("instrumented-stack-size") {
@@ -288,8 +300,8 @@ if (is_kernel) {
       ":standalone",
       ":warnings",
 
-      #"arch/$mk_cpu:abi",
-      #"arch/$mk_cpu:kernel",
+      "arch/$kernel_cpu:abi",
+      "arch/$kernel_cpu:kernel",
       "//build/config:no-finite-loops",
       "//build/config:zero-call-used-regs",
 
@@ -319,6 +331,10 @@ if (is_kernel) {
     # !WITH_FRAME_POINTERS if it will never be used.
     configs += [ "//build/config:frame_pointers" ]
 
+    # Disable stack protector and safe stack
+    configs += [ "//build/config:no-stack-protector" ]
+    configs += [ "//build/config:no-safe-stack" ]
+
     defines = kernel_defines + kernel_extra_defines
     defines += [
       "_KERNEL",
@@ -327,10 +343,11 @@ if (is_kernel) {
       "ZIRCON_TOOLCHAIN",
       "LK_DEBUGLEVEL=$kernel_debug_level",
       "DEBUG_PRINT_LEVEL=$kernel_debug_print_level",
-      "VM_TRACING_LEVEL=$vm_tracing_level",
-      "FUTEX_BLOCK_TRACING_ENABLED=$futex_block_tracing_enabled",
-      "LOCK_TRACING_ENABLED=$lock_tracing_enabled",
-      "EXPERIMENTAL_THREAD_SAMPLER_ENABLED=$experimental_thread_sampler_enabled",
+
+      #"VM_TRACING_LEVEL=$vm_tracing_level",
+      #"FUTEX_BLOCK_TRACING_ENABLED=$futex_block_tracing_enabled",
+      #"LOCK_TRACING_ENABLED=$lock_tracing_enabled",
+      #"EXPERIMENTAL_THREAD_SAMPLER_ENABLED=$experimental_thread_sampler_enabled",
     ]
 
     #cflags = [ "-fpie" ]
@@ -445,7 +462,7 @@ if (is_kernel) {
     output_name = "mk"
     output_extension = "elf"
     ldflags = [
-      "-Wl,-T," + rebase_path("arch/$kernel_cpu/kernel.ld", root_build_dir),
+      "-Wl,-T," + rebase_path("kernel.ld", root_build_dir),
       "-Wl,--emit-relocs",
     ]
     if (toolchain_variant.tags + [ "lto" ] - [ "lto" ] !=
@@ -456,8 +473,11 @@ if (is_kernel) {
       # override the relocation via linker flag.
       ldflags += [ "-Wl,-mllvm,-relocation-model=pic" ]
     }
-    inputs = [ "arch/$kernel_cpu/kernel.ld" ]
-    configs += [ ":kernel_defsym" ]
+    inputs = [ "kernel.ld" ]
+    configs += [
+      ":kernel_defsym",
+      "//build/config/kernel:no-synthetic-sections",
+    ]
     deps = [
       ":kernel-main",
       #"arch/$kernel_cpu:zbi-kernel-image",
@@ -476,7 +496,7 @@ if (is_kernel) {
     } else if (current_cpu == "riscv64") {
       deps += [ "platform/generic-riscv64" ]
     } else if (current_cpu == "x64") {
-      #deps += [ "platform/pc" ]
+      deps += [ "platform/pc" ]
     }
   }
 
