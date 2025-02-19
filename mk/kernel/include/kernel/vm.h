@@ -32,7 +32,7 @@
 #error ARCH needs to declare mmu support
 #endif
 
-#ifndef ASSEMBLY
+#ifndef __ASSEMBLER__
 
 #include <arch.h>
 #include <stdint.h>
@@ -262,4 +262,4 @@ vmm_aspace_t *vmm_set_active_aspace(vmm_aspace_t *aspace);
 
 __END_CDECLS
 
-#endif  // !ASSEMBLY
+#endif  // !__ASSEMBLER__

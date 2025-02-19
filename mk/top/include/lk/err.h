@@ -7,7 +7,7 @@
  */
 #pragma once
 
-#ifndef ASSEMBLY
+#ifndef __ASSEMBLER__
 #include <sys/types.h>  // for status_t
 #endif
 

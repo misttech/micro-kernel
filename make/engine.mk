@@ -96,7 +96,7 @@ GLOBAL_COMPILEFLAGS += -fno-common
 GLOBAL_COMPILEFLAGS += -ffreestanding
 GLOBAL_CFLAGS := --std=c11 -Werror-implicit-function-declaration -Wstrict-prototypes -Wwrite-strings
 GLOBAL_CPPFLAGS := --std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics
-GLOBAL_ASMFLAGS := -DASSEMBLY
+GLOBAL_ASMFLAGS := -D__ASSEMBLER__
 GLOBAL_LDFLAGS := -nostdlib -z noexecstack
 
 # Build with --build-id to generate a build ID for the kernel

@@ -10,7 +10,7 @@
 
 #include <lk/compiler.h>
 
-#ifndef ASSEMBLY
+#ifndef __ASSEMBLER__
 
 #include <arch/x86.h>
 
@@ -83,4 +83,4 @@ static inline uint arch_curr_cpu_num(void) { return 0; }
 #define smp_rmb() CF
 #endif
 
-#endif  // !ASSEMBLY
+#endif  // !__ASSEMBLER__

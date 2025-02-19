@@ -9,7 +9,7 @@
 
 #if RISCV_MMU
 
-#ifndef ASSEMBLY
+#ifndef __ASSEMBLER__
 #include <stdint.h>
 
 #include <arch/defines.h>

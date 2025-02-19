@@ -7,7 +7,7 @@
  */
 #pragma once
 
-#ifndef ASSEMBLY
+#ifndef __ASSEMBLER__
 
 #include <stdbool.h>
 
@@ -99,4 +99,4 @@ static inline uint arch_curr_cpu_num(void) { return 0; }
 
 __END_CDECLS
 
-#endif  // ASSEMBLY
+#endif  // __ASSEMBLER__

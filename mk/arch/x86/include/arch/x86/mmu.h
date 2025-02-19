@@ -81,7 +81,7 @@
 #endif
 
 /* C defines below */
-#ifndef ASSEMBLY
+#ifndef __ASSEMBLER__
 
 #include <sys/types.h>
 
@@ -119,4 +119,4 @@ void x86_mmu_init(void);
 
 __END_CDECLS
 
-#endif  // !ASSEMBLY
+#endif  // !__ASSEMBLER__

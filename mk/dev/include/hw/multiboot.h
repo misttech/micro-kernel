@@ -35,7 +35,7 @@
 /* This flag indicates the use of the address fields in the header. */
 #define MULTIBOOT_AOUT_KLUDGE 0x00010000
 
-#ifndef ASSEMBLY
+#ifndef __ASSEMBLER__
 
 #include <assert.h>
 #include <sys/types.h>
@@ -172,4 +172,4 @@ enum {
   MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT = 2,
 };
 
-#endif  // ASSEMBLY
+#endif  // __ASSEMBLER__

@@ -7,7 +7,7 @@
  */
 #pragma once
 
-#ifndef ASSEMBLY
+#ifndef __ASSEMBLER__
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -42,7 +42,7 @@ void arch_idle(void);
 
 __END_CDECLS
 
-#endif  // !ASSEMBLY
+#endif  // !__ASSEMBLER__
 
 /* for the above arch enable/disable routines */
 #define ARCH_CACHE_FLAG_ICACHE 1
