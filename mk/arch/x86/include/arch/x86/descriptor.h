@@ -37,7 +37,7 @@
 #define SEG_TYPE_DATA_RW 0x2
 #define SEG_TYPE_CODE_RW 0xa
 
-#ifndef ASSEMBLY
+#ifndef __ASSEMBLER__
 
 #include <sys/types.h>
 

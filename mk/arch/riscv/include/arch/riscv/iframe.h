@@ -20,7 +20,7 @@
 
 #define RISCV_IFRAME_LEN (24 * __riscv_xlen / 8)
 
-#ifndef ASSEMBLY
+#ifndef __ASSEMBLER__
 
 #include <assert.h>
 
@@ -64,4 +64,4 @@ static_assert(offsetof(struct riscv_short_iframe, t0) == RISCV_IFRAME_T_BASE, ""
 static_assert(offsetof(struct riscv_short_iframe, gp) == RISCV_IFRAME_GP, "");
 static_assert(offsetof(struct riscv_short_iframe, sp) == RISCV_IFRAME_SP, "");
 
-#endif  // __ASSEMBLY__
+#endif  // ____ASSEMBLER____

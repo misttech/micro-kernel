@@ -133,7 +133,7 @@
 #define RISCV_EXCEPTION_LOAD_PAGE_FAULT 13
 #define RISCV_EXCEPTION_STORE_PAGE_FAULT 15
 
-#ifndef ASSEMBLY
+#ifndef __ASSEMBLER__
 #define ___ASM_STR(x) #x
 #define __ASM_STR(x) ___ASM_STR(x)
 
@@ -255,4 +255,4 @@ static inline uint64_t riscv_get_time(void) { return riscv_csr_read(RISCV_CSR_TI
 
 __END_CDECLS
 
-#endif /* ASSEMBLY */
+#endif /* __ASSEMBLER__ */

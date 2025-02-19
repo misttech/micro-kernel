@@ -5,7 +5,7 @@
 #ifndef TOP_INCLUDE_LK_DEBUG_H_
 #define TOP_INCLUDE_LK_DEBUG_H_
 
-#include_next <debug.h>
+#include <debug.h>
 
 #include <pretty/hexdump.h>
 
