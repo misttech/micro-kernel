@@ -6,8 +6,8 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT
 
-#ifndef TOP_INCLUDE_LK_MAIN_H_
-#define TOP_INCLUDE_LK_MAIN_H_
+#ifndef MK_INCLUDE_LK_MAIN_H_
+#define MK_INCLUDE_LK_MAIN_H_
 
 #include <stdbool.h>
 #include <sys/types.h>
@@ -28,4 +28,4 @@ bool lk_global_constructors_called(void);
 
 __END_CDECLS
 
-#endif  // TOP_INCLUDE_LK_MAIN_H_
+#endif  // MK_INCLUDE_LK_MAIN_H_
