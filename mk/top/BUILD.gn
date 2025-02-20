@@ -27,14 +27,14 @@ source_set("top") {
   defines = [ "_LIBCPP_VERBOSE_ABORT_NOT_NOEXCEPT" ]
 }
 
-# If not building for Fuchsia|mistos-os (e.g., linux, macos) then binaries need to get
-# zircon headers directly from source. Otherwise they come from sysroot.
+# If not building for mk (e.g., linux, macos) then binaries need to get
+# mk/zircon headers directly from source.
 config("public_config") {
-  include_dirs = [ "." ]
+  include_dirs = [ "include" ]
   visibility = [ ":*" ]
 }
 
-# These headers are exported for use in building non-fuchsia-host binaries.
+# These headers are exported for use in building non-mk-host binaries.
 source_set("public") {
   #public = [ "zircon/mistos/syscalls/object.h" ]
 
