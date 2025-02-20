@@ -2,11 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# Build variables
-MKROOT ?= $(PWD)
-OUTPUT ?= out/default
-NOECHO ?= @
-
 HOST_PLATFORM := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 HOST_ARCH := $(shell uname -m)
 
@@ -26,6 +21,10 @@ else
 $(error Unsupported host platform: $(HOST_PLATFORM))
 endif
 
+# Build variables
+MKROOT ?= $(PWD)
+OUTPUT ?= build-$(HOST_ARCH)
+NOECHO ?= @
 GN ?= $(MKROOT)/prebuilt/third_party/gn/$(HOST_OS)-$(HOST_ARCH)/gn
 NINJA ?= $(MKROOT)/prebuilt/third_party/ninja/$(HOST_OS)-$(HOST_ARCH)/ninja
 
