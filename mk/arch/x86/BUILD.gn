@@ -112,6 +112,7 @@ zx_library("x86") {
   ]
   deps = [
     "//mk/dev",
+    "//mk/lib/arch",
     "//mk/lib/fbl",
     "//mk/lib/pretty",
   ]

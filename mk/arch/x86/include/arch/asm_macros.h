@@ -1,11 +1,12 @@
+// Copyright 2025 Mist Tecnologia Ltda
 // Copyright 2017 The Fuchsia Authors
 //
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT
 
-#ifndef ARCH_X86_INCLUDE_ARCH_ASM_MACROS_H_
-#define ARCH_X86_INCLUDE_ARCH_ASM_MACROS_H_
+#ifndef MK_ARCH_X86_INCLUDE_ARCH_ASM_MACROS_H_
+#define MK_ARCH_X86_INCLUDE_ARCH_ASM_MACROS_H_
 
 // clang-format off
 
@@ -106,7 +107,4 @@ add $\value, %rsp
   jmp _x; \
   int3
 
-#endif  // ARCH_X86_INCLUDE_ARCH_ASM_MACROS_H_
-
-
-#endif  // ARCH_X86_INCLUDE_ARCH_ASM_MACROS_H_
+#endif  // MK_ARCH_X86_INCLUDE_ARCH_ASM_MACROS_H_

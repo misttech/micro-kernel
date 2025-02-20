@@ -44,7 +44,7 @@ template("hwreg_asm_header") {
                                "visibility",
                              ])
       forward_variables_from(invoker, [ "testonly" ])
-      deps += [ "//zircon/system/ulib/hwreg" ]
+      deps += [ "//mk/ulib/hwreg" ]
     }
   } else {
     not_needed(invoker, "*")

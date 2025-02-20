@@ -7,9 +7,11 @@
  * license that can be found in the LICENSE file or at
  * https://opensource.org/licenses/MIT
  */
-#include <lk/asm.h>
+#include <asm.h>
+#include <arch/defines.h>
 #include <arch/x86/descriptor.h>
 #include <arch/x86/mmu.h>
+#include <lib/arch/asm.h>
 #include <hw/multiboot.h>
 
 #define MSR_EFER 0xc0000080
@@ -18,6 +20,19 @@
 #define PHYS_LOAD_ADDRESS (MEMBASE + KERNEL_LOAD_OFFSET)
 #define PHYS_ADDR_DELTA (KERNEL_BASE + KERNEL_LOAD_OFFSET - PHYS_LOAD_ADDRESS)
 #define PHYS(x) ((x) - PHYS_ADDR_DELTA)
+
+// We assume `KERNEL_ASPACE_SIZE` <= 512GB.
+.if KERNEL_ASPACE_SIZE > 0x0000008000000000
+.err "KERNEL_ASPACE_SIZE must be less than or equal to 512GB"
+.endif
+
+// Clobbers %rax, %rdx.
+.macro sample_ticks out
+  rdtsc
+  shl $32, %rdx
+  or %rdx, %rax
+  mov %rax, \out
+.endm
 
 .section ".text.boot"
 .code32
@@ -195,19 +210,31 @@ farjump64:
     jmp  *%rax
 
 highaddr:
-    /* load the high kernel stack */
+    // load the high kernel stack
     mov  $(_kstack + 4096), %rsp
 
     /* reload the gdtr */
     lgdt _gdtr
 
-    /* set up the idt */
+    // Set up the idt
     call setup_idt
 
-    /* call the main module */
+    // Initialize CPUID value cache - and do so before functions (like
+    // x86_init_percpu) begin to access CPUID data.
+    // call InitializeBootCpuid
+
+    // Call the main module
     call lk_main
 
 0:                          /* just sit around waiting for interrupts */
     hlt                     /* interrupts will unhalt the processor */
     pause
     jmp 0b                  /* so jump back to halt to conserve power */
+
+.object _kstack, bss, global, align=16
+  .skip 8192
+_kstack_end:
+.end_object
+
+// This symbol is used by gdb python to know the base of the kernel module
+.label KERNEL_BASE_ADDRESS, global, value=KERNEL_BASE

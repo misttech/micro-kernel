@@ -13,17 +13,17 @@ library_headers("headers") {
   headers = []
   public_deps = [
     # <lib/arch/internal/zbi-constants.h> has #include <fidl/zbi/data/asm/zbi.h>
-    "//sdk/fidl/zbi:zbi_zither.asm",
+    #"//sdk/fidl/zbi:zbi_zither.asm",
 
     # <lib/arch/zbi-boot.h> has #include <lib/zbi-format/zbi.h>.
     # <lib/arch/internal/zbi-constants.h> has #include <lib/zbi-format/zbi.h>.
-    "//sdk/lib/zbi-format",
+    #"//sdk/lib/zbi-format",
 
     # <lib/arch/x86/boot-cpuid.h> has #include <lib/special-sections/special-sections.h>.
-    "//zircon/kernel/lib/special-sections",
+    "//mk/lib/special-sections",
 
     # <lib/arch/x86/cpuid.h> has #include <hwreg/bitfields.h>.
-    "//zircon/system/ulib/hwreg:headers",
+    "//mk/ulib/hwreg:headers",
   ]
 }
 
@@ -33,7 +33,7 @@ static_library("x86") {
   sources = []
   deps = [
     "..:headers",
-    "//zircon/system/ulib/hwreg",
+    "//mk/ulib/hwreg",
   ]
 
   if (is_kernel) {
@@ -44,9 +44,9 @@ static_library("x86") {
       "standard-segments.cc",
     ]
     deps += [
-      "//zircon/kernel/lib/ktl",
-      "//zircon/kernel/lib/libc",
-      "//zircon/kernel/lib/special-sections",
+      "//mk/lib/ktl",
+      "//mk/lib/libc",
+      "//mk/lib/special-sections",
     ]
 
     if (toolchain_environment == "kernel.phys32") {

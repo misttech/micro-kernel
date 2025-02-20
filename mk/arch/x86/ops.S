@@ -1,11 +1,11 @@
-/*
- * Copyright (c) 2009 Corey Tabaka
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
-#include <lk/asm.h>
+// Copyright 2025 Mist Tecnologia Ltda
+// Copyright (c) 2009 Corey Tabaka
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
+
+#include <asm.h>
 
 .text
 
@@ -30,4 +30,4 @@ FUNCTION(arch_idle)
     hlt
 1:
     ret
-
+END_FUNCTION(arch_idle)

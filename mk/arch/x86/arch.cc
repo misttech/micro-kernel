@@ -49,9 +49,6 @@ struct mmu_initial_mapping mmu_initial_mappings[] = {
     /* null entry to terminate the list */
     {0}};
 
-/* early stack */
-uint8_t _kstack[PAGE_SIZE] __ALIGNED(sizeof(unsigned long));
-
 /* save a pointer to the multiboot information coming in from whoever called us */
 /* make sure it lives in .data to avoid it being wiped out by bss clearing */
 __SECTION(".data") uint32_t _multiboot_info;
