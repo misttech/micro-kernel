@@ -24,6 +24,7 @@ zx_library("pci") {
     "//mk/app",
     "//mk/dev",
     "//mk/lib/console",
+    "//mk/lib/fbl",
     "//mk/lib/pretty",
   ]
 

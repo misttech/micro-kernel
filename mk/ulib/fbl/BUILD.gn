@@ -1,3 +1,4 @@
+# Copyright 2025 Mist Tecnologia Ltda
 # Copyright 2019 The Fuchsia Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -6,7 +7,7 @@ import("//build/kernel/zx_library.gni")
 import("//build/toolchain/toolchain_environment.gni")
 
 # LINT.IfChange
-zx_library("fbl_ulib") {
+zx_library("fbl") {
   sdk = "source"
   sdk_publishable = "internal"
   sdk_headers = [

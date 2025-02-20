@@ -7,20 +7,21 @@
 
 source_set("kernel") {
   sources = [
-    "debug.c",
-    "event.c",
-    "init.c",
-    "mp.c",
-    "mutex.c",
-    "port.c",
-    "semaphore.c",
-    "thread.c",
-    "timer.c",
+    "debug.cc",
+    "event.cc",
+    "init.cc",
+    "mp.cc",
+    "mutex.cc",
+    "port.cc",
+    "semaphore.cc",
+    "thread.cc",
+    "timer.cc",
   ]
 
   deps = [
     "//mk/kernel/vm",
     "//mk/lib/console",
+    "//mk/lib/fbl",
     "//mk/lib/fit",
     "//mk/lib/heap",
     "//mk/lib/ktl",

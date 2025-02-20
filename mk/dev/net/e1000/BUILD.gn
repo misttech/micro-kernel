@@ -7,6 +7,7 @@ source_set("e1000") {
   deps = [
     "//mk/dev",
     "//mk/dev/bus/pci",
+    "//mk/lib/fbl",
     "//mk/lib/minip",
   ]
 }

@@ -9,17 +9,17 @@ import("//build/toolchain/toolchain_environment.gni")
 
 zx_library("pc") {
   sources = [
-    "cmos.c",
-    "console.c",
-    "debug.c",
+    "cmos.cc",
+    "console.cc",
+    "debug.cc",
     "ide.c",
-    "interrupts.c",
-    "keyboard.c",
-    "lapic.c",
-    "pic.c",
-    "platform.c",
-    "timer.c",
-    "uart.c",
+    "interrupts.cc",
+    "keyboard.cc",
+    "lapic.cc",
+    "pic.cc",
+    "platform.cc",
+    "timer.cc",
+    "uart.cc",
   ]
 
   deps = [
@@ -33,6 +33,8 @@ zx_library("pc") {
   public_deps = [
     # <ktl/optional.h> in uart.h.
     "//mk/lib/ktl:headers",
+
+    "//mk/lib/fbl",
   ]
 
   if (toolchain_environment == "kernel") {
