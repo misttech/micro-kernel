@@ -111,6 +111,7 @@ zx_library("x86") {
     "thread.cc",
   ]
   deps = [
+    "cpuid",
     "//mk/dev",
     "//mk/lib/arch",
     "//mk/lib/fbl",
