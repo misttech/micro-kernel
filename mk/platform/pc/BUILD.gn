@@ -12,7 +12,8 @@ zx_library("pc") {
     "cmos.cc",
     "console.cc",
     "debug.cc",
-    "ide.c",
+
+    #"ide.c",
     "interrupts.cc",
     "keyboard.cc",
     "lapic.cc",
@@ -24,9 +25,11 @@ zx_library("pc") {
 
   deps = [
     "//mk/dev",
-    "//mk/dev/bus/pci/drivers",
+
+    #"//mk/dev/bus/pci/drivers",
     "//mk/lib/acpi_lite",
-    "//mk/lib/bio",
+
+    #"//mk/lib/bio",
     "//mk/lib/cbuf",
     "//mk/lib/init",
     "//mk/platform:headers",
