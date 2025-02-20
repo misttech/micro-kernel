@@ -38,23 +38,18 @@ config("suppress-warning.config") {
 
     # TODO(https://fxbug.dev/42121444): Referenced in environment configs.
     "//build/config/*",
-    "//sdk/fidl/zbi:*",
-    "//sdk/lib/fit/*",
-    "//sdk/lib/iob/*",
-    "//sdk/lib/stdcompat/*",
-    "//sdk/lib/zbi-format/*",
-    "//src/lib/elfldltl/*",
-    "//src/lib/llvm-profdata/*",
-    "//src/lib/ubsan-custom/*",
-    "//src/lib/zbitl/*",
-    "//src/performance/lib/fxt/*",
-    "//third_party/zstd/*",
-    "//vendor/google/*",
-    "//zircon/kernel/*",
-    "//zircon/system/ulib/*",
-    "//zircon/third_party/lib/*",
-    "//zircon/third_party/ulib/*",
-    "//zircon/vdso/*",
+    "//mk/*",
+    "//mk/lib/*",
+    "//mk/lib/zbi-format/*",
+    "//mk/ulib/*",
+
+    #"//src/lib/elfldltl/*",
+    #"//src/lib/llvm-profdata/*",
+    #"//src/lib/ubsan-custom/*",
+    #"//src/lib/zbitl/*",
+    # "//src/performance/lib/fxt/*",
+    #"//third_party/zstd/*",
+    # "//vendor/google/*",
   ]
   if (!is_gcc) {
     # Silence warning in Clang about GNU extension used in string_ref.h.

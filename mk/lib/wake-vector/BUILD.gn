@@ -4,12 +4,12 @@
 # license that can be found in the LICENSE file or at
 # https://opensource.org/licenses/MIT
 
-import("//build/zircon/migrated_targets.gni")
+import("//build/kernel/migrated_targets.gni")
 
 zx_library("wake-vector") {
   sources = [ "wake-vector.cc" ]
   deps = [
-    "//zircon/kernel/lib/ktl",
-    "//zircon/system/ulib/affine",
+    "//mk/lib/ktl",
+    "//mk/ulib/affine",
   ]
 }

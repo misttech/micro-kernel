@@ -59,71 +59,72 @@ if (current_toolchain == default_toolchain) {
         #"//mk/lib/lockup_detector:headers.config",
 
         # <kernel/percpu.h> has #include <lib/lazy_init/lazy_init.h>.
-        #"//mk/ulib/lazy_init:headers.config",
+        "//mk/ulib/lazy_init:headers.config",
 
         # <kernel/spinlock.h> has #include <lockdep/lock_policy.h>.
-        #"//mk/ulib/lockdep:headers.config",
+        "//mk/ulib/lockdep:headers.config",
 
         # <kernel/{scheduler.h,scheduler_state.h> has #include <ffl/fixed.h>.
-        #"//mk/ulib/ffl:headers.config",
+        "//mk/ulib/ffl:headers.config",
 
         # <kernel/thread.h> has #include <lib/kconcurrent/*.h>.
-        #"//mk/lib/kconcurrent:headers.config",
-        #"//mk/ulib/concurrent:headers.config",
+        "//mk/lib/kconcurrent:headers.config",
+        "//mk/ulib/concurrent:headers.config",
 
         # <kernel/thread.h> has #include <vm/kstack.h>.
+        #"//mk/vm:headers.config",
         "//mk/kernel/vm:headers.config",
 
         # <vm/page.h> has #include <vm/phys/arena.h>
         #"//zircon/kernel/vm/phys:headers.config",
 
         # <vm/vm_object.h> has #include <lib/user_copy/user_ptr.h>.
-        #"//zircon/kernel/lib/user_copy:headers.config",
+        "//mk/lib/user_copy:headers.config",
 
         # <vm/pmm_checker.h> has #include <lib/boot-options/boot-options.h>.
         #"//mk/lib/acpi_lite:headers.config",
         #"//mk/lib/boot-options:headers.config",
         #"//mk/lib/devicetree:headers.config",
         #"//mk/ulib/uart:headers.config",
-        # "//mk/ulib/hwreg:headers.config",
+        "//mk/ulib/hwreg:headers.config",
 
         # <vm/phys/arena.h> has #include <lib/memalloc/range.h>
         #"//zircon/kernel/phys/lib/memalloc:range.headers.config",
 
         # <lib/ktrace.h> has #include <lib/zircon-internal/ktrace.h>.
-        #"//zircon/system/ulib/zircon-internal:headers.config",
+        "//mk/ulib/zircon-internal:headers.config",
 
         # <lib/ktrace.h> has #include <lib/ktrace/string_ref.h>.
-        #"//zircon/kernel/lib/ktrace:headers.config",
-        #"//zircon/kernel/lib/ktrace:suppress-warning.config",
+        "//mk/lib/ktrace:headers.config",
+        "//mk/lib/ktrace:suppress-warning.config",
         "//mk/lib/special-sections:headers.config",
         "//mk/lib/fxt:headers.config",
 
         # <kernel/thread.h> has #include <fbl/macros.h>
-        #"//zircon/system/ulib/fbl:headers.config",
+        "//mk/ulib/fbl:headers.config",
 
         # <dev/iommu.h> has #include <fbl/name.h>
-        #"//zircon/kernel/lib/fbl:headers.config",
+        "//mk/lib/fbl:headers.config",
 
         # <reg.h> has #include <lib/mmio-ptr/mmio-ptr.h>.
-        #"//zircon/system/ulib/mmio-ptr:headers.config",
+        "//mk/ulib/mmio-ptr:headers.config",
 
         # Everywhere has #include <lib/fit/result.h>
         # Everywhere has #include <zx/result.h>
-        #"//zircon/system/ulib/zx:headers.config",
+        "//mk/ulib/zx:headers.config",
 
-        #"//zircon/kernel/lib/backtrace:headers.config",
+        "//mk/lib/backtrace:headers.config",
 
         #"//zircon/kernel/lib/version:headers.config",
 
-        #"//zircon/kernel/lib/wake-vector:headers.config",
+        "//mk/lib/wake-vector:headers.config",
 
         # <platform.h> has #include <lib/arch/ticks.h>.
-        #"//mk/lib/arch/$_kernel_cpu:headers.config",
-        #"//zircon/kernel/lib/arch:common-headers.config",
+        "//mk/lib/arch/$_kernel_cpu:headers.config",
+        "//mk/lib/arch:common-headers.config",
 
         # Many headers have #include <lib/zbi-format/zbi.h>.
-        #"//sdk/lib/zbi-format:include",
+        "//mk/lib/zbi-format:include",
 
         # <kernel/scheduler.h> depends on <lib/power-management/power-state.h>
         #"//zircon/kernel/lib/power-management:headers.config",
@@ -261,10 +262,6 @@ if (is_kernel) {
 
     "KERNEL_BASE=0xffffffff80000000",
     "KERNEL_LOAD_OFFSET=0x00200000",
-    "KERNEL_ASPACE_BASE=0xffffff8000000000",
-    "KERNEL_ASPACE_SIZE=0x0000008000000000",
-    "USER_ASPACE_BASE=0x0000000000000000",
-    "USER_ASPACE_SIZE=0x0000800000000000",
 
     "SMP_MAX_CPUS=1",
     "ARCH_HAS_MMU=1",

@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//build/zircon/migrated_targets.gni")
+import("//build/kernel/migrated_targets.gni")
 
 zx_library("lockdep") {
   sdk = "source"
@@ -24,18 +24,18 @@ zx_library("lockdep") {
 
   sources = []
   public_deps = [
-    "//src/performance/lib/fxt:headers",
-    "//zircon/system/ulib/fbl:headers",
+    "//mk/lib/fxt:headers",
+    "//mk/ulib/fbl:headers",
   ]
   if (is_kernel) {
     # Anything using libc++ headers in the kernel needs this.
-    public_deps += [ "//zircon/kernel/lib/ktl:headers" ]
+    public_deps += [ "//mk/lib/ktl:headers" ]
   } else {
     sources += [ "lock_dep.cc" ]
     deps = [
-      "//src/performance/lib/fxt",
-      "//zircon/system/ulib/fbl",
-      "//zircon/system/ulib/zx",
+      "//mk/lib/fxt",
+      "//mk/ulib/fbl",
+      "//mk/ulib/zx",
     ]
   }
 }
