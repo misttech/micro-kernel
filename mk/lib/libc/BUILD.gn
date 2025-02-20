@@ -1,4 +1,3 @@
-# Copyright 2025 Mist Tecnologia Ltda
 # Copyright 2019 The Fuchsia Authors
 #
 # Use of this source code is governed by a MIT-style
@@ -22,50 +21,33 @@ static_library("libc") {
   public_deps = [ ":headers" ]
 
   sources = [
-    "abort.c",
-    "atexit.c",
-    "atoi.c",
-    "bsearch.c",
-    "ctype.c",
-    "eabi.c",
-    "errno.c",
-    "printf.c",
-    "pure_virtual.cc",
-    "qsort.c",
-    "rand.c",
-    "stdio.c",
-    "strtol.c",
-    "strtoll.c",
+    "abort.cc",
+    "atomic.cc",
+    "cxa_atexit.cc",
+    "cxa_pure_virtual.cc",
+    "fprintf.cc",
+    "printf.cc",
+    "rand.cc",
+    "snprintf.cc",
+    "string-file.cc",
+    "strtol.cc",
+    "strtoul.cc",
   ]
-
   deps = [
-    ":cpp",
     ":ctype",
     "string",
     "//mk/ulib/zircon-internal",
   ]
 
   if (toolchain_environment == "kernel") {
-    deps += [
-      "//mk/lib/heap",
-      "//mk/lib/io",
-    ]
+    deps += [ "//mk/lib/heap" ]
   }
-}
-
-source_set("cpp") {
-  sources = [
-    "new.cc",
-    "pure_virtual.cc",
-  ]
-
-  cflags_cc = [ "-fvisibility=hidden" ]
 }
 
 config("headers.after") {
   visibility = [
     ":*",
-    "//mk:headers",
+    "//mk/kernel:headers",
   ]
 
   # libc/include is before toolchain headers because it needs to be able to
@@ -87,6 +69,17 @@ config("headers.after") {
 }
 
 source_set("ctype") {
-  sources = [ "ctype.c" ]
+  sources = [ "ctype.cc" ]
   deps = [ ":headers" ]
+}
+
+source_set("tests") {
+  # TODO: testonly = true
+  if (toolchain_environment == "kernel") {
+    sources = [ "atomic_tests.cc" ]
+    deps = [
+      "//mk/lib/ktl:headers",
+      "//mk/lib/unittest",
+    ]
+  }
 }
