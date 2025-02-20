@@ -1,10 +1,9 @@
-/*
- * Copyright (c) 2008-2015 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
+// Copyright 2025 Mist Tecnologia Ltda
+// Copyright (c) 2008-2015 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
 #ifndef MK_INCLUDE_KERNEL_THREAD_H_
 #define MK_INCLUDE_KERNEL_THREAD_H_
@@ -201,9 +200,9 @@ struct timer;
 enum handler_return thread_timer_tick(struct timer *, lk_time_t now, void *arg);
 
 /* the current thread */
-static inline thread_t *get_current_thread(void) { return arch_get_current_thread(); }
+static inline thread_t *get_current_thread(void) { return lk_arch_get_current_thread(); }
 
-static inline void set_current_thread(thread_t *t) { arch_set_current_thread(t); }
+static inline void set_current_thread(thread_t *t) { lk_arch_set_current_thread(t); }
 
 /* list of all threads, unsafe to traverse without holding thread_lock */
 extern struct list_node thread_list;
@@ -255,9 +254,9 @@ struct thread_stats {
 
 extern struct thread_stats thread_stats[SMP_MAX_CPUS];
 
-#define THREAD_STATS_INC(name)                \
-  do {                                        \
-    thread_stats[arch_curr_cpu_num()].name++; \
+#define THREAD_STATS_INC(name)                   \
+  do {                                           \
+    thread_stats[lk_arch_curr_cpu_num()].name++; \
   } while (0)
 
 #else

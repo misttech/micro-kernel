@@ -57,7 +57,7 @@ namespace {
 DECLARE_SINGLETON_MUTEX(CommandLock);
 }  // namespace
 #endif
-static Mutex command_lock;
+static LkMutex command_lock;
 int lastresult;
 static bool exit_console;
 

@@ -421,6 +421,26 @@ static inline bool x86_is_PAE_enabled(void) {
   return true;
 }
 
+static inline uint64_t x86_read_gs_offset64(uintptr_t offset) {
+  uint64_t ret;
+  __asm__("movq  %%gs:%1, %0" : "=r"(ret) : "m"(*(uint64_t*)(offset)));
+  return ret;
+}
+
+static inline void x86_write_gs_offset64(uintptr_t offset, uint64_t val) {
+  __asm__("movq  %0, %%gs:%1" : : "ir"(val), "m"(*(uint64_t*)(offset)) : "memory");
+}
+
+static inline uint32_t x86_read_gs_offset32(uintptr_t offset) {
+  uint32_t ret;
+  __asm__("movl  %%gs:%1, %0" : "=r"(ret) : "m"(*(uint32_t*)(offset)));
+  return ret;
+}
+
+static inline void x86_write_gs_offset32(uintptr_t offset, uint32_t val) {
+  __asm__("movl   %0, %%gs:%1" : : "ir"(val), "m"(*(uint32_t*)(offset)) : "memory");
+}
+
 static inline void cpuid(uint32_t leaf, uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d) {
   __asm__ __volatile__("cpuid" : "=a"(*a), "=b"(*b), "=c"(*c), "=d"(*d) : "a"(leaf), "c"(0));
 }

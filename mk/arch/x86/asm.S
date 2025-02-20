@@ -1,11 +1,11 @@
-/*
- * Copyright (c) 2015 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
-#include <lk/asm.h>
+// Copyright 2025 Mist Tecnologia Ltda
+// Copyright (c) 2015 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
+
+#include <asm.h>
 
 /* void x86_64_context_switch(uint64_t *oldsp, uint64_t newsp) */
 FUNCTION(x86_64_context_switch)
@@ -30,4 +30,4 @@ FUNCTION(x86_64_context_switch)
     popf
 
     retq
-
+END_FUNCTION(x86_64_context_switch)

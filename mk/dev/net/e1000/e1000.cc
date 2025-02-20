@@ -166,7 +166,7 @@ handler_return e1000::irq_handler() {
 
   LTRACEF("icr %#x\n", icr);
 
-  AutoSpinLockNoIrqSave guard(&lock_);
+  LkAutoSpinLockNoIrqSave guard(&lock_);
 
   handler_return ret = INT_NO_RESCHEDULE;
 
@@ -237,7 +237,7 @@ int e1000::rx_worker_routine() {
       pktbuf_t *p;
 
       {
-        AutoSpinLock guard(&lock_);
+        LkAutoSpinLock guard(&lock_);
 
         p = list_remove_head_type(&rx_queue_, pktbuf_t, list);
       }
@@ -313,7 +313,7 @@ void e1000::add_pktbuf_to_rxring_locked(pktbuf_t *p) {
 }
 
 void e1000::add_pktbuf_to_rxring(pktbuf_t *pkt) {
-  AutoSpinLock guard(&lock_);
+  LkAutoSpinLock guard(&lock_);
 
   add_pktbuf_to_rxring_locked(pkt);
 }

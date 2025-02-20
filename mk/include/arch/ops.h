@@ -1,10 +1,9 @@
-/*
- * Copyright (c) 2008-2014 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
+// Copyright 2025 Mist Tecnologia Ltda
+// Copyright (c) 2008-2014 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
 #ifndef MK_INCLUDE_ARCH_OPS_H_
 #define MK_INCLUDE_ARCH_OPS_H_
@@ -30,7 +29,7 @@ static ulong arch_cycle_count(void);
 static uint arch_curr_cpu_num(void);
 
 /* Use to align structures on cache lines to avoid cpu aliasing. */
-#define __CPU_ALIGN __ALIGNED(CACHE_LINE)
+#define __CPU_ALIGN __ALIGNED(MAX_CACHE_LINE)
 
 void arch_disable_cache(uint flags);
 void arch_enable_cache(uint flags);
@@ -51,6 +50,7 @@ __END_CDECLS
 #define ARCH_CACHE_FLAG_DCACHE 2
 #define ARCH_CACHE_FLAG_UCACHE (ARCH_CACHE_FLAG_ICACHE | ARCH_CACHE_FLAG_DCACHE)
 
+// Give the specific arch a chance to override some routines.
 #include <arch/arch_ops.h>
 
 #endif  // MK_INCLUDE_ARCH_OPS_H_

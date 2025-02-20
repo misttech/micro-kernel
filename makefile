@@ -1,35 +1,47 @@
-# Copyright 2025 Mist Tecnologia Ltda
-# Copyright 2016 The Fuchsia Authors
-# Copyright (c) 2008-2015 Travis Geiselbrecht
-#
-# Use of this source code is governed by a MIT-style
-# license that can be found in the LICENSE file or at
-# https://opensource.org/licenses/MIT
+# Copyright 2024 Mist Tecnologia LTDA. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
 
-LKMAKEROOT ?= .
-LKROOT ?= mk
-LKINC ?=
-BUILDROOT ?= .
-DEFAULT_PROJECT ?= x64
-TOOLCHAIN_PREFIX ?=
+HOST_PLATFORM := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+HOST_ARCH := $(shell uname -m)
 
-# check if LKROOT is already a part of LKINC list and add it only if it is not
-ifeq ($(filter $(LKROOT),$(LKINC)), )
-LKINC := $(LKROOT) $(LKINC)
+ifeq ($(HOST_ARCH),x86_64)
+HOST_ARCH = x64
+else ifeq ($(HOST_ARCH),aarch64)
+HOST_ARCH = arm64
+else
+$(error Unsupported host architecture: $(HOST_ARCH))
 endif
 
-# add the external path to LKINC
-LKINC += third_party
+ifeq ($(HOST_PLATFORM),linux)
+HOST_OS = linux
+else ifeq ($(HOST_PLATFORM),darwin)
+HOST_OS = mac
+else
+$(error Unsupported host platform: $(HOST_PLATFORM))
+endif
 
-export LKMAKEROOT
-export LKROOT
-export LKINC
-export BUILDROOT
-export DEFAULT_PROJECT
-export TOOLCHAIN_PREFIX
+# Build variables
+MKROOT ?= $(PWD)
+OUTPUT ?= build-$(HOST_ARCH)
+NOECHO ?= @
+GN ?= $(MKROOT)/prebuilt/third_party/gn/$(HOST_OS)-$(HOST_ARCH)/gn
+NINJA ?= $(MKROOT)/prebuilt/third_party/ninja/$(HOST_OS)-$(HOST_ARCH)/ninja
 
-# veneer makefile that calls into the engine with lk as the build root
-# if we're the top level invocation, call ourselves with additional args
-.PHONY: _top $(MAKECMDGOALS)
-$(MAKECMDGOALS) _top:
-	@$(MAKE) -C $(LKMAKEROOT) --no-print-directory -rR -f make/engine.mk $(addprefix -I,$(LKINC)) $(MAKECMDGOALS)
+# By default, also show the number of actively running actions.
+export NINJA_STATUS="[%f/%t][%p/%w](%r) "
+# By default, print the 4 oldest commands that are still running.
+export NINJA_STATUS_MAX_COMMANDS=4
+export NINJA_STATUS_REFRESH_MILLIS=100
+export NINJA_PERSISTENT_MODE=0
+
+gen: ## Generate ninja
+	$(NOECHO)echo "Running:$(GN) gen $(OUTPUT)"
+	$(NOECHO)$(GN) gen $(OUTPUT)
+.PHONY: gen
+
+spotless:
+	rm -rf -- "$(MKROOT)/$(OUTPUT)"
+
+%: ## Make any ninja target
+	$(NOECHO)$(NINJA) -C $(OUTPUT) $@

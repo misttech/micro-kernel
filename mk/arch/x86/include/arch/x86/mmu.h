@@ -8,6 +8,8 @@
  */
 #pragma once
 
+#include <align.h>
+
 /* top level defines for the x86 mmu */
 /* NOTE: the top part can be included from assembly */
 #define KB (1024UL)
@@ -35,7 +37,6 @@
 #define X86_KERNEL_PT_FLAGS (X86_MMU_PG_RW | X86_MMU_PG_P)
 #endif
 
-#define PAGE_SIZE 4096
 #define PAGE_DIV_SHIFT 12
 
 #if ARCH_X86_64

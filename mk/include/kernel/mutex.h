@@ -1,4 +1,3 @@
-
 // Copyright 2025 Mist Tecnologia Ltda
 // Copyright (c) 2008-2014 Travis Geiselbrecht
 // Copyright (c) 2012 Shantanu Gupta
@@ -55,13 +54,13 @@ __END_CDECLS
 
 #ifdef __cplusplus
 
-#include <lk/cpp.h>
+#include <fbl/macros.h>
 
 // C++ wrapper object
-class Mutex {
+class LkMutex {
  public:
-  constexpr Mutex() = default;
-  ~Mutex() { mutex_destroy(&lock_); }
+  constexpr LkMutex() = default;
+  ~LkMutex() { mutex_destroy(&lock_); }
 
   status_t acquire(lk_time_t timeout = INFINITE_TIME) {
     return mutex_acquire_timeout(&lock_, timeout);
@@ -70,25 +69,25 @@ class Mutex {
   bool is_held() { return is_mutex_held(&lock_); }
 
   // suppress default constructors
-  DISALLOW_COPY_ASSIGN_AND_MOVE(Mutex);
+  DISALLOW_COPY_ASSIGN_AND_MOVE(LkMutex);
 
  private:
   mutex_t lock_ = MUTEX_INITIAL_VALUE(lock_);
 
-  // AutoLock has access to the inner lock
-  friend class AutoLock;
+  // LkAutoLock has access to the inner lock
+  friend class LkAutoLock;
 };
 
 // RAII wrapper around the mutex
-class AutoLock {
+class LkAutoLock {
  public:
-  explicit AutoLock(mutex_t *mutex) : mutex_(mutex) { mutex_acquire(mutex_); }
-  AutoLock(mutex_t &mutex) : AutoLock(&mutex) {}
+  explicit LkAutoLock(mutex_t *mutex) : mutex_(mutex) { mutex_acquire(mutex_); }
+  LkAutoLock(mutex_t &mutex) : LkAutoLock(&mutex) {}
 
-  explicit AutoLock(Mutex *mutex) : AutoLock(&mutex->lock_) {}
-  AutoLock(Mutex &mutex) : AutoLock(&mutex) {}
+  explicit LkAutoLock(LkMutex *mutex) : LkAutoLock(&mutex->lock_) {}
+  LkAutoLock(LkMutex &mutex) : LkAutoLock(&mutex) {}
 
-  ~AutoLock() { release(); }
+  ~LkAutoLock() { release(); }
 
   // early release the mutex before the object goes out of scope
   void release() {
@@ -99,7 +98,7 @@ class AutoLock {
   }
 
   // suppress default constructors
-  DISALLOW_COPY_ASSIGN_AND_MOVE(AutoLock);
+  DISALLOW_COPY_ASSIGN_AND_MOVE(LkAutoLock);
 
  private:
   mutex_t *mutex_ = nullptr;

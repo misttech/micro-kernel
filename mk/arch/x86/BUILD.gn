@@ -96,22 +96,25 @@ config("kernel") {
 # NOTE: Bad indentation is intentional, to make code reviews easier.
 zx_library("x86") {
   sources = [
-    "arch.c",
+    "arch.cc",
     "asm.S",
-    "cache.c",
-    "descriptor.c",
+    "cache.cc",
+    "descriptor.cc",
     "exceptions.S",
-    "faults.c",
-    "feature.c",
-    "fpu.c",
+    "faults.cc",
+    "feature.cc",
+    "fpu.cc",
     "gdt.S",
-    "mmu.c",
+    "mmu.cc",
     "ops.S",
     "start.S",
-    "thread.c",
+    "thread.cc",
   ]
   deps = [
+    "cpuid",
     "//mk/dev",
+    "//mk/lib/arch",
+    "//mk/lib/fbl",
     "//mk/lib/pretty",
   ]
   public_deps = []

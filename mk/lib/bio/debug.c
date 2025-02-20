@@ -25,7 +25,7 @@
 #include <lib/partition.h>
 #endif
 
-#define DMA_ALIGNMENT (CACHE_LINE)
+#define DMA_ALIGNMENT (MAX_CACHE_LINE)
 #define THREE_BYTE_ADDR_BOUNDARY (16777216)
 #define SUB_ERASE_TEST_SAMPLES (32)
 
@@ -124,7 +124,7 @@ static int cmd_bio(int argc, const cmd_args *argv, uint32_t flags) {
       return -1;
     }
 
-    uint8_t *buf = memalign(CACHE_LINE, 256);
+    uint8_t *buf = memalign(MAX_CACHE_LINE, 256);
     ssize_t err = 0;
     while (len > 0) {
       size_t amt = MIN(256, len);

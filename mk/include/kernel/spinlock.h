@@ -1,10 +1,9 @@
-/*
- * Copyright (c) 2014 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
+// Copyright 2025 Mist Tecnologia Ltda
+// Copyright (c) 2014 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
 #ifndef MK_INCLUDE_KERNEL_SPINLOCK_H_
 #define MK_INCLUDE_KERNEL_SPINLOCK_H_
@@ -15,17 +14,17 @@
 __BEGIN_CDECLS
 
 /* interrupts should already be disabled */
-static inline void spin_lock(spin_lock_t *lock) { arch_spin_lock(lock); }
+static inline void spin_lock(spin_lock_t *lock) { lk_arch_spin_lock(lock); }
 
 /* Returns 0 on success, non-0 on failure */
-static inline int spin_trylock(spin_lock_t *lock) { return arch_spin_trylock(lock); }
+static inline int spin_trylock(spin_lock_t *lock) { return lk_arch_spin_trylock(lock); }
 
 /* interrupts should already be disabled */
-static inline void spin_unlock(spin_lock_t *lock) { arch_spin_unlock(lock); }
+static inline void spin_unlock(spin_lock_t *lock) { lk_arch_spin_unlock(lock); }
 
-static inline void spin_lock_init(spin_lock_t *lock) { arch_spin_lock_init(lock); }
+static inline void spin_lock_init(spin_lock_t *lock) { lk_arch_spin_lock_init(lock); }
 
-static inline bool spin_lock_held(spin_lock_t *lock) { return arch_spin_lock_held(lock); }
+static inline bool spin_lock_held(spin_lock_t *lock) { return lk_arch_spin_lock_held(lock); }
 
 /* spin lock irq save flags: */
 
@@ -41,7 +40,7 @@ static inline bool spin_lock_held(spin_lock_t *lock) { return arch_spin_lock_hel
 /* same as spin lock, but save disable and save interrupt state first */
 static inline void spin_lock_save(spin_lock_t *lock, spin_lock_saved_state_t *statep,
                                   spin_lock_save_flags_t flags) {
-  arch_interrupt_save(statep, flags);
+  lk_arch_interrupt_save(statep, flags);
   spin_lock(lock);
 }
 
@@ -49,7 +48,7 @@ static inline void spin_lock_save(spin_lock_t *lock, spin_lock_saved_state_t *st
 static inline void spin_unlock_restore(spin_lock_t *lock, spin_lock_saved_state_t old_state,
                                        spin_lock_save_flags_t flags) {
   spin_unlock(lock);
-  arch_interrupt_restore(old_state, flags);
+  lk_arch_interrupt_restore(old_state, flags);
 }
 
 /* hand(ier) routines */
@@ -63,13 +62,13 @@ __END_CDECLS
 
 #include <assert.h>
 
-#include <lk/cpp.h>
+#include <fbl/macros.h>
 
 // C++ wrapper around a C spinlock_t
-class SpinLock {
+class LkSpinLock {
  public:
-  constexpr SpinLock() = default;
-  ~SpinLock() { DEBUG_ASSERT(!is_held()); }
+  constexpr LkSpinLock() = default;
+  ~LkSpinLock() { DEBUG_ASSERT(!is_held()); }
 
   void lock() { spin_lock(&lock_); }
   int trylock() { return spin_trylock(&lock_); }
@@ -85,22 +84,22 @@ class SpinLock {
   }
 
   // suppress default constructors
-  DISALLOW_COPY_ASSIGN_AND_MOVE(SpinLock);
+  DISALLOW_COPY_ASSIGN_AND_MOVE(LkSpinLock);
 
  private:
   spin_lock_t lock_ = SPIN_LOCK_INITIAL_VALUE;
 
   // friend classes to get to the inner lock
-  friend class AutoSpinLock;
-  friend class AutoSpinLockNoIrqSave;
+  friend class LkAutoSpinLock;
+  friend class LkAutoSpinLockNoIrqSave;
 };
 
 // RAII wrappers for a spinlock, with and without IRQ Save
-class AutoSpinLock {
+class LkAutoSpinLock {
  public:
-  explicit AutoSpinLock(spin_lock_t *lock) : lock_(lock) { spin_lock_irqsave(lock_, state_); }
-  explicit AutoSpinLock(SpinLock *lock) : AutoSpinLock(&lock->lock_) {}
-  ~AutoSpinLock() { release(); }
+  explicit LkAutoSpinLock(spin_lock_t *lock) : lock_(lock) { spin_lock_irqsave(lock_, state_); }
+  explicit LkAutoSpinLock(LkSpinLock *lock) : LkAutoSpinLock(&lock->lock_) {}
+  ~LkAutoSpinLock() { release(); }
 
   void release() {
     if (likely(lock_)) {
@@ -110,18 +109,18 @@ class AutoSpinLock {
   }
 
   // suppress default constructors
-  DISALLOW_COPY_ASSIGN_AND_MOVE(AutoSpinLock);
+  DISALLOW_COPY_ASSIGN_AND_MOVE(LkAutoSpinLock);
 
  private:
   spin_lock_t *lock_;
   spin_lock_saved_state_t state_;
 };
 
-class AutoSpinLockNoIrqSave {
+class LkAutoSpinLockNoIrqSave {
  public:
-  explicit AutoSpinLockNoIrqSave(spin_lock_t *lock) : lock_(lock) { spin_lock(lock_); }
-  explicit AutoSpinLockNoIrqSave(SpinLock *lock) : AutoSpinLockNoIrqSave(&lock->lock_) {}
-  ~AutoSpinLockNoIrqSave() { release(); }
+  explicit LkAutoSpinLockNoIrqSave(spin_lock_t *lock) : lock_(lock) { spin_lock(lock_); }
+  explicit LkAutoSpinLockNoIrqSave(LkSpinLock *lock) : LkAutoSpinLockNoIrqSave(&lock->lock_) {}
+  ~LkAutoSpinLockNoIrqSave() { release(); }
 
   void release() {
     if (likely(lock_)) {
@@ -131,13 +130,12 @@ class AutoSpinLockNoIrqSave {
   }
 
   // suppress default constructors
-  DISALLOW_COPY_ASSIGN_AND_MOVE(AutoSpinLockNoIrqSave);
+  DISALLOW_COPY_ASSIGN_AND_MOVE(LkAutoSpinLockNoIrqSave);
 
  private:
   spin_lock_t *lock_;
 };
 
 #endif  // __cplusplus
-
 
 #endif  // MK_INCLUDE_KERNEL_SPINLOCK_H_

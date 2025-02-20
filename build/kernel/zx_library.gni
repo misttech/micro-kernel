@@ -3,9 +3,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-#import("//build/cpp/sdk_shared_library.gni")
-#import("//build/cpp/sdk_source_set.gni")
-#import("//build/cpp/sdk_static_library.gni")
 import("//build/toolchain/toolchain_environment.gni")
 
 # Build a zircon-specific library, possibly in several ways.
@@ -175,7 +172,7 @@ template("zx_library") {
       if (!defined(public_deps)) {
         public_deps = []
       }
-      #public_deps += [ "//zircon/system/public" ]
+      public_deps += [ "//mk/top:public" ]
     }
 
     config(_headers_config_target) {
@@ -208,20 +205,9 @@ template("zx_library") {
         if (defined(invoker.sdk_name)) {
           name = invoker.sdk_name
         } else {
-          name = target_name
+          #name = target_name
         }
-        target_type = "sdk_source_set"
-        extra_target_args = {
-          build_as_static = true
-          category = sdk_category
-          sdk_name = name
-          forward_variables_from(invoker,
-                                 [
-                                   "sdk_headers_for_internal_use",
-                                   "sdk_area",
-                                   "stable",
-                                 ])
-        }
+        target_type = "source_set"
       } else {
         target_type = "static_library"
         assert(!defined(invoker.sdk_name))
@@ -229,17 +215,7 @@ template("zx_library") {
     } else if (shape == "static") {
       assert(!defined(invoker.sdk_name))
       if (sdkable) {
-        target_type = "sdk_static_library"
-        extra_target_args = {
-          category = sdk_category
-          sdk_name = target_name
-          libcxx_linkage = "static"
-          forward_variables_from(invoker,
-                                 [
-                                   "sdk_headers_for_internal_use",
-                                   "sdk_area",
-                                 ])
-        }
+        target_type = "static_library"
       } else {
         target_type = "static_library"
       }
@@ -247,18 +223,7 @@ template("zx_library") {
       assert(!defined(invoker.sdk_name))
       if (sdkable) {
         assert(sdk_category == "partner")
-        target_type = "sdk_shared_library"
-        extra_target_args = {
-          category = sdk_category
-          sdk_name = target_name
-          libcxx_linkage = "static"
-          symbols_api = "//sdk/lib/$target_name/$target_name.ifs"
-          forward_variables_from(invoker,
-                                 [
-                                   "sdk_headers_for_internal_use",
-                                   "sdk_area",
-                                 ])
-        }
+        target_type = "shared_library"
       } else {
         target_type = "shared_library"
       }
@@ -329,8 +294,8 @@ template("zx_library") {
       lib_libs = invoker.libs
     }
 
-    if (!(is_fuchsia || is_mistos)) {
-      lib_public_deps += [ "//zircon/system/public" ]
+    if (!is_mk) {
+      lib_public_deps += [ "//mk/top:public" ]
     }
 
     _has_public_headers =
@@ -358,7 +323,7 @@ template("zx_library") {
           # For targets outside `//sdk` that require modification
           # acknowledgement, override the default `.api` file location with
           # one under `//sdk/lib`.
-          api = "//sdk/lib/$target_name/$target_name.api"
+          #api = "//sdk/lib/$target_name/$target_name.api"
         }
       }
 
@@ -372,7 +337,7 @@ template("zx_library") {
           # targets in the 'internal' category. Set if to the correct value here to avoid
           # issues later when trying to use the library from the SDK.
           # See https://fxbug.dev/42066095 for details.
-          include_base = "include"
+          #include_base = "include"
         }
       }
 
@@ -391,15 +356,15 @@ template("zx_library") {
       }
 
       # Add allowlist to data_deps rather than deps to not trigger SDK deps logic
-      data_deps += [ "//build:deprecated_zx_wrapper_allowlist" ]
+      #data_deps += [ "//build:deprecated_zx_wrapper_allowlist" ]
       if (sdkable) {
         # Prevent additional confusing uses of `sdk_publishable` per its documentation.
         if (sdk_category == "partner") {
-          data_deps += [ "//build/zircon:sdk_category_partner_allowlist" ]
+          #data_deps += [ "//build/zircon:sdk_category_partner_allowlist" ]
         } else if (sdk_category == "internal") {
-          data_deps += [ "//build/zircon:sdk_category_internal_allowlist" ]
+          #data_deps += [ "//build/zircon:sdk_category_internal_allowlist" ]
         } else if (sdk_category == "firmware_sdk") {
-          data_deps += [ "//build/zircon:sdk_category_firmware_allowlist" ]
+          #data_deps += [ "//build/zircon:sdk_category_firmware_allowlist" ]
         } else {
           assert(
               false,

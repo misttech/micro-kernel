@@ -45,6 +45,4 @@ jobs:
           jiri fetch-packages
 
       - name: Build
-        run: |
-          ./prebuilt/third_party/gn/linux-x64/gn gen build-x64
-          ./prebuilt/third_party/ninja/linux-x64/ninja -C build-x64
+        run: make gen && make all

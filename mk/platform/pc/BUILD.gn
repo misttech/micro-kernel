@@ -9,29 +9,34 @@ import("//build/toolchain/toolchain_environment.gni")
 
 zx_library("pc") {
   sources = [
-    "cmos.c",
-    "console.c",
-    "debug.c",
-    "ide.c",
-    "interrupts.c",
-    "keyboard.c",
-    "lapic.c",
-    "pic.c",
-    "platform.c",
-    "timer.c",
-    "uart.c",
+    "cmos.cc",
+    "console.cc",
+    "debug.cc",
+
+    #"ide.c",
+    "interrupts.cc",
+    "keyboard.cc",
+    "lapic.cc",
+    "pic.cc",
+    "platform.cc",
+    "timer.cc",
+    "uart.cc",
   ]
 
   deps = [
     "//mk/dev",
-    "//mk/dev/bus/pci/drivers",
+
+    #"//mk/dev/bus/pci/drivers",
     "//mk/lib/acpi_lite",
-    "//mk/lib/bio",
+
+    #"//mk/lib/bio",
     "//mk/lib/cbuf",
+    "//mk/lib/init",
     "//mk/platform:headers",
   ]
   public_deps = [
     # <ktl/optional.h> in uart.h.
+    "//mk/lib/fbl",
     "//mk/lib/ktl:headers",
   ]
 

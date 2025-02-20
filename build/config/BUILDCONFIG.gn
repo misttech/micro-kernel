@@ -1260,7 +1260,7 @@ foreach(_target_type,
 
       # To suppress checking for output dir leaks, in the invoker:
       #   no_output_dir_leaks = false
-      no_output_dir_leaks = true
+      no_output_dir_leaks = false
       if (defined(invoker.no_output_dir_leaks)) {
         no_output_dir_leaks = invoker.no_output_dir_leaks
       } else if (string_replace("##${current_toolchain}",
@@ -1272,7 +1272,7 @@ foreach(_target_type,
       }
 
       if (!no_output_dir_leaks) {
-        deps += [ "//build:output_dir_leaking_allowlist" ]
+        #deps += [ "//build:output_dir_leaking_allowlist" ]
       }
 
       # Prevent the build output dir path from leaking into the

@@ -99,6 +99,28 @@ GLOBAL_CPPFLAGS := --std=c++20 -fno-exceptions -fno-rtti -fno-threadsafe-statics
 GLOBAL_ASMFLAGS := -D__ASSEMBLER__
 GLOBAL_LDFLAGS := -nostdlib -z noexecstack
 
+
+# TODO(https://fxbug.dev/324268041): Disable "-Wextra-qualification"
+# which warns when an extra qualifier appears on a member.
+GLOBAL_CPPFLAGS += "-Wno-extra-qualification"
+
+# TODO(https://fxbug.dev/330769701): Disable "-Wcast-fuction-type-strict"
+# and "-Wcast-function-type-mismatch"  which enforce an exact type match
+# between a function pointer and the target function.
+GLOBAL_CPPFLAGS += "-Wno-cast-function-type-strict"
+GLOBAL_CPPFLAGS += "-Wno-cast-function-type-mismatch"
+GLOBAL_CPPFLAGS += "-Wno-unknown-warning-option"
+
+# TODO(https://fxbug.dev/344080745): After the issue is fixed,
+# remove "-Wno-missing-template-arg-list-after-template-kw".
+GLOBAL_CPPFLAGS += "-Wno-missing-template-arg-list-after-template-kw"
+
+# TODO(https://fxbug.dev/42073532): The use of implicit capture of this via [=] has
+# been deprecated in C++20, but we cannot address this because adding an
+# explicit capture of 'this' to capture '*this' by reference is a C++20
+# extension and not valid in C++17.
+GLOBAL_CPPFLAGS += "-Wno-deprecated-this-capture"
+
 # Build with --build-id to generate a build ID for the kernel
 # FIXME(mist): This is breaking the build with zig cc
 ifeq ($(call TOBOOL,$(USE_ZIG_CC)),false)

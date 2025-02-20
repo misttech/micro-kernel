@@ -219,7 +219,8 @@ static void pktbuf_init(uint level) {
   slab = memalign(CACHE_LINE, PKTBUF_POOL_SIZE * sizeof(pktbuf_pool_object_t));
 #endif
 
-  pool_init(&pktbuf_pool, sizeof(struct pktbuf_pool_object), CACHE_LINE, PKTBUF_POOL_SIZE, slab);
+  pool_init(&pktbuf_pool, sizeof(struct pktbuf_pool_object), MAX_CACHE_LINE, PKTBUF_POOL_SIZE,
+            slab);
   sem_init(&pktbuf_sem, PKTBUF_POOL_SIZE);
 }
 

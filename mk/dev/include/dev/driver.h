@@ -69,22 +69,23 @@ struct driver {
 #define concat(a, b) __ex_concat(a, b)
 #define __ex_concat(a, b) a##b
 
-#define DRIVER_EXPORT(type_, ops_)                                                                \
-  const struct driver concat(__driver_, type_) __ALIGNED(sizeof(void *)) __SECTION("drivers") = { \
-      .type = #type_,                                                                             \
-      .ops = ops_,                                                                                \
-  }
+#define DRIVER_EXPORT(type_, ops_)                                             \
+  __ALIGNED(sizeof(void *))                                                    \
+  __USED __SECTION("drivers") const struct driver concat(__driver_, type_) = { \
+      .type = #type_,                                                          \
+      .ops = ops_,                                                             \
+  };
 
-#define DEVICE_INSTANCE(type_, name_, config_, flags_)                                       \
-  extern const struct driver concat(__driver_, type_);                                       \
-  struct device concat(__device_, concat(type_, concat(_, name_))) __ALIGNED(sizeof(void *)) \
-      __SECTION("devices") = {                                                               \
-          .name = #name_,                                                                    \
-          .driver = &concat(__driver_, type_),                                               \
-          .flags = flags_,                                                                   \
-          .config = config_,                                                                 \
-          .state = NULL,                                                                     \
-          .device_state = DEVICE_UNINITIALIZED,                                              \
+#define DEVICE_INSTANCE(type_, name_, config_, flags_)                                             \
+  extern const struct driver concat(__driver_, type_);                                             \
+  __ALIGNED(sizeof(void *))                                                                        \
+  __USED __SECTION("devices") struct device concat(__device_, concat(type_, concat(_, name_))) = { \
+      .name = #name_,                                                                              \
+      .driver = &concat(__driver_, type_),                                                         \
+      .flags = flags_,                                                                             \
+      .config = config_,                                                                           \
+      .state = NULL,                                                                               \
+      .device_state = DEVICE_UNINITIALIZED,                                                        \
   }
 
 /*
