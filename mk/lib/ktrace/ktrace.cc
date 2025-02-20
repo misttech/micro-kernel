@@ -5,7 +5,7 @@
 // https://opensource.org/licenses/MIT
 
 #include <debug.h>
-#include <lib/boot-options/boot-options.h>
+//#include <lib/boot-options/boot-options.h>
 #include <lib/fxt/fields.h>
 #include <lib/fxt/interned_category.h>
 #include <lib/ktrace.h>
@@ -18,9 +18,9 @@
 #include <zircon/types.h>
 
 #include <arch/ops.h>
-#include <arch/user_copy.h>
+//#include <arch/user_copy.h>
 #include <fbl/alloc_checker.h>
-#include <hypervisor/ktrace.h>
+//#include <hypervisor/ktrace.h>
 #include <kernel/koid.h>
 #include <ktl/atomic.h>
 #include <ktl/iterator.h>
@@ -265,6 +265,7 @@ zx_status_t KTraceState::RewindLocked() {
   return ZX_OK;
 }
 
+#if 0
 ssize_t KTraceState::ReadUser(user_out_ptr<void> ptr, uint32_t off, size_t len) {
   Guard<Mutex> guard(&lock_);
 
@@ -433,6 +434,7 @@ ssize_t KTraceState::ReadUser(user_out_ptr<void> ptr, uint32_t off, size_t len) 
   // Success!
   return done;
 }
+#endif
 
 void KTraceState::ReportStaticNames() {
   fxt::InternedString::RegisterStrings();
@@ -625,9 +627,12 @@ static void ktrace_init(unsigned level) {
   // corresponding syscalls. Note that because KTRACE_STATE grpmask starts at 0
   // and will not be changed, the other functions in this file need not check
   // for enabled-ness manually.
-  const bool syscalls_enabled = gBootOptions->enable_debugging_syscalls;
-  const uint32_t bufsize = syscalls_enabled ? (gBootOptions->ktrace_bufsize << 20) : 0;
-  const uint32_t initial_grpmask = gBootOptions->ktrace_grpmask;
+  //const bool syscalls_enabled = gBootOptions->enable_debugging_syscalls;
+  const bool syscalls_enabled = false;
+  //const uint32_t bufsize = syscalls_enabled ? (gBootOptions->ktrace_bufsize << 20) : 0;
+  const uint32_t bufsize = 0;
+  //const uint32_t initial_grpmask = gBootOptions->ktrace_grpmask;
+  const uint32_t initial_grpmask = 0;
 
   dprintf(INFO, "ktrace_init: syscalls_enabled=%d bufsize=%u grpmask=%x\n", syscalls_enabled,
           bufsize, initial_grpmask);

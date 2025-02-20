@@ -11,15 +11,15 @@
 #include <lib/fit/function.h>
 #include <lib/fxt/interned_category.h>
 #include <lib/fxt/serializer.h>
-#include <lib/user_copy/user_ptr.h>
+// #include <lib/user_copy/user_ptr.h>
 #include <lib/zircon-internal/ktrace.h>
 #include <lib/zx/result.h>
 #include <stdint.h>
 #include <zircon/errors.h>
 #include <zircon/types.h>
 
-#include <arch/user_copy.h>
-#include <kernel/lockdep.h>
+// #include <arch/user_copy.h>
+// #include <kernel/lockdep.h>
 #include <kernel/mutex.h>
 #include <kernel/spinlock.h>
 #include <ktl/atomic.h>
@@ -96,7 +96,7 @@ class KTraceState {
     return RewindLocked();
   }
 
-  ssize_t ReadUser(user_out_ptr<void> ptr, uint32_t off, size_t len) TA_EXCL(lock_, write_lock_);
+  // ssize_t ReadUser(user_out_ptr<void> ptr, uint32_t off, size_t len) TA_EXCL(lock_, write_lock_);
 
   uint32_t grpmask() const {
     return static_cast<uint32_t>(grpmask_.load(ktl::memory_order_acquire));

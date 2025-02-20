@@ -4,23 +4,26 @@
 # license that can be found in the LICENSE file or at
 # https://opensource.org/licenses/MIT
 
-import("//build/zircon/migrated_targets.gni")
+import("//build/kernel/migrated_targets.gni")
 
 zx_library("ktrace") {
   sources = [ "ktrace.cc" ]
   deps = [
-    "//zircon/kernel/hypervisor:headers",
-    "//zircon/kernel/lib/boot-options",
-    "//zircon/kernel/lib/init",
-    "//zircon/kernel/lib/ktl",
-    "//zircon/kernel/lib/syscalls:headers",
-    "//zircon/kernel/object:headers",
-    "//zircon/system/ulib/zircon-internal",
+    #"//mk/hypervisor:headers",
+    #"//mk/lib/boot-options",
+    "//mk/lib/init",
+    "//mk/lib/ktl",
+
+    #"//mk/lib/syscalls:headers",
+
+    #"//mk/kernel/object:headers",
+    "//mk/ulib/zircon-internal",
+    "//mk/lib/fbl",
   ]
 
   public_deps = [
     ":suppress-warning",
-    "//src/performance/lib/fxt:headers",
+    "//mk/lib/fxt:headers",
   ]
 }
 
