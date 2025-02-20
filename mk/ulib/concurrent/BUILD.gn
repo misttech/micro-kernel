@@ -18,7 +18,7 @@ library_headers("headers") {
 source_set("concurrent") {
   sources = [ "copy.cc" ]
 
-  if (is_fuchsia && !is_kernel) {
+  if (is_mk && !is_kernel) {
     sources += [ "seqlock_usermode_fuchsia.cc" ]
   } else if (is_host) {
     sources += [ "seqlock_usermode_posix.cc" ]
@@ -26,10 +26,10 @@ source_set("concurrent") {
 
   public_deps = [
     ":headers",
-    "//src/performance/lib/fxt:headers",
-    "//zircon/kernel/lib/arch:headers",
+    "//mk/lib/arch:headers",
+    "//mk/lib/fxt:headers",
   ]
-  deps = [ "//sdk/lib/stdcompat" ]
+  deps = [ "//mk/lib/stdcompat" ]
 }
 
 group("tests") {
