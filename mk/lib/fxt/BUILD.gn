@@ -26,13 +26,13 @@ library_headers("headers") {
   ]
   public_deps = [
     ":suppress-warning",
-    "//sdk/lib/fit",
-    "//sdk/lib/stdcompat",
-    "//zircon/kernel/lib/special-sections",
+    "//mk/lib/fit",
+    "//mk/lib/special-sections",
+    "//mk/lib/stdcompat",
 
     # <fxt/writer.h> has #include <lib/zx/result.h>
     # <fxt/serializer.h> has #include <lib/zx/result.h>
-    "//zircon/system/ulib/zx",
+    "//mk/ulib/zx",
   ]
 }
 
