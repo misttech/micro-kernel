@@ -16,7 +16,7 @@ zx_library("pretty") {
     "hexdump.cc",
     "sizes.cc",
   ]
-  public_deps = [ "//mk/lib/zircon-internal:headers" ]
+  public_deps = [ "//mk/ulib/zircon-internal:headers" ]
   if (is_kernel && toolchain_environment != "kernel") {
     deps = [ "//mk/lib/libc" ]
   }

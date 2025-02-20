@@ -90,7 +90,7 @@ zx_library("fbl") {
   }
 
   if (!is_mk && !is_kernel) {
-    deps += [ "//mk/lib/zircon-internal:headers" ]
+    deps += [ "//mk/ulib/zircon-internal:headers" ]
   }
 }
 

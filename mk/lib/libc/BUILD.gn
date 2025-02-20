@@ -42,7 +42,7 @@ static_library("libc") {
     ":cpp",
     ":ctype",
     "string",
-    "//mk/lib/zircon-internal",
+    "//mk/ulib/zircon-internal",
   ]
 
   if (toolchain_environment == "kernel") {

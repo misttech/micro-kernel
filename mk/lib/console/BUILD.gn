@@ -21,7 +21,7 @@ zx_library("console") {
   sources = [ "console.cc" ]
   defines = [ "BOOT_TEST_SUCCESS_STRING=\"$boot_test_success_string\"" ]
   deps = [
-    "//mk/lib/zircon-internal",
     "//mk/ulib/fbl",
+    "//mk/ulib/zircon-internal",
   ]
 }
