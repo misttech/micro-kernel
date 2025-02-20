@@ -1,0 +1,18 @@
+# Copyright 2025 Mist Tecnologia Ltda
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/migrated_targets.gni")
+
+zx_library("io") {
+  sources = [
+    "console.c",
+    "io.c",
+  ]
+  deps = [ "//mk/lib/cbuf" ]
+
+  defines = [ "CONSOLE_OUTPUT_TO_PLATFORM_PUTC=1" ]
+}

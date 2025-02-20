@@ -11,6 +11,7 @@
 #include <app/tests.h>
 #include <lk/debug.h>
 #include <lk/err.h>
+#include <pretty/hexdump.h>
 
 // We're doing a few things here that the compiler doesn't like, so disable printf warnings
 #pragma GCC diagnostic push

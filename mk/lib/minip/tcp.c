@@ -21,6 +21,7 @@
 #include <lk/console_cmd.h>
 #include <lk/err.h>
 #include <lk/trace.h>
+#include <pretty/hexdump.h>
 
 #include "minip-internal.h"
 

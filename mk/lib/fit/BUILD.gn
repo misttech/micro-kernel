@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import("//build/zircon/migrated_targets.gni")
+import("//build/kernel/zx_library.gni")
 
 zx_library("fit") {
   sdk = "source"
@@ -25,8 +25,7 @@ zx_library("fit") {
     "lib/fit/inline_any.h",
   ]
 
-  sources = []
-  public_deps = [ "//sdk/lib/stdcompat" ]
+  public_deps = [ "//mk/lib/stdcompat" ]
 }
 
 group("tests") {

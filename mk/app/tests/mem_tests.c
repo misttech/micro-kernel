@@ -15,6 +15,7 @@
 #include <lk/console_cmd.h>
 #include <lk/debug.h>
 #include <lk/err.h>
+#include <pretty/hexdump.h>
 
 #if WITH_KERNEL_VM
 #include <kernel/vm.h>

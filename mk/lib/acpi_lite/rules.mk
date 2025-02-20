@@ -5,7 +5,7 @@ MODULE := $(LOCAL_DIR)
 MODULE_OPTIONS := extra_warnings
 
 MODULE_DEPS := \
-	lib/libcpp
+	lib/libc
 
 MODULE_SRCS += \
    $(LOCAL_DIR)/acpi_lite.cc

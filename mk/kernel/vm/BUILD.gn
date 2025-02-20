@@ -1,0 +1,39 @@
+# Copyright 2025 Mist Tecnologia Ltda. All rights reserved.
+# Copyright 2019 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//build/kernel/migrated_targets.gni")
+import("//mk/params.gni")
+
+zx_library("vm") {
+  sources = [
+    "bootalloc.c",
+    "pmm.c",
+    "vm.c",
+    "vmm.c",
+  ]
+  deps = [
+    "//mk/lib/console",
+    "//mk/lib/pretty",
+  ]
+
+  defines = []
+
+  public_deps = []
+
+  public_configs = []
+
+  # GCC figures out some cases where we have a global variable that's used as a
+  # RefPtr and so appears like it might be passed to delete.  We always leak
+  # the reference so it will never actually be called, but the compiler can't
+  # figure that out statically so we must disable its warning.
+  configs += [ ":suppress-nonheap-warning" ]
+}
+
+config("suppress-nonheap-warning") {
+  visibility = [ ":*" ]
+  if (is_gcc) {
+    cflags = [ "-Wno-free-nonheap-object" ]
+  }
+}

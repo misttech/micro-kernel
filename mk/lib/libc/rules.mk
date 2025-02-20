@@ -18,7 +18,10 @@ MODULE_SRCS += \
 	$(LOCAL_DIR)/strtoll.c \
 	$(LOCAL_DIR)/stdio.c \
 	$(LOCAL_DIR)/qsort.c \
-	$(LOCAL_DIR)/eabi.c
+	$(LOCAL_DIR)/eabi.c \
+\
+	$(LOCAL_DIR)/pure_virtual.cc \
+	$(LOCAL_DIR)/new.cc
 
 MODULE_FLOAT_SRCS += \
 	$(LOCAL_DIR)/printf.c \

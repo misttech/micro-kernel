@@ -1,0 +1,25 @@
+# Copyright 2025 Mist Tecnologia Ltda
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/cpp/library_headers.gni")
+
+library_headers("headers") {
+  headers = [ "lib/cmpctmalloc.h" ]
+  public_deps = []
+}
+
+source_set("cmpctmalloc") {
+  sources = [ "cmpctmalloc.c" ]
+  deps = []
+  public_deps = [ ":headers" ]
+
+  if (is_host) {
+    configs += [ "//build/config/mk:enable_zircon_asserts" ]
+  } else if (is_kernel) {
+    deps += []
+  }
+}

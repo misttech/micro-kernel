@@ -11,6 +11,7 @@
 #include <lk/trace.h>
 #include <arch/ops.h>
 #include <lk/console_cmd.h>
+#include <pretty/hexdump.h>
 
 /*
  * These sample values come from publication "FIPS-197", Appendix C.1

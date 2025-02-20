@@ -11,6 +11,7 @@
 #include <kernel/thread.h>
 #include <lk/debug.h>
 #include <lk/trace.h>
+#include <pretty/hexdump.h>
 
 /* exceptions */
 #define INT_DIVIDE_0 0x00

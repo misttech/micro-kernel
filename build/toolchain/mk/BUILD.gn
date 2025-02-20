@@ -1,0 +1,23 @@
+# Copyright 2025 Mist Tecnologia Ltda. All rights reserved.
+# Copyright 2016 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//build/toolchain/clang_toolchain_suite.gni")
+
+clang_toolchain_suite(target_cpu) {
+  toolchain_cpu = target_cpu
+  toolchain_os = target_os
+
+  use_strip = true
+
+  # As a special case, on mk, replace --strip-all with --strip-sections.
+  # It is stronger, and thus generates smaller binaries, but also creates
+  # crashes for host binaries (e.g. https://fxbug.dev/42126969).
+  strip_cxx_bin_args = "--strip-sections"
+
+  deps = [ "//build/config/mk:terminal_link_deps" ]
+  executable_deps = [ "//build/config/mk:executable_deps" ]
+  link_deps = [ "//build/config/mk:link_deps" ]
+  source_deps = [ "//build/config/mk:source_deps" ]
+}

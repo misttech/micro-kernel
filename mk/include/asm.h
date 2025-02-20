@@ -43,5 +43,3 @@
 
 #endif  // MK_INCLUDE_ASM_H_
 
-
-#endif  // KERNEL_INCLUDE_ASM_H_

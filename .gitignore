@@ -1,42 +1,75 @@
 ### General file patterns
-*.dSYM
-*.orig
-*.swp
 *~
-*.code-workspace
-!micro-kernel.code-workspace
-.cache
-.cproject
+.*.sw?
+.build_lock
+.cargo
 .clangd
+**/.cache/clangd
+.checkstyle
+.classpath
+.config
+.ccls-cache
+.envrc
+.cproject
 .DS_Store
 .gdb_history
 .gdbinit
 .jiri_manifest
+.landmines
+.local
+.packages
+.project
+.pydevproject
+.ssh
 .vscode
-blk.bin
-build-*
+*_BACKUP_*
+*_REMOTE_*
+*_LOCAL_*
+*_BASE_*
+*.dSYM
+*.fxt
+*.iml
+*.orig
+*.pyc
+*.code-workspace
+!fuchsia.code-workspace
+!mist-os.code-workspace
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+CMakeLists.txt
 compile_commands.json
+cmake-build-debug/
 cscope.*
-doit*
-local.mk
-scripts/toolpaths.local
-t
-tagit
-TAGS
+default.profraw
+rls*.log
+Session.vim
 tags
-toolchain
-.cache
-vmlinux
+TAGS
+Thumbs.db
+tmp/
+json_generator_tests_*.txt
+tables_generator_tests_*.txt
+
+### Checkout generated files
+/build/checkout.gni
+/build/cipd.gni
+
+### Directories to be ignored across the tree
+.cipd/
+.idea/
 
 ### Top-level directories
 /.jiri/
 /.jiri_root/
+/build-*
+/integration/
 # For storing local scripts and data files in a source tree.
 /local/
-/build-*/
-/prebuilt/downloads/
-/prebuilt/config.mk
-/prebuilt/config-zig.mk
+/out/
+/prebuilt/
+/test_data/
 
 # Local test coverage file.
 lcov.info

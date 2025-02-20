@@ -16,7 +16,7 @@ MODULE_SRCS += $(LOCAL_DIR)/spinlock.c
 MODULE_SRCS += $(LOCAL_DIR)/thread.c
 MODULE_SRCS += $(LOCAL_DIR)/time.c
 
-MODULE_DEPS += lib/libcpp
+MODULE_DEPS += lib/libc
 
 # one file uses slightly complicated designated initializer
 MODULE_CFLAGS += -Wno-override-init

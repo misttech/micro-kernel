@@ -1,0 +1,218 @@
+# Copyright 2025 Mist Tecnologia Ltda. All rights reserved.
+# Copyright 2016 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//build/config/build_id.gni")
+import("//build/config/clang/clang.gni")
+import("//build/config/clang/clang_target_toolchain_info.gni")
+import("//build/config/current_target_tuple.gni")
+import("//build/config/sanitizers/sanitizer_default_options.gni")
+import("//build/config/sysroot.gni")
+import("//build/toolchain/ccache.gni")
+
+# ccache, at least in some configurations, caches preprocessed content. This
+# means that by the time the compiler sees it, macros are unrolled. A number
+# of gcc and clang diagnostics are conditioned on whether the source is part
+# of a macro or not. This is because a "reasonable" looking macro invocation
+# may end up doing something silly internally. This can mean self assignment
+# and tautological comparisons, since macros are not typed. Macros also tend
+# to over-parenthesize, and so on. This particular list of options was found
+# via trial and error, and might be the best way of keeping the build quiet.
+config("ccache") {
+  cflags = [
+    "-Wno-error",
+    "-Qunused-arguments",
+    "-Wno-parentheses-equality",
+    "-Wno-self-assign",
+    "-Wno-tautological-compare",
+    "-Wno-unused-command-line-argument",
+  ]
+  asmflags = cflags
+}
+
+config("compiler") {
+  configs = [
+    ":compiler_sysroot",
+    ":compiler_target",
+    ":compiler_fuchsia_api_level",
+  ]
+
+  configs += [ "//build/config:cpu_baseline" ]
+
+  if (use_ccache) {
+    configs += [ ":ccache" ]
+  }
+
+  ldflags = []
+  if (build_id_format != "") {
+    ldflags += [ "-Wl,--build-id=$build_id_format" ]
+  }
+}
+
+config("compiler_sysroot") {
+  if (defined(sysroot) && sysroot != "") {
+    cflags = [ "--sysroot=" + rebase_path(sysroot, root_build_dir) ]
+    asmflags = cflags
+    ldflags = cflags
+  }
+}
+
+config("compiler_target") {
+  cflags = [ "--target=$current_target_tuple" ]
+  asmflags = cflags
+  ldflags = cflags
+}
+
+config("shared_library_config") {
+  cflags = [ "-fPIC" ]
+
+  # Ensure assembly code can use `#ifdef __PIC__`
+  asmflags = cflags
+  ldflags = cflags
+}
+
+config("executable_config") {
+}
+
+config("enable_kernel_asserts") {
+  defines = [ "ZX_ASSERT_LEVEL=2" ]
+}
+
+declare_args() {
+  kernel_asserts = is_debug
+}
+
+config("kernel_asserts") {
+  if (kernel_asserts) {
+    configs = [ ":enable_kernel_asserts" ]
+  }
+}
+
+config("no_cpp_standard_library") {
+  ldflags = [ "-nostdlib++" ]
+}
+
+config("static_cpp_standard_library") {
+  ldflags = [
+    # Use libc++ as the C++ standard library.
+    "-stdlib=libc++",
+
+    # Use libunwind as the unwinder.
+    "-unwindlib=libunwind",
+
+    # Request static linking for standard C++ library. Despite the name, this
+    # option applies to both libstdc++ and libc++, whichever is used by Clang.
+    "-static-libstdc++",
+
+    # Request static linking for unwinder. Despite the name, this option
+    # applies to both libgcc and libunwind, whichever is used by Clang.
+    "-static-libgcc",
+  ]
+}
+
+# Enable additional integer-math sanitizers
+config("integer-paranoia") {
+  cflags = [
+    "-fsanitize=integer-divide-by-zero,signed-integer-overflow",
+    "-fsanitize-undefined-trap-on-error",
+  ]
+}
+
+# clang_libunwind is only available on mk.
+# See the definition in //build/config/clang/clang.gni.
+if (is_mk) {
+  # TODO(https://fxbug.dev/42135607): Get this information from runtime.json instead
+  _clang_libunwind =
+      "${rebased_clang_prefix}/../${clang_target_toolchain_info.libunwind_so}"
+
+  config("libunwind") {
+    libs = [ _clang_libunwind ]
+  }
+}
+
+# NOTE: This config's label is hard-coded in //build/config/BUILDCONFIG.gn
+# so don't rename it without updating that file too!
+config("static-pie-config") {
+  cflags = [
+    "-fno-sanitize=all",
+    "-fno-stack-protector",
+  ]
+  ldflags = [
+    "-nostdlib",
+    "-nostartfiles",
+    "-Wl,-no-dynamic-linker",
+  ]
+}
+
+# TODO(https://fxbug.dev/42180987): This works around a toolchain issue in LTO builds
+# where code generation results in a dependency on a Zircon vDSO call but
+# doesn't link -lzircon to supply it at link time.  This is added to deps of
+# the few targets where this has caused link failures to just explicitly link
+# it in.  As soon as the toolchain issues are resolved, this and the deps on it
+# will all be removed.
+group("uses-outline-atomics-fxbug98632") {
+  visibility = []
+  if (current_cpu == "arm64" && is_mk) {
+    #deps = [ "//src/zircon/lib/zircon" ]
+  }
+}
+
+# toolchain_variant.{executable_,source,}deps point to these usually, so
+# BUILDCONFIG.gn (for $default_toolchain) and the toolchain definitions don't
+# have to keep the details in sync.  These use only data_deps so that there is
+# no automatic retriggering of the dependent target just because one of the
+# sysroot actions re-runs, only if a file found via depfile changed.  Note this
+# could mean that newly-added sysroot files that would now be seen in a search
+# path but were not before don't cause rebuilds that would now pick them up.
+# But that won't happen if the old files previously found instead were removed
+# from the sysroot, since the additions cause the cleanup scan that would
+# remove old files and thereby cause rebuilds of their dependents via depfile.
+
+group("terminal_link_deps") {
+  # toolchain_variant.deps is used by loadable_module() and executable().  It's
+  # responsible for making sure there are data_deps for any shared_library()
+  # targets that may be runtime file dependencies.  This gets those files into
+  # the Fuchsia package via their distribution_entries metadata.
+  #data_deps = [ "//zircon/public/sysroot:data($variant_base_toolchain)" ]
+}
+
+group("executable_deps") {
+  # Every normal executable() depends on this.  But since :link_deps has to
+  # include the startfiles because of the RBE wrapper, it has nothing do do.
+}
+
+group("link_deps") {
+  # Every linking target depends on this.  The RBE wrapper requires that
+  # Scrt1.o be present for all links, not just executable links (which might
+  # actually use it).  If the RBE support were more sophisticated, installing
+  # Scrt1.o could be just in :executable_deps instead.  But it's not.  So this
+  # ensures that things are in place for Scrt1.o and the like to be found in
+  # the sysroot where the compiler will look for them before the executable()
+  # is linked.  But it doesn't contribute any link inputs as a GN target, so it
+  # does no harm to have it in deps even when the link uses -nostartfiles or
+  # equivalent.
+  #data_deps = [ "//zircon/public/sysroot:startfiles($variant_base_toolchain)" ]
+}
+
+group("source_deps") {
+  # Every normal target that has $sources it compiles depends on this.  Note
+  # this includes linking targets as well as compilation-only targets, both
+  # terminal and non-terminal (shared_library() targets).
+  #
+  # It ensures that everything the compiler expects to find in the sysroot is
+  # ready for a compilation step or linking step that's not an executable(),
+  # i.e. doesn't use startfiles.  It doesn't modify how anything gets compiled
+  # or linked (by propagating configs or link inputs, etc.).  So it's harmless
+  # to have it in deps even for a target that doesn't use the sysroot headers
+  # or linking stubs.
+  #
+  # The individual compilation steps do not wait for data_deps, only the target
+  # as a whole.  So these must be deps and action re-runs will cause rebuilds.
+  # But the link steps have direct order-only Ninja deps on their data_deps, so
+  # action re-runs for those alone won't always cause relinks.
+  deps = [
+    #"//zircon/public/sysroot:include($variant_base_toolchain)",
+    #"//zircon/public/sysroot:lib($variant_base_toolchain)",
+  ]
+}

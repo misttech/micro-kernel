@@ -1,0 +1,92 @@
+# Copyright 2025 Mist Tecnologia Ltda
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/cpp/library_headers.gni")
+import("//build/toolchain/toolchain_environment.gni")
+
+library_headers("headers") {
+  headers = []
+  public_deps = [
+    # <stdio.h> has #include <ktl/string_view.h>.
+    "//mk/lib/ktl:headers",
+  ]
+
+  public_configs = [ ":headers.after" ]
+}
+
+static_library("libc") {
+  public_deps = [ ":headers" ]
+
+  sources = [
+    "abort.c",
+    "atexit.c",
+    "atoi.c",
+    "bsearch.c",
+    "ctype.c",
+    "eabi.c",
+    "errno.c",
+    "printf.c",
+    "pure_virtual.cc",
+    "qsort.c",
+    "rand.c",
+    "stdio.c",
+    "strtol.c",
+    "strtoll.c",
+  ]
+
+  deps = [
+    ":cpp",
+    ":ctype",
+    "string",
+    "//mk/lib/zircon-internal",
+  ]
+
+  if (toolchain_environment == "kernel") {
+    deps += [
+      "//mk/lib/heap",
+      "//mk/lib/io",
+    ]
+  }
+}
+
+source_set("cpp") {
+  sources = [
+    "new.cc",
+    "pure_virtual.cc",
+  ]
+
+  cflags_cc = [ "-fvisibility=hidden" ]
+}
+
+config("headers.after") {
+  visibility = [
+    ":*",
+    "//mk:headers",
+  ]
+
+  # libc/include is before toolchain headers because it needs to be able to
+  # override some libc++ headers that won't work in the kernel context.
+  # However, libc/include/limits.h punts to the toolchain via #include_next
+  # <limits.h> and the toolchain's limits.h does the same to get the "system"
+  # libc <limits.h>, so we need another include directory after the toolchain
+  # headers that has a limits.h for that to find, even though in the kernel
+  # there is nothing to add to the toolchain's <limits.h> content.
+  cflags = [
+    "-idirafter",
+    rebase_path("include-after", root_build_dir),
+  ]
+
+  # This is propagated by :headers, but that's not used directly by the kernel
+  # toolchain.  It explicitly uses this config, so propagate it separately that
+  # way.
+  configs = [ "//mk/lib/ktl:headers.after" ]
+}
+
+source_set("ctype") {
+  sources = [ "ctype.c" ]
+  deps = [ ":headers" ]
+}

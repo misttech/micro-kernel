@@ -7,8 +7,6 @@
 
 #include <debug.h>
 
-#include <pretty/hexdump.h>
-
 __BEGIN_CDECLS
 
 #if !DISABLE_DEBUG_OUTPUT

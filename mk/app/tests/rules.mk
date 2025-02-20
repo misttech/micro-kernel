@@ -22,7 +22,8 @@ MODULE_FLOAT_SRCS := \
     $(LOCAL_DIR)/printf_tests.c \
 
 MODULE_DEPS += \
-    lib/cbuf
+    lib/cbuf \
+    lib/pretty
 
 MODULE_COMPILEFLAGS += -fno-builtin
 

@@ -1,0 +1,45 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/kernel_cpu.gni")
+
+source_set("top") {
+  sources = [
+    "debug.cc",
+    "init.c",
+    "main.c",
+  ]
+  deps = [
+    "//mk/app",
+    "//mk/arch/$kernel_cpu",
+    "//mk/dev",
+    "//mk/kernel",
+    "//mk/lib/console",
+    "//mk/platform",
+    "//mk/target",
+  ]
+
+  # TODO(https://fxbug.dev/374753100): Remove this after soft transition.
+  defines = [ "_LIBCPP_VERBOSE_ABORT_NOT_NOEXCEPT" ]
+}
+
+# If not building for Fuchsia|mistos-os (e.g., linux, macos) then binaries need to get
+# zircon headers directly from source. Otherwise they come from sysroot.
+config("public_config") {
+  include_dirs = [ "." ]
+  visibility = [ ":*" ]
+}
+
+# These headers are exported for use in building non-fuchsia-host binaries.
+source_set("public") {
+  #public = [ "zircon/mistos/syscalls/object.h" ]
+
+  # Since this doesn't actually compile any code, don't let it contribute any
+  # implicit link inputs from default configs.
+  configs = []
+
+  public_configs = [ ":public_config" ]
+}

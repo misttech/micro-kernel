@@ -26,29 +26,18 @@ curl -s "https://fuchsia.googlesource.com/jiri/+/HEAD/scripts/bootstrap_jiri?for
 # Update binary/packages dependencies using jiri
 export PATH=$PWD/.jiri_root/bin:$PATH
 
-# Download prebuilt binaries (Clang, qemu, etc)
-./scripts/download-prebuilt
+# Import the mk integration
+jiri import -name=integration mk https://github.com/misttech/mk-integration
 
-# Download Zig compiler (to use zig cc)
-./scripts/download-zig
+# Download prebuilt binaries
+jiri -v -vv fetch-packages
 ```
 
 # Build:
 
 ```
-# Build with clang
-USE_CLANG=true ./scripts/do-qemux86 -6
-
-# Build with zig cc
-USE_ZIG_CC=true ./scripts/do-qemux86 -6
-```
-
-# Development Setup
-
-When contributing to the project, install Git hooks:
-
-```bash
-./scripts/setup-hooks
+./prebuilt/third_party/gn/mac-x64/gn gen build-x64
+./prebuilt/third_party/ninja/mac-x64/ninja -C build-x64
 ```
 
 ## License

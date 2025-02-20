@@ -2,11 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import("//build/kernel/zx_library.gni")
 import("//build/toolchain/toolchain_environment.gni")
-import("//build/zircon/zx_library.gni")
 
 # LINT.IfChange
-zx_library("fbl") {
+zx_library("fbl_ulib") {
   sdk = "source"
   sdk_publishable = "internal"
   sdk_headers = [
@@ -64,32 +64,32 @@ zx_library("fbl") {
   }
 
   public_deps = [
-    "//sdk/lib/fit",
-    "//sdk/lib/stdcompat",
+    "//mk/lib/fit",
+    "//mk/lib/stdcompat",
   ]
 
   deps = []
 
   if (is_kernel) {
     # Anything using libc++ headers in the kernel needs this.
-    public_deps += [ "//zircon/kernel/lib/ktl:headers" ]
+    public_deps += [ "//mk/lib/ktl:headers" ]
     if (toolchain_environment == "kernel") {
-      deps += [ "//zircon/kernel/lib/heap:headers" ]
+      deps += [ "//mk/lib/heap:headers" ]
     } else {
       deps += [
-        "//zircon/kernel/lib/ktl",
-        "//zircon/kernel/lib/libc",
+        "//mk/lib/ktl",
+        "//mk/lib/libc",
       ]
     }
   }
 
   if (toolchain_environment == "kernel") {
     # Avoid circularity.
-    configs -= [ "//zircon/kernel/vm:headers.config" ]
+    configs -= [ "//mk/kernel/vm:headers.config" ]
   }
 
-  if (!is_fuchsia && !is_kernel) {
-    deps += [ "//zircon/system/public" ]
+  if (!is_mk && !is_kernel) {
+    deps += [ "//mk/lib/zircon-internal:headers" ]
   }
 }
 

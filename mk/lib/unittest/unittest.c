@@ -16,6 +16,7 @@
 #include <string.h>
 
 #include <lk/debug.h>
+#include <pretty/hexdump.h>
 
 #if LK_DEBUGLEVEL > 2
 #define TEST_FAILURE_CASES 1
