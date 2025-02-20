@@ -7,6 +7,6 @@
 import("//build/kernel/migrated_targets.gni")
 
 zx_library("cbuf") {
-  sources = [ "cbuf.c" ]
-  deps = []
+  sources = [ "cbuf.cc" ]
+  deps = [ "//mk/lib/fbl" ]
 }

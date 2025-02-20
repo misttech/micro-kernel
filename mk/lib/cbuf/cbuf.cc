@@ -30,7 +30,7 @@ void cbuf_initialize_etc(cbuf_t *cbuf, size_t len, void *buf) {
   cbuf->head = 0;
   cbuf->tail = 0;
   cbuf->len_pow2 = log2_uint(len);
-  cbuf->buf = buf;
+  cbuf->buf = static_cast<char *>(buf);
   event_init(&cbuf->event, false, 0);
   spin_lock_init(&cbuf->lock);
 
