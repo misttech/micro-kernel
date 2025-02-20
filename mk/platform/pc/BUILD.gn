@@ -28,13 +28,13 @@ zx_library("pc") {
     "//mk/lib/acpi_lite",
     "//mk/lib/bio",
     "//mk/lib/cbuf",
+    "//mk/lib/init",
     "//mk/platform:headers",
   ]
   public_deps = [
     # <ktl/optional.h> in uart.h.
-    "//mk/lib/ktl:headers",
-
     "//mk/lib/fbl",
+    "//mk/lib/ktl:headers",
   ]
 
   if (toolchain_environment == "kernel") {

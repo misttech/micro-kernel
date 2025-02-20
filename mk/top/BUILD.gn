@@ -19,6 +19,7 @@ source_set("top") {
     "//mk/kernel",
     "//mk/lib/console",
     "//mk/lib/fbl",
+    "//mk/lib/init",
     "//mk/platform",
     "//mk/target",
   ]

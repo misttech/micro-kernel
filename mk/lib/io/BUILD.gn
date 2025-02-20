@@ -12,7 +12,10 @@ zx_library("io") {
     "console.c",
     "io.c",
   ]
-  deps = [ "//mk/lib/cbuf" ]
+  deps = [
+    "//mk/lib/cbuf",
+    "//mk/lib/init",
+  ]
 
   defines = [ "CONSOLE_OUTPUT_TO_PLATFORM_PUTC=1" ]
 }
