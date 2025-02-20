@@ -9,7 +9,7 @@ import("//build/kernel/kernel_cpu.gni")
 source_set("top") {
   sources = [
     "debug.cc",
-    "init.c",
+    "init.cc",
     "main.cc",
   ]
   deps = [
