@@ -35,7 +35,7 @@ import("//build/toolchain/toolchain_environment.gni")
 #   the library to be part of the Fuchsia SDK. The value of `sdk_publishable`
 #   must be a valid SDK category.
 #   The only allowed value for new instances of this template is `"partner"`.
-#   This is enforced by the allowlists defined in //build/zircon/BUILD.gn.
+#   This is enforced by the allowlists defined in //build/kernel/BUILD.gn.
 #   New libraries likely probably need to be added to the partner SDK rather
 #   than specifying one of the other SDK categories. See
 #   https://fxbug.dev/333125197 for details.

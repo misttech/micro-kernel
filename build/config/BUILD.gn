@@ -797,7 +797,7 @@ config("Wno-conversion") {
 
   # To trim this list:
   # $ scripts/gn/trim_visibility.py --target="//build/config:Wno-conversion"
-  visibility = []
+  #visibility = [ "//mk/third_party/ulib/cksum:*" ]
 }
 
 config("Wno-extra-semi") {
@@ -806,7 +806,7 @@ config("Wno-extra-semi") {
 
 config("Wno-implicit-fallthrough") {
   cflags = [ "-Wno-implicit-fallthrough" ]
-  visibility = []
+  #visibility = []
 }
 
 # Config to suppress Wno-unused-but-set-parameter warning in the third party code
@@ -837,11 +837,11 @@ config("Wno-defaulted-function-deleted") {
 
 config("Wno-missing-prototypes") {
   cflags_c = [ "-Wno-missing-prototypes" ]
-  visibility = []
+  #visibility = []
 }
 
 config("Wno-missing-declarations") {
-  visibility = []
+  #visibility = []
 
   cflags = [ "-Wno-missing-declarations" ]
 }
