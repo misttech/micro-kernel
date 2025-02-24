@@ -12,7 +12,7 @@ rustc_binary("fxt_pretty_printer") {
   source_root = "src/pretty_printer.rs"
   sources = [ source_root ]
   deps = [
-    "//src/performance/lib/fxt/rust",
+    "//mk/lib/fxt/rust",
     "//third_party/rust_crates:argh",
   ]
 }

@@ -10,7 +10,7 @@
 #include <zxtest/zxtest.h>
 
 // These test verify behavior of AllocChecker that cannot easily be verified by its main in-kernel
-// test suite, //zircon/kernel/tests/alloc_checker_tests.cc.  Prefer to add tests there instead.
+// test suite, //mk/tests/alloc_checker_tests.cc.  Prefer to add tests there instead.
 
 namespace {
 

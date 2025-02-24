@@ -10,7 +10,6 @@
 #define FBL_STRING_TRAITS_H_
 
 #include <stddef.h>
-
 #include <type_traits>
 
 #include <fbl/macros.h>

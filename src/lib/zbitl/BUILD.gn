@@ -58,7 +58,7 @@ zx_library("zbitl") {
       "stdio.cc",
     ]
 
-    if (is_fuchsia) {
+    if (is_mk) {
       sources += [
         "mapvmo.cc",
         "vmo-read.cc",
@@ -82,9 +82,7 @@ source_set("internal.decompress-zstd") {
     "zstd.cc",
   ]
   defines = [ "ZSTD_STATIC_LINKING_ONLY" ]
-  deps = [
-    "//third_party/zstd:zstd-decompress-standalone"
-  ]
+  deps = [ "//third_party/zstd:zstd-decompress-standalone" ]
   public_deps = [
     "//mk/lib/stdcompat",
 

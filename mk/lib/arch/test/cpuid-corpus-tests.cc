@@ -17,7 +17,7 @@
 // This file is meant for testing lib/arch logic that deals in CpuidIo access,
 // along with expressing expectations of the accessed values for the suite of
 // particular processors included in the CPUID corpus (see
-// //zircon/kernel/lib/arch/test/data/cpuid/README.md). Expectations on the
+// //mk/lib/arch/test/data/cpuid/README.md). Expectations on the
 // full cross-product of (CpuidIo logic, corpus entry) should be found below.
 
 namespace {

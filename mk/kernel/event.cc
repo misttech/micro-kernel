@@ -1,10 +1,9 @@
-/*
- * Copyright (c) 2008-2014 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2008-2014 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
 /**
  * @file
@@ -16,154 +15,178 @@
  * Threads wait for events, with optional timeouts.
  *
  * Events are "signaled", releasing waiting threads to continue.
- * Signals may be one-shot signals (EVENT_FLAG_AUTOUNSIGNAL), in which
+ * Signals may be one-shot signals (Event::AUTOUNSIGNAL), in which
  * case one signal releases only one thread, at which point it is
  * automatically cleared. Otherwise, signals release all waiting threads
  * to continue immediately until the signal is manually cleared with
- * event_unsignal().
+ * Event::Unsignal().
  *
  * @{
  */
 
+#include "kernel/event.h"
+
 #include <assert.h>
+#include <debug.h>
+#include <lib/fit/defer.h>
+#include <lib/kconcurrent/chainlock.h>
+#include <lib/kconcurrent/chainlock_transaction.h>
+#include <lib/zircon-internal/macros.h>
+#include <sys/types.h>
+#include <zircon/errors.h>
+#include <zircon/types.h>
 
-#include <kernel/event.h>
+#include <kernel/auto_preempt_disabler.h>
+#include <kernel/scheduler.h>
+#include <kernel/spinlock.h>
 #include <kernel/thread.h>
-#include <lk/debug.h>
-#include <lk/err.h>
 
 /**
- * @brief  Initialize an event object
+ * @brief  Destruct an Event object.
  *
- * @param e        Event object to initialize
- * @param initial  Initial value for "signaled" state
- * @param flags    0 or EVENT_FLAG_AUTOUNSIGNAL
+ * Event's resources are freed and it may no longer be used.
+ * Will panic if there are any threads still waiting.
  */
-void event_init(event_t *e, bool initial, uint flags) {
-  *e = (event_t)EVENT_INITIAL_VALUE(*e, initial, flags);
+Event::~Event() {
+  DEBUG_ASSERT(magic_ == kMagic);
+
+  magic_ = 0;
+  result_.store(kNotSignaled, ktl::memory_order_relaxed);
+  flags_ = Flags(0);
 }
 
-/**
- * @brief  Destroy an event object.
- *
- * Event's resources are freed and it may no longer be
- * used until event_init() is called again.  Any threads
- * still waiting on the event will be resumed.
- *
- * @param e        Event object to initialize
- */
-void event_destroy(event_t *e) {
-  DEBUG_ASSERT(e->magic == EVENT_MAGIC);
+zx_status_t Event::WaitWorker(const Deadline& deadline, Interruptible interruptible,
+                              uint signal_mask) {
+  DEBUG_ASSERT(magic_ == kMagic);
+  DEBUG_ASSERT(!arch_blocking_disallowed());
 
-  THREAD_LOCK(state);
+  // Start by grabbing our wait queue's lock.  The state of the event is only
+  // allowed to change from un-signaled to signaled when we are holding this
+  // lock, so by holding it here, we can check the state of the signal and fast
+  // abort if we need to, or descend into the wait queue and be certain to fully
+  // block in the queue before releasing the lock.
+  const auto do_transaction =
+      [&]() TA_REQ(chainlock_transaction_token) -> ChainLockTransaction::Result<zx_status_t> {
+    wait_.get_lock().AcquireFirstInChain();
 
-  e->magic = 0;
-  e->signaled = false;
-  e->flags = 0;
-  wait_queue_destroy(&e->wait, true);
+    zx_status_t result = result_.load(ktl::memory_order_relaxed);
+    if (result == kNotSignaled) {
+      // Looks like we are not currently signaled.  Now try to obtain the
+      // current thread's lock so we can block it.
+      Thread* current_thread = Thread::Current::Get();
+      if (!current_thread->get_lock().AcquireOrBackoff()) {
+        wait_.get_lock().Release();
+        return ChainLockTransaction::Action::Backoff;
+      }
 
-  THREAD_UNLOCK(state);
-}
+      ChainLockTransaction::Finalize();
 
-/**
- * @brief  Wait for event to be signaled
- *
- * If the event has already been signaled, this function
- * returns immediately.  Otherwise, the current thread
- * goes to sleep until the event object is signaled,
- * the timeout is reached, or the event object is destroyed
- * by another thread.
- *
- * @param e        Event object
- * @param timeout  Timeout value, in ms
- *
- * @return  0 on success, ERR_TIMED_OUT on timeout,
- *         other values on other errors.
- */
-status_t event_wait_timeout(event_t *e, lk_time_t timeout) {
-  status_t ret = NO_ERROR;
-
-  DEBUG_ASSERT(e->magic == EVENT_MAGIC);
-
-  THREAD_LOCK(state);
-
-  if (e->signaled) {
-    /* signaled, we're going to fall through */
-    if (e->flags & EVENT_FLAG_AUTOUNSIGNAL) {
-      /* autounsignal flag lets one thread fall through before unsignaling */
-      e->signaled = false;
+      // We got the lock, go ahead and block the thread.  This will
+      // automatically release the queue's lock after the thread has been added
+      // to the queue and is committed to blocking.  We will need release the
+      // thread's lock ourselves after it wakes up, as it will be obtained as it
+      // becomes scheduled.
+      result = wait_.BlockEtc(current_thread, deadline, signal_mask, ResourceOwnership::Normal,
+                              interruptible);
+      current_thread->get_lock().Release();
+      return result;
     }
-  } else {
-    /* unsignaled, block here */
-    ret = wait_queue_block(&e->wait, timeout);
-  }
 
-  THREAD_UNLOCK(state);
+    /* signaled, we're going to fall through */
+    if (flags_ & Event::AUTOUNSIGNAL) {
+      /* autounsignal flag lets one thread fall through before unsignaling */
+      result_.store(kNotSignaled, ktl::memory_order_relaxed);
+    }
 
-  return ret;
+    wait_.get_lock().Release();
+    return result;
+  };
+
+  return ChainLockTransaction::UntilDone(IrqSaveOption, CLT_TAG("Event::WaitWorker"),
+                                         do_transaction);
 }
 
 /**
  * @brief  Signal an event
  *
- * Signals an event.  If EVENT_FLAG_AUTOUNSIGNAL is set in the event
+ * Signals an event.  If Event::AUTOUNSIGNAL is set in the event
  * object's flags, only one waiting thread is allowed to proceed.  Otherwise,
  * all waiting threads are allowed to proceed until such time as
- * event_unsignal() is called.
+ * Event::Unsignal() is called.
  *
  * @param e           Event object
- * @param reschedule  If true, waiting thread(s) are executed immediately,
- *                    and the current thread resumes only after the
- *                    waiting threads have been satisfied. If false,
- *                    waiting threads are placed at the end of the run
- *                    queue.
- *
- * @return  Returns NO_ERROR on success.
+ * @param wait_result What status a wait call will return to the
+ *                    thread or threads that are woken up.
  */
-status_t event_signal(event_t *e, bool reschedule) {
-  DEBUG_ASSERT(e->magic == EVENT_MAGIC);
+void Event::Signal(zx_status_t wait_result) {
+  DEBUG_ASSERT(magic_ == kMagic);
+  DEBUG_ASSERT(wait_result != kNotSignaled);
 
-  THREAD_LOCK(state);
+  // In order to transition from not-signaled to signaled, we must be
+  // holding our wait queue's lock.
+  const auto do_transaction =
+      [&]() TA_REQ(chainlock_transaction_token) -> ChainLockTransaction::Result<> {
+    ChainLockGuard guard{wait_.get_lock()};
 
-  if (!e->signaled) {
-    if (e->flags & EVENT_FLAG_AUTOUNSIGNAL) {
-      /* try to release one thread and leave unsignaled if successful */
-      if (wait_queue_wake_one(&e->wait, reschedule, NO_ERROR) <= 0) {
-        /*
-         * if we didn't actually find a thread to wake up, go to
-         * signaled state and let the next call to event_wait
-         * unsignal the event.
-         */
-        e->signaled = true;
-      }
-    } else {
-      /* release all threads and remain signaled */
-      e->signaled = true;
-      wait_queue_wake_all(&e->wait, reschedule, NO_ERROR);
+    // If we are already signaled, we are finished.  We should be able to assert
+    // that there are no waiters right now.
+    if (result_.load(ktl::memory_order_relaxed) != kNotSignaled) {
+      DEBUG_ASSERT(wait_.Count() == 0);
+      return ChainLockTransaction::Done;
     }
-  }
 
-  THREAD_UNLOCK(state);
+    // If there are no threads waiting in the event, we can just mark it
+    // signaled and get out.
+    if (wait_.Count() == 0) {
+      result_.store(wait_result, ktl::memory_order_relaxed);
+      return ChainLockTransaction::Done;
+    }
 
-  return NO_ERROR;
+    // Try to lock with one or all of the threads for wake.
+    ktl::optional<Thread::UnblockList> maybe_unblock_list =
+        (flags_ & Event::AUTOUNSIGNAL) ? WaitQueueLockOps::LockForWakeOne(wait_, wait_result)
+                                       : WaitQueueLockOps::LockForWakeAll(wait_, wait_result);
+
+    // If we failed to lock, we need to drop the queue lock, then try again.
+    if (!maybe_unblock_list.has_value()) {
+      return ChainLockTransaction::Action::Backoff;
+    }
+
+    // We have all of our locks now, time to proceed with the wake operations (if any)
+    ChainLockTransaction::Finalize();
+
+    // Success.  If we not an auto-reset event, or we failed to find anyone to
+    // wake, make sure to set the event to the signaled state.
+    const bool has_threads_to_wake = !maybe_unblock_list.value().is_empty();
+    if (!(flags_ & Event::AUTOUNSIGNAL) || !has_threads_to_wake) {
+      result_.store(wait_result, ktl::memory_order_relaxed);
+    }
+
+    // We've finished our bookkeeping.  Go ahead and drop the queue lock, then
+    // unblock all of the threads.
+    guard.Release();
+    if (has_threads_to_wake) {
+      Scheduler::Unblock(ktl::move(maybe_unblock_list).value());
+    }
+    return ChainLockTransaction::Done;
+  };
+  ChainLockTransaction::UntilDone(IrqSaveOption, CLT_TAG("Event::Signal"), do_transaction);
 }
 
 /**
  * @brief  Clear the "signaled" property of an event
  *
- * Used mainly for event objects without the EVENT_FLAG_AUTOUNSIGNAL
- * flag.  Once this function is called, threads that call event_wait()
+ * Used mainly for event objects without the Event::AUTOUNSIGNAL
+ * flag.  Once this function is called, threads that call Event::Wait()
  * functions will once again need to wait until the event object
  * is signaled.
  *
  * @param e  Event object
  *
- * @return  Returns NO_ERROR on success.
+ * @return  Returns ZX_OK on success.
  */
-status_t event_unsignal(event_t *e) {
-  DEBUG_ASSERT(e->magic == EVENT_MAGIC);
-
-  e->signaled = false;
-
-  return NO_ERROR;
+zx_status_t Event::Unsignal() {
+  DEBUG_ASSERT(magic_ == kMagic);
+  result_.store(kNotSignaled, ktl::memory_order_relaxed);
+  return ZX_OK;
 }

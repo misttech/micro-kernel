@@ -1,0 +1,11 @@
+# Copyright 2020 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Define convenience variables used to reference a few common Zircon host tools.
+
+zbi_tool_target = "//tools/zbi($host_toolchain)"
+zbi_tool_path = get_label_info(zbi_tool_target, "root_out_dir") + "/zbi"
+if (host_os == "win") {
+  zbi_tool_path += ".exe"
+}

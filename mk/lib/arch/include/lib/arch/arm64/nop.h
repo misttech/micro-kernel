@@ -14,7 +14,7 @@
 namespace arch {
 
 // Encodes information on the arm64 `nop` instruction.
-// See //zircon/kernel/lib/arch/include/lib/arch/nop.h for expectations for
+// See //mk/lib/arch/include/lib/arch/nop.h for expectations for
 // the static members of this struct.
 struct Arm64NopTraits {
   // [arm/v8]: C6.2.203  NOP.

@@ -74,3 +74,11 @@ tables_generator_tests_*.txt
 # Local test coverage file.
 lcov.info
 .coverage
+
+# Third party repos.
+/third_party/*
+!/third_party/BUILD.gn
+!/third_party/boringssl/
+/third_party/boringssl/src
+!/third_party/zstd/
+/third_party/zstd/src

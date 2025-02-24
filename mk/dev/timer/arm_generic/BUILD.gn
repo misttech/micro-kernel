@@ -1,0 +1,29 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/cpp/library_headers.gni")
+
+library_headers("headers") {
+  headers = [ "dev/timer/arm_generic.h" ]
+  public_deps = [ "//mk/lib/zbi-format" ]
+}
+
+source_set("arm_generic") {
+  sources = [ "arm_generic_timer.cc" ]
+  public_deps = [ ":headers" ]
+  deps = [
+    "//mk/dev/interrupt",
+    "//mk/lib/arch",
+    "//mk/lib/boot-options",
+    "//mk/lib/counters",
+    "//mk/lib/fixed_point",
+    "//mk/lib/init",
+    "//mk/lib/ktl",
+    "//mk/lib/unittest",
+    "//mk/phys:handoff",
+    "//mk/ulib/affine",
+  ]
+}

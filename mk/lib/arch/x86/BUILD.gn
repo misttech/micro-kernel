@@ -17,7 +17,7 @@ library_headers("headers") {
 
     # <lib/arch/zbi-boot.h> has #include <lib/zbi-format/zbi.h>.
     # <lib/arch/internal/zbi-constants.h> has #include <lib/zbi-format/zbi.h>.
-    #"//sdk/lib/zbi-format",
+    "//mk/lib/zbi-format",
 
     # <lib/arch/x86/boot-cpuid.h> has #include <lib/special-sections/special-sections.h>.
     "//mk/lib/special-sections",

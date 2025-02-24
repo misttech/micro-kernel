@@ -1,94 +1,84 @@
-// Copyright 2025 Mist Tecnologia Ltda
+// Copyright 2016 The Fuchsia Authors
 // Copyright (c) 2008 Travis Geiselbrecht
 //
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT
 
-#ifndef MK_INCLUDE_PLATFORM_H_
-#define MK_INCLUDE_PLATFORM_H_
+#ifndef ZIRCON_KERNEL_INCLUDE_PLATFORM_H_
+#define ZIRCON_KERNEL_INCLUDE_PLATFORM_H_
 
+#include <lib/zbi-format/reboot.h>
+#include <lib/zx/result.h>
 #include <sys/types.h>
+#include <zircon/boot/crash-reason.h>
+#include <zircon/compiler.h>
+#include <zircon/types.h>
 
-#include <lk/compiler.h>
-
-/* TODO: move all callers to using time.h directly */
-#include <platform/time.h>
-
-__BEGIN_CDECLS
+#include <dev/power.h>
+#include <kernel/cpu.h>
 
 #define BOOT_CPU_ID 0
 
 typedef enum {
-  HALT_ACTION_HALT = 0,  // Spin forever.
-  HALT_ACTION_REBOOT,    // Reset the CPU.
-  HALT_ACTION_SHUTDOWN,  // Shutdown and power off.
+  HALT_ACTION_HALT = 0,           // Spin forever.
+  HALT_ACTION_REBOOT,             // Reset the CPU.
+  HALT_ACTION_REBOOT_BOOTLOADER,  // Reboot into the bootloader.
+  HALT_ACTION_REBOOT_RECOVERY,    // Reboot into the recovery partition.
+  HALT_ACTION_SHUTDOWN,           // Shutdown and power off.
 } platform_halt_action;
 
-const char *platform_halt_action_string(platform_halt_action action);
-
-typedef enum {
-  HALT_REASON_INVALID = 0,
-  HALT_REASON_UNKNOWN,      // Unknown reason
-  HALT_REASON_NO_CRASH,     // No crash
-  HALT_REASON_POR,          // Cold-boot
-  HALT_REASON_HW_WATCHDOG,  // HW watchdog timer
-  HALT_REASON_LOWVOLTAGE,   // LV/Brownout condition
-  HALT_REASON_HIGHVOLTAGE,  // High voltage condition.
-  HALT_REASON_THERMAL,      // Thermal reason (probably overtemp)
-  HALT_REASON_OTHER_HW,     // Other hardware (platform) specific reason
-  HALT_REASON_SW_RESET,     // Generic Software Initiated Reboot
-  HALT_REASON_SW_WATCHDOG,  // Reboot triggered by a SW watchdog timer
-  HALT_REASON_SW_PANIC,     // Reboot triggered by a SW panic or ASSERT
-  HALT_REASON_SW_UPDATE,    // SW triggered reboot in order to begin firmware update
-} platform_halt_reason;
-
-const char *platform_halt_reason_string(platform_halt_reason reason);
-
-/* if the platform has knowledge of what caused the latest reboot, it can report
- * it to applications with this function.  */
-platform_halt_reason platform_get_reboot_reason(void);
-
-/* platform_halt is a method which is called from various places in the LK
- * system, and may be implemented by platforms and called by applications.  This
- * call represents the end of the life of SW for a device; there is no returning
- * from this function.  Callers will provide a reason for the halt, and a
- * suggested action for the platform to take, but it is the platform's
- * responsibility to determine the final action taken.  For example, in the case
- * of a failed ASSERT or a panic, LK will call platform halt and suggest a Halt
- * action, but a release build on a platform with no debug channel may choose to
- * reboot instead as there is no one to tell about the ASSERT, and no one
- * waiting to debug the device in its halted state.  If not overloaded by the
- * platform, the default behavior of platform halt will be to dprintf the
- * reason, and then halt execution by turning off interrupts and spinning
- * forever.
- */
-__WEAK void platform_halt(platform_halt_action suggested_action,
-                          platform_halt_reason reason) __NO_RETURN;
-
-/* Default implementation of the above routine, which platforms can call with
- * appropriate hooks to implement platform specific reboot and shutdown behavior.
- */
-typedef void (*platform_reboot_hook)(void);
-typedef void (*platform_shutdown_hook)(void);
-void platform_halt_default(platform_halt_action suggested_action, platform_halt_reason reason,
-                           platform_reboot_hook prh, platform_shutdown_hook psh) __NO_RETURN;
-
-/* called during chain loading to make sure drivers and platform is put into a stopped state */
-void platform_quiesce(void);
-
 /* super early platform initialization, before almost everything */
-void platform_early_init(void);
+void platform_early_init();
+
+/* Perform any set up required before virtual memory is enabled, or the heap is set up. */
+void platform_prevm_init();
 
 /* later init, after the kernel has come up */
-void platform_init(void);
+void platform_init();
 
-/* called by the arch init code to get the platform to set up any mmu mappings it may need */
-void platform_init_mmu_mappings(void);
+/* platform_halt halts the system and performs the |suggested_action|.
+ *
+ * This function is used in both the graceful shutdown and panic paths so it
+ * does not perform more complex actions like switching to the primary CPU,
+ * unloading the run queue of secondary CPUs, stopping secondary CPUs, etc.
+ *
+ * There is no returning from this function.
+ */
+void platform_halt(platform_halt_action suggested_action, zircon_crash_reason_t reason) __NO_RETURN;
 
-/* Called by LK to get the device tree */
-const void *get_fdt(void);
+/* The platform specific actions to be taken in a halt situation.  This is a
+ * weak symbol meant to be overloaded by platform specific implementations and
+ * called from the common |platform_halt| implementation.  Do not call this
+ * function directly, call |platform_halt| instead.
+ *
+ * There is no returning from this function.
+ */
+void platform_specific_halt(platform_halt_action suggested_action, zircon_crash_reason_t reason,
+                            bool halt_on_panic) __NO_RETURN;
 
-__END_CDECLS
+/* optionally stop the current cpu in a way the platform finds appropriate */
+void platform_halt_cpu();
 
-#endif  // MK_INCLUDE_PLATFORM_H_
+// Returns true if this system has a debug serial port that is enabled
+bool platform_serial_enabled();
+
+// Accessors for the HW reboot reason which may or may not have been delivered
+// by the bootloader.
+void platform_set_hw_reboot_reason(zbi_hw_reboot_reason_t reason);
+zbi_hw_reboot_reason_t platform_hw_reboot_reason();
+
+// platform_panic_start informs the system that a panic message is about
+// to be printed and that platform_halt will be called shortly.  The
+// platform should stop other CPUs if requested and do whatever is necessary
+// to safely ensure that the panic message will be visible to the user.
+enum class PanicStartHaltOtherCpus { No = 0, Yes };
+void platform_panic_start(PanicStartHaltOtherCpus option = PanicStartHaltOtherCpus::Yes);
+
+/* start the given cpu in a way the platform finds appropriate */
+zx_status_t platform_start_cpu(cpu_num_t cpu_id, uint64_t mpid);
+
+// Get the state of a CPU.
+zx::result<power_cpu_state> platform_get_cpu_state(cpu_num_t cpu_id);
+
+#endif  // ZIRCON_KERNEL_INCLUDE_PLATFORM_H_

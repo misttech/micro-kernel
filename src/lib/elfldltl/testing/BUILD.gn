@@ -34,7 +34,7 @@ library_headers("headers.common") {
 
   public_deps = [
     "..",
-    "//zircon/system/ulib/fbl",
+    "//mk/ulib/fbl",
   ]
 }
 
@@ -56,7 +56,7 @@ static_library("elfldltl-testing") {
     deps += [
       "//sdk/fidl/fuchsia.ldsvc:fuchsia.ldsvc_cpp",
       "//sdk/lib/fdio",
-      "//zircon/system/ulib/zx",
+      "//mk/ulib/zx",
     ]
   }
 }
@@ -71,7 +71,7 @@ static_library("elfldltl-zxtest") {
     sources = [ "get-test-lib-vmo.cc" ]
     deps = [
       "//sdk/fidl/fuchsia.ldsvc:fuchsia.ldsvc_cpp",
-      "//zircon/system/ulib/zx",
+      "//mk/ulib/zx",
     ]
   }
 }
@@ -82,7 +82,7 @@ group("headers.zxtest") {
 
   public_deps = [
     ":headers.common",
-    "//zircon/system/ulib/zxtest:zxtest-streams",
+    "//mk/ulib/zxtest:zxtest-streams",
   ]
   public_configs = [ ":use-zxtest.config" ]
 }

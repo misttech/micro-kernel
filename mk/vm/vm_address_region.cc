@@ -10,7 +10,7 @@
 #include <inttypes.h>
 #include <lib/counters.h>
 #include <lib/crypto/prng.h>
-#include <lib/userabi/vdso.h>
+// #include <lib/userabi/vdso.h>
 #include <pow2.h>
 #include <trace.h>
 #include <zircon/errors.h>
@@ -25,6 +25,7 @@
 #include <vm/vm_address_region_enumerator.h>
 #include <vm/vm_aspace.h>
 #include <vm/vm_object.h>
+#include <vm/vm_object_paged.h>
 
 #include "vm_priv.h"
 
@@ -195,8 +196,9 @@ zx_status_t VmAddressRegion::CreateSubVmarInner(size_t offset, size_t size, uint
 
     // Notice if this is an executable mapping from the vDSO VMO
     // before we lose the VMO reference via ktl::move(vmo).
-    const bool is_vdso_code =
-        (vmo && (arch_mmu_flags & ARCH_MMU_FLAG_PERM_EXECUTE) && VDso::vmo_is_vdso(vmo));
+    // const bool is_vdso_code =
+    //     (vmo && (arch_mmu_flags & ARCH_MMU_FLAG_PERM_EXECUTE) && VDso::vmo_is_vdso(vmo));
+    const bool is_vdso_code = false;
 
     fbl::AllocChecker ac;
     if (vmo) {
@@ -219,10 +221,10 @@ zx_status_t VmAddressRegion::CreateSubVmarInner(size_t offset, size_t size, uint
     if (is_vdso_code) {
       // For an executable mapping of the vDSO, allow only one per process
       // and only for the valid range of the image.
-      if (aspace_->vdso_code_mapping_ || !VDso::valid_code_mapping(vmo_offset, size)) {
-        return ZX_ERR_ACCESS_DENIED;
-      }
-      aspace_->vdso_code_mapping_ = fbl::RefPtr<VmMapping>::Downcast(vmar);
+      // if (aspace_->vdso_code_mapping_ || !VDso::valid_code_mapping(vmo_offset, size)) {
+      //   return ZX_ERR_ACCESS_DENIED;
+      // }
+      // aspace_->vdso_code_mapping_ = fbl::RefPtr<VmMapping>::Downcast(vmar);
     }
 
     // These locked actions on the vmar are done inside a lambda as otherwise the AssertHeld, which

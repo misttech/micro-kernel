@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MK_LIB_ZX_INCLUDE_LIB_ZX_RESULT_H_
-#define MK_LIB_ZX_INCLUDE_LIB_ZX_RESULT_H_
+#ifndef LIB_ZX_RESULT_H_
+#define LIB_ZX_RESULT_H_
 
 #include <lib/fit/internal/compiler.h>
 #include <lib/fit/result.h>
@@ -275,4 +275,4 @@ struct std::formatter<zx::result<T>> : std::formatter<const char*> {
 };
 
 #endif
-#endif  // MK_LIB_ZX_INCLUDE_LIB_ZX_RESULT_H_
+#endif  // LIB_ZX_RESULT_H_

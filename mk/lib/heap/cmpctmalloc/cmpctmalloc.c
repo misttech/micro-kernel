@@ -5,6 +5,7 @@
  * license that can be found in the LICENSE file or at
  * https://opensource.org/licenses/MIT
  */
+#include <align.h>
 #include <assert.h>
 #include <lib/cmpctmalloc.h>
 #include <lib/heap.h>

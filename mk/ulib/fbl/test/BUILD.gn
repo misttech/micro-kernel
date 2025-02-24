@@ -56,9 +56,9 @@ test("fbl") {
   ]
 
   deps = [
-    "//sdk/lib/stdcompat",
-    "//zircon/system/ulib/fbl",
-    "//zircon/system/ulib/zxtest",
+    "//mk/lib/stdcompat",
+    "//mk/ulib/fbl",
+    "//mk/ulib/zxtest",
   ]
 
   if (!is_fuchsia) {
@@ -87,7 +87,7 @@ test("fbl") {
     ]
     deps += [
       "//sdk/lib/fdio",
-      "//zircon/system/ulib/zx",
+      "//mk/ulib/zx",
     ]
   }
 
@@ -110,7 +110,7 @@ test("fbl-gmock-test") {
     "//src/lib/fxl/test:gtest_main",
     "//third_party/googletest:gmock",
     "//third_party/googletest:gtest",
-    "//zircon/system/ulib/fbl",
+    "//mk/ulib/fbl",
   ]
 }
 

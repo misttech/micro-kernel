@@ -6,7 +6,7 @@
 
 import("//build/cpp/library_headers.gni")
 import("//build/toolchain/toolchain_environment.gni")
-import("//zircon/system/ulib/hwreg/hwreg_asm_header.gni")
+import("//mk/ulib/hwreg/hwreg_asm_header.gni")
 
 library_headers("headers") {
   visibility = [ "../*" ]

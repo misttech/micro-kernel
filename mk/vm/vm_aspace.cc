@@ -14,7 +14,7 @@
 #include <lib/crypto/prng.h>
 #include <lib/ktrace.h>
 #include <lib/lazy_init/lazy_init.h>
-#include <lib/userabi/vdso.h>
+//#include <lib/userabi/vdso.h>
 #include <lib/zircon-internal/macros.h>
 #include <stdlib.h>
 #include <string.h>
@@ -305,7 +305,7 @@ zx_status_t VmAspace::Destroy() {
 
   // Don't let a vDSO mapping prevent destroying a VMAR
   // when the whole process is being destroyed.
-  vdso_code_mapping_.reset();
+  //vdso_code_mapping_.reset();
 
   // tear down and free all of the regions in our address space
   if (root_vmar_) {
@@ -760,19 +760,19 @@ void VmAspace::InitializeAslr() {
 
 uintptr_t VmAspace::vdso_base_address() const {
   Guard<CriticalMutex> guard{&lock_};
-  if (vdso_code_mapping_) {
-    AssertHeld(vdso_code_mapping_->lock_ref());
-    return VDso::base_address(vdso_code_mapping_);
-  }
+  //if (vdso_code_mapping_) {
+  //  AssertHeld(vdso_code_mapping_->lock_ref());
+  //  return VDso::base_address(vdso_code_mapping_);
+  //}
   return 0;
 }
 
 uintptr_t VmAspace::vdso_code_address() const {
   Guard<CriticalMutex> guard{&lock_};
-  if (vdso_code_mapping_) {
-    AssertHeld(vdso_code_mapping_->lock_ref());
-    return vdso_code_mapping_->base_locked();
-  }
+  //if (vdso_code_mapping_) {
+  //  AssertHeld(vdso_code_mapping_->lock_ref());
+  //  return vdso_code_mapping_->base_locked();
+  //}
   return 0;
 }
 
@@ -792,12 +792,11 @@ void VmAspace::DropUserPageTables() {
 }
 
 bool VmAspace::IntersectsVdsoCodeLocked(vaddr_t base, size_t size) const {
-  if (vdso_code_mapping_) {
-    AssertHeld(vdso_code_mapping_->lock_ref());
-    return Intersects(vdso_code_mapping_->base_locked(), vdso_code_mapping_->size_locked(), base,
-                      size);
-  }
-
+  //if (vdso_code_mapping_) {
+  //  AssertHeld(vdso_code_mapping_->lock_ref());
+  //  return Intersects(vdso_code_mapping_->base_locked(), vdso_code_mapping_->size_locked(), base,
+  //                    size);
+  //}
   return false;
 }
 

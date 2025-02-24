@@ -48,30 +48,30 @@ zx_library("vm") {
     "vmm.cc",
   ]
   deps = [
-    #"//mk/lib/zbitl",
     "//mk/lib/arch",
-
-    #"//mk/lib/boot-options",
+    "//mk/lib/boot-options",
     "//mk/lib/console",
     "//mk/lib/counters",
-
-    #"//mk/lib/dump",
+    "//mk/lib/dump",
     "//mk/lib/fbl",
     "//mk/lib/heap/cmpctmalloc:headers",
     "//mk/lib/init",
+    "//mk/lib/instrumentation",
     "//mk/lib/ktl",
     "//mk/lib/ktrace",
-    "//mk/lib/pretty",
-
-    #"//mk/lib/page_cache",
+    "//mk/lib/page_cache",
     "//mk/lib/user_copy",
 
     #"//mk/lib/userabi",
+    "//mk/lib/crypto",
+    "//mk/phys:handoff",
+    "//mk/phys/lib/memalloc:range",
+    "//mk/third_party/ulib/lz4",
     "//mk/ulib/affine",
     "//mk/ulib/ffl",
     "//mk/ulib/lazy_init",
-
-    #"//mk/lib/lz4",
+    "//mk/ulib/pretty",
+    "//src/lib/zbitl",
 
     # TODO: testonly
     #":tests",
@@ -96,10 +96,10 @@ zx_library("vm") {
     "//mk/lib/user_copy:headers",
 
     # <vm/vm_aspace.h> has #include <lib/crypto/prng.h>
-    #"//mk/lib/crypto:headers",
+    "//mk/lib/crypto:headers",
 
     # <vm/vm_cow_pages.h> has #include <lib/page_cache.h>
-    #"//mk/lib/page_cache:headers",
+    "//mk/lib/page_cache:headers",
 
     # <vm/vm_object.h> has #include <ffl/fixed.h>
     "//mk/ulib/ffl:headers",
@@ -108,12 +108,12 @@ zx_library("vm") {
     "//mk/ulib/zx:headers",
 
     # <vm/pmm_checker.h> has #include <lib/boot-options/boot-options.h>.
-    #"//mk/lib/boot-options:headers",
+    "//mk/lib/boot-options:headers",
   ]
   public_configs = [
     # <vm/physical_page_provider.h> has #include <object/port_dispatcher.h>.
     # But this is a circular dependency, so we can't use its :headers in deps.
-    #"//zircon/kernel/object:headers.config",
+    "//mk/object:headers.config",
   ]
 
   # GCC figures out some cases where we have a global variable that's used as a
@@ -141,7 +141,7 @@ source_set("tests") {
     "unittests/vmpl_unittest.cc",
   ]
   deps = [
-    "//zircon/kernel/lib/unittest",
+    "//mk/lib/unittest",
     "//zircon/third_party/ulib/lz4",
   ]
 }

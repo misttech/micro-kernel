@@ -1,0 +1,52 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/cpp/library_headers.gni")
+
+library_headers("headers") {
+  headers = [
+    "dev/interrupt/arm_gicv2_init.h",
+    "dev/interrupt/arm_gicv2_regs.h",
+    "dev/interrupt/arm_gicv2m_msi.h",
+    "dev/interrupt/arm_gicv2m.h",
+  ]
+  public_deps = [ "//mk/lib/zbi-format" ]
+}
+
+source_set("v2") {
+  sources = [
+    "arm_gicv2.cc",
+    "arm_gicv2m.cc",
+    "arm_gicv2m_msi.cc",
+    "arm_gicv2m_pcie.cc",
+  ]
+  public_deps = [ ":headers" ]
+  deps = [
+    ":test",
+    "//mk/dev/interrupt",
+    "//mk/dev/interrupt/gic/common",
+    "//mk/dev/pcie",
+    "//mk/dev/pdev/interrupt",
+    "//mk/lib/fbl",
+    "//mk/lib/init",
+    "//mk/lib/kpci",
+    "//mk/lib/ktrace",
+    "//mk/lib/pow2_range_allocator",
+    "//mk/lib/root_resource_filter",
+    "//mk/lib/topology",
+    "//mk/ulib/lazy_init",
+  ]
+}
+
+source_set("test") {
+  # TODO: testonly = true
+  sources = [ "arm_gicv2_test.cc" ]
+  deps = [
+    ":headers",
+    "//mk/lib/fbl",
+    "//mk/lib/unittest",
+  ]
+}

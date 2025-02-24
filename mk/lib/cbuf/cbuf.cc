@@ -1,244 +1,102 @@
-/*
- * Copyright (c) 2008-2015 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2008-2015 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
+
 #include <assert.h>
+#include <debug.h>
 #include <lib/cbuf.h>
 #include <stdlib.h>
 #include <string.h>
+#include <trace.h>
 
+#include <kernel/auto_lock.h>
+#include <kernel/auto_preempt_disabler.h>
 #include <kernel/event.h>
 #include <kernel/spinlock.h>
-#include <lk/debug.h>
-#include <lk/pow2.h>
-#include <lk/trace.h>
+#include <ktl/bit.h>
+
+#include <ktl/enforce.h>
 
 #define LOCAL_TRACE 0
 
-#define INC_POINTER(cbuf, ptr, inc) modpow2(((ptr) + (inc)), (cbuf)->len_pow2)
-
-void cbuf_initialize(cbuf_t *cbuf, size_t len) { cbuf_initialize_etc(cbuf, len, malloc(len)); }
-
-void cbuf_initialize_etc(cbuf_t *cbuf, size_t len, void *buf) {
-  DEBUG_ASSERT(cbuf);
+// This should only be called once to initialize the Cbuf, and so thread safety analysis is
+// disabled.
+void Cbuf::Initialize(size_t len, void* buf) TA_NO_THREAD_SAFETY_ANALYSIS {
   DEBUG_ASSERT(len > 0);
-  DEBUG_ASSERT(ispow2(len));
+  DEBUG_ASSERT(ktl::has_single_bit(len));
 
-  cbuf->head = 0;
-  cbuf->tail = 0;
-  cbuf->len_pow2 = log2_uint(len);
-  cbuf->buf = static_cast<char *>(buf);
-  event_init(&cbuf->event, false, 0);
-  spin_lock_init(&cbuf->lock);
+  len_pow2_ = static_cast<uint32_t>(log2_ulong_floor(len));
+  buf_ = static_cast<char*>(buf);
 
-  LTRACEF("len %zd, len_pow2 %u\n", len, cbuf->len_pow2);
+  LTRACEF("len %zu, len_pow2 %u\n", len, len_pow2_);
 }
 
-size_t cbuf_space_avail(cbuf_t *cbuf) {
-  uint consumed = modpow2((uint)(cbuf->head - cbuf->tail), cbuf->len_pow2);
-  return valpow2(cbuf->len_pow2) - consumed - 1;
+// TODO(https://fxbug.dev/42125783): We want to revisit the Cbuf API. It's intended to be used from
+// interrupt context, at which time clients can rely on being the only accessor. For now, we disable
+// thread safety analysis on this function.
+bool Cbuf::Full() const TA_NO_THREAD_SAFETY_ANALYSIS {
+  uint32_t consumed = modpow2(head_ - tail_, len_pow2_);
+  size_t avail = valpow2(len_pow2_) - consumed - 1;
+  return avail == 0;
 }
 
-size_t cbuf_space_used(cbuf_t *cbuf) {
-  return modpow2((uint)(cbuf->head - cbuf->tail), cbuf->len_pow2);
-}
+size_t Cbuf::WriteChar(char c) {
+  {
+    AutoSpinLock guard(&lock_);
 
-size_t cbuf_write(cbuf_t *cbuf, const void *_buf, size_t len, bool canreschedule) {
-  const char *buf = (const char *)_buf;
-
-  LTRACEF("len %zd\n", len);
-
-  DEBUG_ASSERT(cbuf);
-  DEBUG_ASSERT(len < valpow2(cbuf->len_pow2));
-
-  spin_lock_saved_state_t state;
-  spin_lock_irqsave(&cbuf->lock, state);
-
-  size_t write_len;
-  size_t pos = 0;
-
-  while (pos < len && cbuf_space_avail(cbuf) > 0) {
-    if (cbuf->head >= cbuf->tail) {
-      if (cbuf->tail == 0) {
-        // Special case - if tail is at position 0, we can't write all
-        // the way to the end of the buffer. Otherwise, head ends up at
-        // 0, head == tail, and buffer is considered "empty" again.
-        write_len = MIN(valpow2(cbuf->len_pow2) - cbuf->head - 1, len - pos);
-      } else {
-        // Write to the end of the buffer.
-        write_len = MIN(valpow2(cbuf->len_pow2) - cbuf->head, len - pos);
-      }
-    } else {
-      // Write from head to tail-1.
-      write_len = MIN(cbuf->tail - cbuf->head - 1, len - pos);
+    if (Full()) {
+      return 0;
     }
 
-    // if it's full, abort and return how much we've written
-    if (write_len == 0) {
-      break;
-    }
-
-    if (NULL == buf) {
-      memset(cbuf->buf + cbuf->head, 0, write_len);
-    } else {
-      memcpy(cbuf->buf + cbuf->head, buf + pos, write_len);
-    }
-
-    cbuf->head = INC_POINTER(cbuf, cbuf->head, write_len);
-    pos += write_len;
+    buf_[head_] = c;
+    IncPointer(&head_, 1);
   }
 
-  if (cbuf->head != cbuf->tail)
-    event_signal(&cbuf->event, false);
+  // By signaling after dropping the lock, we avoid lock thrashing (though it doesn't matter much
+  // since this lock is a spinlock).
+  //
+  // Note: by the time we signal, the buffer may have already been drained, but that's OK.  It just
+  // means a reader may be woken when the buffer is empty.
+  event_.Signal();
 
-  spin_unlock_irqrestore(&cbuf->lock, state);
-
-  // XXX convert to only rescheduling if
-  if (canreschedule)
-    thread_preempt();
-
-  return pos;
+  return 1;
 }
 
-size_t cbuf_read(cbuf_t *cbuf, void *_buf, size_t buflen, bool block) {
-  char *buf = (char *)_buf;
+zx::result<Cbuf::ReadContext> Cbuf::ReadCharWithContext(bool block) {
+  while (true) {
+    {
+      AutoSpinLock guard(&lock_);
+      if (!Empty()) {
+        ReadContext res = {
+            .c = buf_[tail_],
+            .transitioned_from_full = Full(),
+        };
 
-  DEBUG_ASSERT(cbuf);
-
-retry:
-  // block on the cbuf outside of the lock, which may
-  // unblock us early and we'll have to double check below
-  if (block)
-    event_wait(&cbuf->event);
-
-  spin_lock_saved_state_t state;
-  spin_lock_irqsave(&cbuf->lock, state);
-
-  // see if there's data available
-  size_t ret = 0;
-  if (cbuf->tail != cbuf->head) {
-    size_t pos = 0;
-
-    // loop until we've read everything we need
-    // at most this will make two passes to deal with wraparound
-    while (pos < buflen && cbuf->tail != cbuf->head) {
-      size_t read_len;
-      if (cbuf->head > cbuf->tail) {
-        // simple case where there is no wraparound
-        read_len = MIN(cbuf->head - cbuf->tail, buflen - pos);
-      } else {
-        // read to the end of buffer in this pass
-        read_len = MIN(valpow2(cbuf->len_pow2) - cbuf->tail, buflen - pos);
+        IncPointer(&tail_, 1);
+        if (Empty()) {
+          event_.Unsignal();
+        }
+        return zx::ok(res);
       }
 
-      // Only perform the copy if a buf was supplied
-      if (NULL != buf) {
-        memcpy(buf + pos, cbuf->buf + cbuf->tail, read_len);
-      }
-
-      cbuf->tail = INC_POINTER(cbuf, cbuf->tail, read_len);
-      pos += read_len;
+      // Because the signal state does not 100% match the buffer state, it is critical that the
+      // event is unsignaled when the buffer is found to be empty (not just when it *transitions* to
+      // empty).
+      event_.Unsignal();
     }
 
-    if (cbuf->tail == cbuf->head) {
-      DEBUG_ASSERT(pos > 0);
-      // we've emptied the buffer, unsignal the event
-      event_unsignal(&cbuf->event);
+    if (!block) {
+      return zx::error(ZX_ERR_SHOULD_WAIT);
     }
 
-    ret = pos;
-  }
-
-  spin_unlock_irqrestore(&cbuf->lock, state);
-
-  // we apparently blocked but raced with another thread and found no data, retry
-  if (block && ret == 0)
-    goto retry;
-
-  return ret;
-}
-
-size_t cbuf_peek(cbuf_t *cbuf, iovec_t *regions) {
-  DEBUG_ASSERT(cbuf && regions);
-
-  spin_lock_saved_state_t state;
-  spin_lock_irqsave(&cbuf->lock, state);
-
-  size_t ret = cbuf_space_used(cbuf);
-  size_t sz = cbuf_size(cbuf);
-
-  DEBUG_ASSERT(cbuf->tail < sz);
-  DEBUG_ASSERT(ret <= sz);
-
-  regions[0].iov_base = ret ? (cbuf->buf + cbuf->tail) : NULL;
-  if (ret + cbuf->tail > sz) {
-    regions[0].iov_len = sz - cbuf->tail;
-    regions[1].iov_base = cbuf->buf;
-    regions[1].iov_len = ret - regions[0].iov_len;
-  } else {
-    regions[0].iov_len = ret;
-    regions[1].iov_base = NULL;
-    regions[1].iov_len = 0;
-  }
-
-  spin_unlock_irqrestore(&cbuf->lock, state);
-  return ret;
-}
-
-size_t cbuf_write_char(cbuf_t *cbuf, char c, bool canreschedule) {
-  DEBUG_ASSERT(cbuf);
-
-  spin_lock_saved_state_t state;
-  spin_lock_irqsave(&cbuf->lock, state);
-
-  size_t ret = 0;
-  if (cbuf_space_avail(cbuf) > 0) {
-    cbuf->buf[cbuf->head] = c;
-
-    cbuf->head = INC_POINTER(cbuf, cbuf->head, 1);
-    ret = 1;
-
-    if (cbuf->head != cbuf->tail)
-      event_signal(&cbuf->event, canreschedule);
-  }
-
-  spin_unlock_irqrestore(&cbuf->lock, state);
-
-  return ret;
-}
-
-size_t cbuf_read_char(cbuf_t *cbuf, char *c, bool block) {
-  DEBUG_ASSERT(cbuf);
-  DEBUG_ASSERT(c);
-
-retry:
-  if (block)
-    event_wait(&cbuf->event);
-
-  spin_lock_saved_state_t state;
-  spin_lock_irqsave(&cbuf->lock, state);
-
-  // see if there's data available
-  size_t ret = 0;
-  if (cbuf->tail != cbuf->head) {
-    *c = cbuf->buf[cbuf->tail];
-    cbuf->tail = INC_POINTER(cbuf, cbuf->tail, 1);
-
-    if (cbuf->tail == cbuf->head) {
-      // we've emptied the buffer, unsignal the event
-      event_unsignal(&cbuf->event);
+    zx_status_t status = event_.Wait(Deadline::infinite());
+    if (status != ZX_OK) {
+      return zx::error(status);
     }
-
-    ret = 1;
   }
-
-  spin_unlock_irqrestore(&cbuf->lock, state);
-
-  if (block && ret == 0)
-    goto retry;
-
-  return ret;
 }
+
+bool Cbuf::Empty() const { return (tail_ == head_); }

@@ -5,34 +5,16 @@
 # https://opensource.org/licenses/MIT
 
 import("//build/cpp/library_headers.gni")
-import("//build/test.gni")
 
 library_headers("headers") {
   headers = [ "vm/phys/arena.h" ]
   public_deps = [
-    "//sdk/lib/stdcompat",
+    "//mk/lib/stdcompat",
 
     # <vm/phys/arena.h> has #include <lib/fit/result.h>
-    "//sdk/lib/fit",
+    "//mk/lib/fit",
 
     # <vm/phys/arena.h> has #include <lib/memalloc/range.h>
-    "//zircon/kernel/phys/lib/memalloc:range.headers",
+    "//mk/phys/lib/memalloc:range.headers",
   ]
-}
-
-test("arena-selection-tests") {
-  sources = [ "arena-selection-tests.cc" ]
-  deps = [
-    ":headers",
-    "//sdk/lib/stdcompat",
-    "//src/lib/fxl/test:gtest_main",
-    "//third_party/googletest:gtest",
-    "//zircon/kernel/phys/lib/memalloc",
-    "//zircon/kernel/phys/lib/memalloc:testing",
-  ]
-}
-
-group("tests") {
-  testonly = true
-  deps = [ ":arena-selection-tests($host_toolchain)" ]
 }

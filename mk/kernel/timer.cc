@@ -1,10 +1,9 @@
-/*
- * Copyright (c) 2008-2014 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2008-2014 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
 /**
  * @file
@@ -19,278 +18,661 @@
  *
  * @{
  */
-#include <assert.h>
-#include <platform.h>
+#include "kernel/timer.h"
 
-#include <kernel/debug.h>
+#include <assert.h>
+#include <debug.h>
+#include <inttypes.h>
+#include <lib/affine/ratio.h>
+#include <lib/arch/intrin.h>
+#include <lib/counters.h>
+#include <lib/kconcurrent/chainlock_transaction.h>
+#include <lib/zircon-internal/macros.h>
+#include <platform.h>
+#include <stdlib.h>
+#include <trace.h>
+#include <zircon/compiler.h>
+#include <zircon/errors.h>
+#include <zircon/listnode.h>
+#include <zircon/time.h>
+#include <zircon/types.h>
+
+#include <cstdio>
+
+#include <kernel/align.h>
+#include <kernel/lockdep.h>
+#include <kernel/mp.h>
+#include <kernel/percpu.h>
+#include <kernel/scheduler.h>
 #include <kernel/spinlock.h>
+#include <kernel/stats.h>
 #include <kernel/thread.h>
-#include <kernel/timer.h>
-#include <lk/debug.h>
-#include <lk/list.h>
-#include <lk/trace.h>
 #include <platform/timer.h>
 
 #define LOCAL_TRACE 0
 
-spin_lock_t timer_lock;
+// Total number of timers set. Always increasing.
+KCOUNTER(timer_created_counter, "timer.created")
 
-struct timer_state {
-  struct list_node timer_queue;
-} __CPU_ALIGN;
+// Number of timers merged into an existing timer because of slack.
+KCOUNTER(timer_coalesced_counter, "timer.coalesced")
 
-static struct timer_state timers[SMP_MAX_CPUS];
+// Number of timers that have fired (i.e. callback was invoked).
+KCOUNTER(timer_fired_counter, "timer.fired")
 
-static enum handler_return timer_tick(void *arg, lk_time_t now);
+// Number of timers that were successfully canceled. Attempts to cancel a timer that is currently
+// firing are not counted.
+KCOUNTER(timer_canceled_counter, "timer.canceled")
 
-/**
- * @brief  Initialize a timer object
- */
-void timer_initialize(timer_t *timer) { *timer = (timer_t)TIMER_INITIAL_VALUE(*timer); }
+// static
+MonitoredSpinLock Timer::timer_lock __CPU_ALIGN_EXCLUSIVE{"timer_lock"_intern};
 
-static void insert_timer_in_queue(uint cpu, timer_t *timer) {
-  timer_t *entry;
+namespace {
 
+affine::Ratio gTicksToTime;
+uint64_t gTicksPerSecond;
+
+}  // anonymous namespace
+
+void timer_set_ticks_to_time_ratio(const affine::Ratio& ticks_to_time) {
+  // ASSERT that we are not calling this function twice.  Once set, this ratio
+  // may not change.
+  DEBUG_ASSERT(gTicksPerSecond == 0);
+  DEBUG_ASSERT(ticks_to_time.numerator() != 0);
+  DEBUG_ASSERT(ticks_to_time.denominator() != 0);
+  gTicksToTime = ticks_to_time;
+  gTicksPerSecond = gTicksToTime.Inverse().Scale(ZX_SEC(1));
+}
+
+const affine::Ratio& timer_get_ticks_to_time_ratio(void) { return gTicksToTime; }
+
+zx_instant_mono_t current_mono_time(void) { return gTicksToTime.Scale(current_mono_ticks()); }
+
+zx_instant_boot_t current_boot_time(void) { return gTicksToTime.Scale(current_boot_ticks()); }
+
+zx_ticks_t ticks_per_second(void) { return gTicksPerSecond; }
+
+ktl::optional<zx_ticks_t> TimerQueue::ConvertMonotonicTimeToRawTicks(zx_instant_mono_t mono) {
+  // Do not attempt to convert the sentinel value of ZX_TIME_INFINITE.
+  if (mono == ZX_TIME_INFINITE) {
+    return ZX_TIME_INFINITE;
+  }
+  const zx_ticks_t deadline_mono_ticks =
+      timer_get_ticks_to_time_ratio().Inverse().Scale<affine::Ratio::Round::Up>(mono);
+  return timer_convert_mono_to_raw_ticks(deadline_mono_ticks);
+}
+
+zx_ticks_t TimerQueue::ConvertBootTimeToRawTicks(zx_instant_boot_t boot) {
+  // Do not attempt to convert the sentinel value of ZX_TIME_INFINITE.
+  if (boot == ZX_TIME_INFINITE) {
+    return ZX_TIME_INFINITE;
+  }
+  const zx_ticks_t deadline_boot_ticks =
+      timer_get_ticks_to_time_ratio().Inverse().Scale<affine::Ratio::Round::Up>(boot);
+  return zx_ticks_sub_ticks(deadline_boot_ticks, timer_get_boot_ticks_offset());
+}
+
+void TimerQueue::UpdatePlatformTimer() {
+  Guard<MonitoredSpinLock, NoIrqSave> guard{Timer::TimerLock::Get(), SOURCE_TAG};
+  UpdatePlatformTimerLocked();
+}
+
+void TimerQueue::UpdatePlatformTimerLocked() {
+  DEBUG_ASSERT(arch_ints_disabled());
+  zx_ticks_t timer_deadline = ZX_TIME_INFINITE;
+
+  // The monotonic deadline should be the minimum of the preemption timer and the front of the
+  // monotonic timer list.
+  zx_instant_mono_t mono_time_deadline = preempt_timer_deadline_;
+  if (!monotonic_timer_list_.is_empty()) {
+    mono_time_deadline =
+        ktl::min(mono_time_deadline, monotonic_timer_list_.front().scheduled_time_);
+  }
+  const ktl::optional<zx_ticks_t> mono_ticks_deadline =
+      ConvertMonotonicTimeToRawTicks(mono_time_deadline);
+  if (mono_ticks_deadline.has_value()) {
+    timer_deadline = mono_ticks_deadline.value();
+  }
+
+  // Check if we have a boot timer with a sooner scheduled time and update the timer deadline
+  // accordingly.
+  if (!boot_timer_list_.is_empty()) {
+    const zx_ticks_t boot_deadline =
+        ConvertBootTimeToRawTicks(boot_timer_list_.front().scheduled_time_);
+    timer_deadline = ktl::min(timer_deadline, boot_deadline);
+  }
+
+  // Update the platform oneshot timer to the resulting timer deadline.
+  LTRACEF("rescheduling timer for %" PRIi64 " ticks from UpdatePlatformTimer\n", timer_deadline);
+  platform_set_oneshot_timer(timer_deadline);
+  next_timer_deadline_ = timer_deadline;
+}
+
+void TimerQueue::UpdatePlatformTimerBoot(zx_instant_boot_t new_deadline) {
   DEBUG_ASSERT(arch_ints_disabled());
 
-  LTRACEF("timer %p, cpu %u, scheduled %u, periodic %u\n", timer, cpu, timer->scheduled_time,
-          timer->periodic_time);
+  // Do not set the platform timer if we were passed an infinite deadline.
+  if (new_deadline == ZX_TIME_INFINITE) {
+    return;
+  }
 
-  list_for_every_entry (&timers[cpu].timer_queue, entry, timer_t, node) {
-    if (TIME_GT(entry->scheduled_time, timer->scheduled_time)) {
-      list_add_before(&entry->node, &timer->node);
+  const zx_ticks_t deadline_raw_ticks = ConvertBootTimeToRawTicks(new_deadline);
+  if (deadline_raw_ticks < next_timer_deadline_) {
+    LTRACEF("rescheduling timer for %" PRIi64 " ticks from UpdatePlatformTimerBoot, next: %" PRIi64
+            " \n",
+            deadline_raw_ticks, next_timer_deadline_);
+    platform_set_oneshot_timer(deadline_raw_ticks);
+    next_timer_deadline_ = deadline_raw_ticks;
+  }
+}
+
+void TimerQueue::UpdatePlatformTimerMono(zx_instant_mono_t new_deadline) {
+  DEBUG_ASSERT(arch_ints_disabled());
+
+  // Do not set the platform timer if we were passed an infinite deadline.
+  if (new_deadline == ZX_TIME_INFINITE) {
+    return;
+  }
+
+  // Convert from monotonic time to a raw ticks value to set the platform timer to.
+  const ktl::optional<zx_ticks_t> deadline_raw_ticks = ConvertMonotonicTimeToRawTicks(new_deadline);
+  // Return early if the monotonic clock is paused.
+  if (!deadline_raw_ticks.has_value()) {
+    return;
+  }
+
+  if (deadline_raw_ticks.value() < next_timer_deadline_) {
+    LTRACEF("rescheduling timer for %" PRIi64 " ticks from UpdatePlatformTimerMono, next: %" PRIi64
+            "\n",
+            deadline_raw_ticks.value(), next_timer_deadline_);
+    platform_set_oneshot_timer(deadline_raw_ticks.value());
+    next_timer_deadline_ = deadline_raw_ticks.value();
+  }
+}
+
+void TimerQueue::Insert(Timer* timer, zx_time_t earliest_deadline, zx_time_t latest_deadline) {
+  DEBUG_ASSERT(arch_ints_disabled());
+  LTRACEF("timer %p, cpu %u, scheduled %" PRIi64 "\n", timer, arch_curr_cpu_num(),
+          timer->scheduled_time_);
+  fbl::DoublyLinkedList<Timer*>& timer_list =
+      timer->clock_id_ == ZX_CLOCK_MONOTONIC ? monotonic_timer_list_ : boot_timer_list_;
+  InsertIntoTimerList(timer_list, timer, earliest_deadline, latest_deadline);
+}
+
+void TimerQueue::InsertIntoTimerList(fbl::DoublyLinkedList<Timer*>& timer_list, Timer* timer,
+                                     zx_time_t earliest_deadline, zx_time_t latest_deadline) {
+  // For inserting the timer we consider several cases. In general we
+  // want to coalesce with the current timer unless we can prove that
+  // either that:
+  //  1- there is no slack overlap with current timer OR
+  //  2- the next timer is a better fit.
+  //
+  // In diagrams that follow
+  // - Let |e| be the current (existing) timer deadline
+  // - Let |t| be the deadline of the timer we are inserting
+  // - Let |n| be the next timer deadline if any
+  // - Let |x| be the end of the list (not a timer)
+  // - Let |(| and |)| the earliest_deadline and latest_deadline.
+
+  for (Timer& entry : timer_list) {
+    if (entry.scheduled_time_ > latest_deadline) {
+      // New timer latest is earlier than the current timer.
+      // Just add upfront as is, without slack.
+      //
+      //   ---------t---)--e-------------------------------> time
+      timer->slack_ = 0ll;
+      timer_list.insert(entry, timer);
       return;
     }
+
+    if (entry.scheduled_time_ >= timer->scheduled_time_) {
+      //  New timer slack overlaps and is to the left (or equal). We
+      //  coalesce with current by scheduling late.
+      //
+      //  --------(----t---e-)----------------------------> time
+      timer->slack_ = zx_time_sub_time(entry.scheduled_time_, timer->scheduled_time_);
+      timer->scheduled_time_ = entry.scheduled_time_;
+      kcounter_add(timer_coalesced_counter, 1);
+      timer_list.insert_after(timer_list.make_iterator(entry), timer);
+      return;
+    }
+
+    if (entry.scheduled_time_ < earliest_deadline) {
+      // new timer earliest is later than the current timer. This case
+      // is handled in a future iteration.
+      //
+      //   ----------------e--(---t-----------------------> time
+      continue;
+    }
+
+    // New timer is to the right of current timer and there is overlap
+    // with the current timer, but could the next timer (if any) be
+    // a better fit?
+    //
+    //  -------------(--e---t-----?-------------------> time
+
+    auto iter = timer_list.make_iterator(entry);
+    ++iter;
+    if (iter != timer_list.end()) {
+      const Timer& next = *iter;
+      if (next.scheduled_time_ <= timer->scheduled_time_) {
+        // The new timer is to the right of the next timer. There is no
+        // chance the current timer is a better fit.
+        //
+        //  -------------(--e---n---t----------------------> time
+        continue;
+      }
+
+      if (next.scheduled_time_ < latest_deadline) {
+        // There is slack overlap with the next timer, and also with the
+        // current timer. Which coalescing is a better match?
+        //
+        //  --------------(-e---t---n-)-----------------------> time
+        zx_duration_t delta_entry = zx_time_sub_time(timer->scheduled_time_, entry.scheduled_time_);
+        zx_duration_t delta_next = zx_time_sub_time(next.scheduled_time_, timer->scheduled_time_);
+        if (delta_next < delta_entry) {
+          // New timer is closer to the next timer, handle it in the
+          // next iteration.
+          continue;
+        }
+      }
+    }
+
+    // Handles the remaining cases, note that there is overlap with
+    // the current timer.
+    //
+    //  1- this is the last timer (next == NULL) or
+    //  2- there is no overlap with the next timer, or
+    //  3- there is overlap with both current and next but
+    //     current is closer.
+    //
+    //  So we coalesce by scheduling early.
+    timer->slack_ = zx_time_sub_time(entry.scheduled_time_, timer->scheduled_time_);
+    timer->scheduled_time_ = entry.scheduled_time_;
+    kcounter_add(timer_coalesced_counter, 1);
+    timer_list.insert_after(timer_list.make_iterator(entry), timer);
+    return;
   }
 
-  /* walked off the end of the list */
-  list_add_tail(&timers[cpu].timer_queue, &timer->node);
+  // Walked off the end of the list and there was no overlap.
+  timer->slack_ = 0;
+  timer_list.push_back(timer);
 }
 
-static void timer_set(timer_t *timer, lk_time_t delay, lk_time_t period, timer_callback callback,
-                      void *arg) {
-  lk_time_t now;
+Timer::~Timer() {
+  // Ensure that we are not on any TimerQueue's list.
+  ZX_DEBUG_ASSERT(!InContainer());
+  // Ensure that we are not active on some cpu.
+  ZX_DEBUG_ASSERT(active_cpu_.load(ktl::memory_order_relaxed) == INVALID_CPU);
+}
 
-  LTRACEF("timer %p, delay %u, period %u, callback %p, arg %p\n", timer, delay, period, callback,
-          arg);
+void Timer::Set(const Deadline& deadline, Callback callback, void* arg) {
+  LTRACEF("timer %p deadline.when %" PRIi64 " deadline.slack.amount %" PRIi64
+          " deadline.slack.mode %u callback %p arg %p\n",
+          this, deadline.when(), deadline.slack().amount(), deadline.slack().mode(), callback, arg);
 
-  DEBUG_ASSERT(timer->magic == TIMER_MAGIC);
+  DEBUG_ASSERT(magic_ == kMagic);
+  DEBUG_ASSERT(deadline.slack().mode() <= TIMER_SLACK_LATE);
+  DEBUG_ASSERT(deadline.slack().amount() >= 0);
 
-  if (list_in_list(&timer->node)) {
-    panic("timer %p already in list\n", timer);
+  if (InContainer()) {
+    panic("timer %p already in list\n", this);
   }
 
-  now = current_time();
-  timer->scheduled_time = now + delay;
-  timer->periodic_time = period;
-  timer->callback = callback;
-  timer->arg = arg;
+  const zx_time_t latest_deadline = deadline.latest();
+  const zx_time_t earliest_deadline = deadline.earliest();
 
-  LTRACEF("scheduled time %u\n", timer->scheduled_time);
+  Guard<MonitoredSpinLock, IrqSave> guard{TimerLock::Get(), SOURCE_TAG};
 
-  spin_lock_saved_state_t state;
-  spin_lock_irqsave(&timer_lock, state);
+  cpu_num_t cpu = arch_curr_cpu_num();
+  cpu_num_t active_cpu = active_cpu_.load(ktl::memory_order_relaxed);
 
-  uint cpu = lk_arch_curr_cpu_num();
-  insert_timer_in_queue(cpu, timer);
-
-#if PLATFORM_HAS_DYNAMIC_TIMER
-  if (list_peek_head_type(&timers[cpu].timer_queue, timer_t, node) == timer) {
-    /* we just modified the head of the timer queue */
-    LTRACEF("setting new timer for %u msecs\n", delay);
-    platform_set_oneshot_timer(timer_tick, NULL, delay);
+  bool currently_active = (active_cpu == cpu);
+  if (unlikely(currently_active)) {
+    // The timer is active on our own cpu, we must be inside the callback.
+    if (cancel_.load(ktl::memory_order_relaxed)) {
+      return;
+    }
+  } else if (unlikely(active_cpu != INVALID_CPU)) {
+    panic("timer %p currently active on a different cpu %u\n", this, active_cpu);
   }
-#endif
 
-  spin_unlock_irqrestore(&timer_lock, state);
-}
+  // Set up the structure.
+  scheduled_time_ = deadline.when();
+  callback_ = callback;
+  arg_ = arg;
+  cancel_.store(false, ktl::memory_order_relaxed);
+  // We don't need to modify active_cpu_ because it is managed by timer_tick().
 
-/**
- * @brief  Set up a timer that executes once
- *
- * This function specifies a callback function to be called after a specified
- * delay.  The function will be called one time.
- *
- * @param  timer The timer to use
- * @param  delay The delay, in ms, before the timer is executed
- * @param  callback  The function to call when the timer expires
- * @param  arg  The argument to pass to the callback
- *
- * The timer function is declared as:
- *   enum handler_return callback(struct timer *, lk_time_t now, void *arg) { ... }
- */
-void timer_set_oneshot(timer_t *timer, lk_time_t delay, timer_callback callback, void *arg) {
-  if (delay == 0)
-    delay = 1;
-  timer_set(timer, delay, 0, callback, arg);
-}
+  LTRACEF("scheduled time %" PRIi64 "\n", scheduled_time_);
 
-/**
- * @brief  Set up a timer that executes repeatedly
- *
- * This function specifies a callback function to be called after a specified
- * delay.  The function will be called repeatedly.
- *
- * @param  timer The timer to use
- * @param  period The delay, in ms, between timer executions (first execution occurs one period
- * after timer set)
- * @param  callback  The function to call when the timer expires
- * @param  arg  The argument to pass to the callback
- *
- * The timer function is declared as:
- *   enum handler_return callback(struct timer *, lk_time_t now, void *arg) { ... }
- */
-void timer_set_periodic(timer_t *timer, lk_time_t period, timer_callback callback, void *arg) {
-  if (period == 0)
-    period = 1;
-  timer_set(timer, period, period, callback, arg);
-}
+  TimerQueue& timer_queue = percpu::Get(cpu).timer_queue;
+  timer_queue.Insert(this, earliest_deadline, latest_deadline);
 
-/**
- * @brief  Cancel a pending timer
- */
-void timer_cancel(timer_t *timer) {
-  DEBUG_ASSERT(timer->magic == TIMER_MAGIC);
-
-  spin_lock_saved_state_t state;
-  spin_lock_irqsave(&timer_lock, state);
-
-#if PLATFORM_HAS_DYNAMIC_TIMER
-  uint cpu = arch_curr_cpu_num();
-
-  timer_t *oldhead = list_peek_head_type(&timers[cpu].timer_queue, timer_t, node);
-#endif
-
-  if (list_in_list(&timer->node))
-    list_delete(&timer->node);
-
-  /* to keep it from being reinserted into the queue if called from
-   * periodic timer callback.
-   */
-  timer->periodic_time = 0;
-  timer->callback = NULL;
-  timer->arg = NULL;
-
-#if PLATFORM_HAS_DYNAMIC_TIMER
-  /* see if we've just modified the head of the timer queue */
-  timer_t *newhead = list_peek_head_type(&timers[cpu].timer_queue, timer_t, node);
-  if (newhead == NULL) {
-    LTRACEF("clearing old hw timer, nothing in the queue\n");
-    platform_stop_timer();
-  } else if (newhead != oldhead) {
-    lk_time_t delay;
-    lk_time_t now = current_time();
-
-    if (TIME_LT(newhead->scheduled_time, now))
-      delay = 0;
-    else
-      delay = newhead->scheduled_time - now;
-
-    LTRACEF("setting new timer to %u\n", (uint)delay);
-    platform_set_oneshot_timer(timer_tick, NULL, delay);
+  switch (clock_id_) {
+    case ZX_CLOCK_MONOTONIC:
+      if (!timer_queue.monotonic_timer_list_.is_empty() &&
+          &timer_queue.monotonic_timer_list_.front() == this) {
+        timer_queue.UpdatePlatformTimerMono(deadline.when());
+      }
+      break;
+    case ZX_CLOCK_BOOT:
+      if (!timer_queue.boot_timer_list_.is_empty() &&
+          &timer_queue.boot_timer_list_.front() == this) {
+        timer_queue.UpdatePlatformTimerBoot(deadline.when());
+      }
+      break;
   }
-#endif
-
-  spin_unlock_irqrestore(&timer_lock, state);
+  kcounter_add(timer_created_counter, 1);
 }
 
-/* called at interrupt time to process any pending timers */
-static enum handler_return timer_tick(void *arg, lk_time_t now) {
-  timer_t *timer;
-  enum handler_return ret = INT_NO_RESCHEDULE;
+void TimerQueue::PreemptReset(zx_instant_mono_t deadline) {
+  DEBUG_ASSERT(arch_ints_disabled());
+  LTRACEF("preempt timer cpu %u deadline %" PRIi64 "\n", arch_curr_cpu_num(), deadline);
+  preempt_timer_deadline_ = deadline;
+  UpdatePlatformTimerMono(deadline);
+}
 
+bool Timer::Cancel() {
+  DEBUG_ASSERT(magic_ == kMagic);
+
+  Guard<MonitoredSpinLock, IrqSave> guard{TimerLock::Get(), SOURCE_TAG};
+
+  cpu_num_t cpu = arch_curr_cpu_num();
+
+  // mark the timer as canceled
+  cancel_.store(true, ktl::memory_order_relaxed);
+  // TODO(https://fxbug.dev/42142666): Consider whether this DeviceMemoryBarrier is required
+  arch::DeviceMemoryBarrier();
+
+  // see if we're trying to cancel the timer we're currently in the middle of handling
+  if (unlikely(active_cpu_.load(ktl::memory_order_relaxed) == cpu)) {
+    // zero it out
+    callback_ = nullptr;
+    arg_ = nullptr;
+
+    // we're done, so return back to the callback
+    return false;
+  }
+
+  bool callback_not_running;
+
+  // If this Timer is in a queue, remove it and adjust hardware timers if needed.
+  if (InContainer()) {
+    callback_not_running = true;
+
+    TimerQueue& timer_queue = percpu::Get(cpu).timer_queue;
+
+    // Save a copy of the old head of the queue so later we can see if we modified the head.
+    const Timer* oldhead = nullptr;
+    fbl::DoublyLinkedList<Timer*>& timer_list = clock_id_ == ZX_CLOCK_MONOTONIC
+                                                    ? timer_queue.monotonic_timer_list_
+                                                    : timer_queue.boot_timer_list_;
+    if (!timer_list.is_empty()) {
+      oldhead = &timer_list.front();
+    }
+
+    // Remove this Timer from this whatever TimerQueue it's on.
+    RemoveFromContainer();
+    kcounter_add(timer_canceled_counter, 1);
+
+    // TODO(cpu): If, after removing |timer| there is one other single Timer with
+    // the same scheduled_time_ and slack_ non-zero, then it is possible to return
+    // that timer to the ideal scheduled_time_.
+
+    // See if we've just modified the head of this TimerQueue.
+    //
+    // If Timer was on another cpu's queue, we'll just let it fire and sort itself out.
+    if (unlikely(oldhead == this)) {
+      // The Timer we're canceling was at head of this queue, so see if we should update platform
+      // timer.
+      if (!timer_list.is_empty()) {
+        timer_queue.UpdatePlatformTimerLocked();
+      } else if (timer_queue.next_timer_deadline_ == ZX_TIME_INFINITE) {
+        LTRACEF("clearing old hw timer, preempt timer not set, nothing in the queue\n");
+        platform_stop_timer();
+      }
+    }
+  } else {
+    callback_not_running = false;
+  }
+
+  guard.Release();
+
+  // wait for the timer to become un-busy in case a callback is currently active on another cpu
+  while (active_cpu_.load(ktl::memory_order_relaxed) != INVALID_CPU) {
+    arch::Yield();
+  }
+
+  // zero it out
+  callback_ = nullptr;
+  arg_ = nullptr;
+
+  return callback_not_running;
+}
+
+// called at interrupt time to process any pending timers
+void timer_tick() {
   DEBUG_ASSERT(arch_ints_disabled());
 
-  THREAD_STATS_INC(timer_ints);
-  //  KEVLOG_TIMER_TICK(); // enable only if necessary
+  CPU_STATS_INC(timer_ints);
 
-  uint cpu = lk_arch_curr_cpu_num();
+  cpu_num_t cpu = arch_curr_cpu_num();
+  percpu::Get(cpu).timer_queue.Tick(cpu);
+}
 
-  LTRACEF("cpu %u now %u, sp %p\n", cpu, now, __GET_FRAME());
+void TimerQueue::Tick(cpu_num_t cpu) {
+  zx_instant_mono_t now = current_mono_time();
+  zx_instant_boot_t boot_now = current_boot_time();
+  LTRACEF("cpu %u now %" PRIi64 ", sp %p\n", cpu, now, __GET_FRAME());
 
-  spin_lock(&timer_lock);
+  // The platform timer has fired, so no deadline is set.
+  next_timer_deadline_ = ZX_TIME_INFINITE;
+
+  // Service the preemption timer before acquiring the timer lock.
+  if (now >= preempt_timer_deadline_) {
+    preempt_timer_deadline_ = ZX_TIME_INFINITE;
+    Scheduler::TimerTick(SchedTime{now});
+  }
+
+  // Tick both of the timer lists.
+  TickInternal(now, cpu, &monotonic_timer_list_);
+  TickInternal(boot_now, cpu, &boot_timer_list_);
+
+  // Update the platform timer.
+  UpdatePlatformTimer();
+}
+
+template <typename TimestampType>
+void TimerQueue::TickInternal(TimestampType now, cpu_num_t cpu,
+                              fbl::DoublyLinkedList<Timer*>* timer_list) {
+  Guard<MonitoredSpinLock, NoIrqSave> guard{Timer::TimerLock::Get(), SOURCE_TAG};
 
   for (;;) {
-    /* see if there's an event to process */
-    timer = list_peek_head_type(&timers[cpu].timer_queue, timer_t, node);
-    if (likely(timer == 0))
+    // See if there's an event to process.
+    if (timer_list->is_empty()) {
       break;
-    LTRACEF("next item on timer queue %p at %u now %u (%p, arg %p)\n", timer, timer->scheduled_time,
-            now, timer->callback, timer->arg);
-    if (likely(TIME_LT(now, timer->scheduled_time)))
+    }
+
+    Timer& timer = timer_list->front();
+
+    LTRACEF("next item on timer queue %p at %" PRIi64 " now %" PRIi64 " (%p, arg %p)\n", &timer,
+            timer.scheduled_time_, now, timer.callback_, timer.arg_);
+    if (likely(now < timer.scheduled_time_)) {
       break;
+    }
 
-    /* process it */
-    LTRACEF("timer %p\n", timer);
-    DEBUG_ASSERT(timer && timer->magic == TIMER_MAGIC);
-    list_delete(&timer->node);
+    // Process it.
+    LTRACEF("timer %p\n", &timer);
+    DEBUG_ASSERT_MSG(timer.magic_ == Timer::kMagic,
+                     "ASSERT: timer failed magic check: timer %p, magic 0x%x\n", &timer,
+                     (uint)timer.magic_);
+    timer_list->erase(timer);
 
-    /* we pulled it off the list, release the list lock to handle it */
-    spin_unlock(&timer_lock);
+    // Mark the timer busy.
+    timer.active_cpu_.store(cpu, ktl::memory_order_relaxed);
+    // Unlocking the spinlock in CallUnlocked acts as a release fence.
 
-    LTRACEF("dequeued timer %p, scheduled %u periodic %u\n", timer, timer->scheduled_time,
-            timer->periodic_time);
+    // Now that the timer is off of the list, release the spinlock to handle
+    // the callback, then re-acquire in case it is requeued.
+    guard.CallUnlocked([&timer, now]() {
+      LTRACEF("dequeued timer %p, scheduled %" PRIi64 "\n", &timer, timer.scheduled_time_);
 
-    THREAD_STATS_INC(timers);
+      CPU_STATS_INC(timers);
+      kcounter_add(timer_fired_counter, 1);
 
-    bool periodic = timer->periodic_time > 0;
+      LTRACEF("timer %p firing callback %p, arg %p\n", &timer, timer.callback_, timer.arg_);
+      timer.callback_(&timer, now, timer.arg_);
 
-    LTRACEF("timer %p firing callback %p, arg %p\n", timer, timer->callback, timer->arg);
-    KEVLOG_TIMER_CALL(timer->callback, timer->arg);
-    if (timer->callback(timer, now, timer->arg) == INT_RESCHEDULE)
-      ret = INT_RESCHEDULE;
+      DEBUG_ASSERT(arch_ints_disabled());
+    });
 
-    /* it may have been requeued or periodic, grab the lock so we can safely inspect it */
-    spin_lock(&timer_lock);
+    // Mark it not busy.
+    timer.active_cpu_.store(INVALID_CPU, ktl::memory_order_relaxed);
+    // TODO(https://fxbug.dev/42142666): Consider whether this DeviceMemoryBarrier is required
+    arch::DeviceMemoryBarrier();
+  }
 
-    /* if it was a periodic timer and it hasn't been requeued
-     * by the callback put it back in the list
-     */
-    if (periodic && !list_in_list(&timer->node) && timer->periodic_time > 0) {
-      LTRACEF("periodic timer, period %u\n", timer->periodic_time);
-      timer->scheduled_time += timer->periodic_time;
-      if (unlikely(TIME_LT(timer->scheduled_time, now))) {
-        timer->scheduled_time = now + timer->periodic_time;
-      }
-      insert_timer_in_queue(cpu, timer);
+  // Verify that the head of the timer queue has a scheduled time after now.
+  if (!timer_list->is_empty()) {
+    DEBUG_ASSERT(timer_list->front().scheduled_time_ > now);
+  }
+}
+
+zx_status_t Timer::TrylockOrCancel(MonitoredSpinLock* lock) {
+  // spin trylocking on the passed in spinlock either waiting for it
+  // to grab or the passed in timer to be canceled.
+  while (unlikely(lock->TryAcquire(SOURCE_TAG))) {
+    // we failed to grab it, check for cancel
+    if (cancel_.load(ktl::memory_order_relaxed)) {
+      // we were canceled, so bail immediately
+      return ZX_ERR_TIMED_OUT;
+    }
+    // tell the arch to wait
+    arch::Yield();
+  }
+
+  return ZX_OK;
+}
+
+zx_status_t Timer::TrylockOrCancel(ChainLock& lock) {
+  // Just like the previous implementation of TrylockOrCancel, but this version
+  // attempts operates on a ChainLock instead of a MonitoredSpinLock, and is
+  // used by the wait queue timeout mechanism.  Keep attempting to acquire the
+  // lock, arch:Yield'ing in between attempts, and bailing out in the case that
+  // we notice that the cancel_ flag has been set.
+  while (!lock.TryAcquire()) {
+    if (cancel_.load(ktl::memory_order_relaxed)) {
+      return ZX_ERR_TIMED_OUT;
+    }
+    arch::Yield();
+  }
+
+  return ZX_OK;
+}
+
+ktl::optional<Timer*> TimerQueue::TransitionTimerList(fbl::DoublyLinkedList<Timer*>& src_list,
+                                                      fbl::DoublyLinkedList<Timer*>& dst_list) {
+  // Keep track of what the first timer in the dst_list was.
+  Timer* old_head = nullptr;
+  if (!dst_list.is_empty()) {
+    old_head = &dst_list.front();
+  }
+
+  // Move all the timers from the src_list to the dst_list.
+  Timer* timer;
+  while ((timer = src_list.pop_front()) != nullptr) {
+    // We lost the original asymmetric slack information so when we combine them
+    // with the other timer queue they are not coalesced again.
+    // TODO(cpu): figure how important this case is.
+    InsertIntoTimerList(dst_list, timer, timer->scheduled_time_, timer->scheduled_time_);
+    // Note, we do not increment the "created" counter here because we are simply moving these
+    // timers from one queue to another and we already counted them when they were first
+    // created.
+  }
+  Timer* new_head = nullptr;
+  if (!dst_list.is_empty()) {
+    new_head = &dst_list.front();
+  }
+
+  // If the head of the timer list changed, then we need to return the new head.
+  if (new_head != nullptr && new_head != old_head) {
+    return ktl::optional<Timer*>(new_head);
+  }
+  return ktl::nullopt;
+}
+
+void TimerQueue::TransitionOffCpu(TimerQueue& source) {
+  Guard<MonitoredSpinLock, IrqSave> guard{Timer::TimerLock::Get(), SOURCE_TAG};
+
+  // Transition both timer lists. This may update the platform timer.
+  const ktl::optional<Timer*> new_mono_head =
+      TransitionTimerList(source.monotonic_timer_list_, monotonic_timer_list_);
+  if (new_mono_head) {
+    UpdatePlatformTimerMono(new_mono_head.value()->scheduled_time_);
+  }
+  const ktl::optional<Timer*> new_boot_head =
+      TransitionTimerList(source.boot_timer_list_, boot_timer_list_);
+  if (new_boot_head) {
+    UpdatePlatformTimerBoot(new_boot_head.value()->scheduled_time_);
+  }
+
+  // The old TimerQueue has no tasks left, so reset the deadlines.
+  source.preempt_timer_deadline_ = ZX_TIME_INFINITE;
+  source.next_timer_deadline_ = ZX_TIME_INFINITE;
+}
+
+template <typename TimestampType>
+void TimerQueue::PrintTimerList(TimestampType now, fbl::DoublyLinkedList<Timer*>& timer_list,
+                                StringFile& buffer) {
+  TimestampType last = now;
+  for (Timer& t : timer_list) {
+    zx_duration_t delta_now = zx_time_sub_time(t.scheduled_time_, now);
+    zx_duration_t delta_last = zx_time_sub_time(t.scheduled_time_, last);
+    fprintf(&buffer,
+            "\ttime %" PRIi64 " delta_now %" PRIi64 " delta_last %" PRIi64 " func %p arg %p\n",
+            t.scheduled_time_, delta_now, delta_last, t.callback_, t.arg_);
+    last = t.scheduled_time_;
+  }
+}
+
+void TimerQueue::PrintTimerQueues(char* buf, size_t len) {
+  StringFile buffer{ktl::span(buf, len)};
+  Guard<MonitoredSpinLock, IrqSave> guard{Timer::TimerLock::Get(), SOURCE_TAG};
+  for (cpu_num_t i = 0; i < percpu::processor_count(); i++) {
+    if (mp_is_cpu_online(i)) {
+      fprintf(&buffer, "cpu %u:\n", i);
+      PrintTimerList(current_mono_time(), percpu::Get(i).timer_queue.monotonic_timer_list_, buffer);
+      fprintf(&buffer, "boot timers:\n");
+      PrintTimerList(current_boot_time(), percpu::Get(i).timer_queue.boot_timer_list_, buffer);
     }
   }
-
-#if PLATFORM_HAS_DYNAMIC_TIMER
-  /* reset the timer to the next event */
-  timer = list_peek_head_type(&timers[cpu].timer_queue, timer_t, node);
-  if (timer) {
-    /* has to be the case or it would have fired already */
-    DEBUG_ASSERT(TIME_GT(timer->scheduled_time, now));
-
-    lk_time_t delay = timer->scheduled_time - now;
-
-    LTRACEF("setting new timer for %u msecs for event %p\n", (uint)delay, timer);
-    platform_set_oneshot_timer(timer_tick, NULL, delay);
-  }
-
-  /* we're done manipulating the timer queue */
-  spin_unlock(&timer_lock);
-#else
-  /* release the timer lock before calling the tick handler */
-  spin_unlock(&timer_lock);
-
-  /* let the scheduler have a shot to do quantum expiration, etc */
-  /* in case of dynamic timer, the scheduler will set up a periodic timer */
-  if (thread_timer_tick(NULL, now, NULL) == INT_RESCHEDULE)
-    ret = INT_RESCHEDULE;
-#endif
-
-  return ret;
+  // Null terminate the buffer.
+  ktl::move(buffer).take();
 }
 
-void timer_init(void) {
-  timer_lock = SPIN_LOCK_INITIAL_VALUE;
-  for (uint i = 0; i < SMP_MAX_CPUS; i++) {
-    list_initialize(&timers[i].timer_queue);
+#include <lib/console.h>
+
+static int cmd_timers(int argc, const cmd_args* argv, uint32_t flags) {
+  const size_t timer_buffer_size = PAGE_SIZE;
+
+  // allocate a buffer to dump the timer queue into to avoid reentrancy issues with the
+  // timer spinlock
+  char* buf = static_cast<char*>(malloc(timer_buffer_size));
+  if (!buf) {
+    return ZX_ERR_NO_MEMORY;
   }
-#if !PLATFORM_HAS_DYNAMIC_TIMER
-  /* register for a periodic timer tick */
-  platform_set_periodic_timer(timer_tick, NULL, 10); /* 10ms */
-#endif
+
+  TimerQueue::PrintTimerQueues(buf, timer_buffer_size);
+
+  printf("%s", buf);
+
+  free(buf);
+
+  return 0;
 }
+
+STATIC_COMMAND_START
+STATIC_COMMAND_MASKED("timers", "dump the current kernel timer queues", &cmd_timers,
+                      CMD_AVAIL_NORMAL)
+STATIC_COMMAND_END(kernel)

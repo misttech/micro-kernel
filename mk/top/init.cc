@@ -1,4 +1,3 @@
-// Copyright 2025 Mist Tecnologia Ltda
 // Copyright 2016 The Fuchsia Authors
 // Copyright (c) 2013 Travis Geiselbrecht
 //
@@ -11,13 +10,14 @@
  * a init hook that is called at increasing init levels as the system is
  * initialized.
  */
+#include "lk/init.h"
+
 #include <assert.h>
+#include <debug.h>
+#include <trace.h>
+#include <zircon/compiler.h>
 
 #include <arch/ops.h>
-#include <lk/compiler.h>
-#include <lk/debug.h>
-#include <lk/init.h>
-#include <lk/trace.h>
 
 #define LOCAL_TRACE 0
 
@@ -30,14 +30,14 @@ void lk_init_level(enum lk_init_flags required_flag, uint start_level, uint stop
 
   ASSERT(start_level > 0);
   uint last_called_level = start_level - 1;
-  const struct lk_init_struct *last = NULL;
+  const struct lk_init_struct* last = NULL;
   for (;;) {
     /* search for the lowest uncalled hook to call */
     LTRACEF("last %p, last_called_level %#x\n", last, last_called_level);
 
-    const struct lk_init_struct *found = NULL;
+    const struct lk_init_struct* found = NULL;
     bool seen_last = false;
-    for (const struct lk_init_struct *ptr = __start_lk_init; ptr != __stop_lk_init; ptr++) {
+    for (const struct lk_init_struct* ptr = __start_lk_init; ptr != __stop_lk_init; ptr++) {
       LTRACEF("looking at %p (%s) level %#x, flags %#x, seen_last %d\n", ptr, ptr->name, ptr->level,
               ptr->flags, seen_last);
 
@@ -73,8 +73,8 @@ void lk_init_level(enum lk_init_flags required_flag, uint start_level, uint stop
     if (!found)
       break;
 
-    dprintf(INFO, "INIT: cpu %d, calling hook %p (%s) at level %#x, flags %#x\n",
-            lk_arch_curr_cpu_num(), found->hook, found->name, found->level, found->flags);
+    dprintf(INFO, "INIT: cpu %u, calling hook %p (%s) at level %#x, flags %#x\n", arch_curr_cpu_num(),
+           found->hook, found->name, found->level, found->flags);
 
     found->hook(found->level);
     last_called_level = found->level;

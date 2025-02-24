@@ -14,7 +14,7 @@
 namespace arch {
 
 // Encodes information on the riscv64 `nop` instruction.
-// See //zircon/kernel/lib/arch/include/lib/arch/nop.h for expectations for
+// See //mk/lib/arch/include/lib/arch/nop.h for expectations for
 // the static members of this struct.
 struct RiscvNopTraits {
   static constexpr uint16_t kCnop[] = {0x01};

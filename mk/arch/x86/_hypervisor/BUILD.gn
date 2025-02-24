@@ -1,0 +1,35 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+source_set("hypervisor") {
+  sources = [
+    "guest.cc",
+    "invalidate.cc",
+    "pv.cc",
+    "vcpu.cc",
+    "vmcall.cc",
+    "vmexit.cc",
+    "vmx.S",
+    "vmx_cpu_state.cc",
+  ]
+  deps = [
+    ":tests",
+    "//mk/arch/x86:headers",
+    "//mk/hypervisor:headers",
+    "//mk/lib/boot-options",
+    "//mk/lib/syscalls:headers",
+    "//mk/platform/pc",
+  ]
+}
+
+source_set("tests") {
+  # TODO: testonly = true
+  sources = [ "vmx_test.cc" ]
+  deps = [
+    "//mk/hypervisor:headers",
+    "//mk/lib/unittest",
+  ]
+}

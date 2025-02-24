@@ -7,5 +7,5 @@
 source_set("tests") {
   # TODO: testonly = true
   sources = [ "stall_test.cc" ]
-  deps = [ "//zircon/kernel/lib/unittest" ]
+  deps = [ "//mk/lib/unittest" ]
 }

@@ -14,8 +14,8 @@ test("libhwreg-test") {
   deps = [
     "..:hwreg",
     "..:hwreg-mock",
-    "//zircon/system/ulib/fbl",
-    "//zircon/system/ulib/zxtest",
+    "//mk/ulib/fbl",
+    "//mk/ulib/zxtest",
   ]
 }
 
@@ -28,10 +28,10 @@ test("libhwreg-i2c-test") {
     "//src/devices/i2c/testing/mock-i2c",
     "//src/lib/ddk",
     "//src/lib/ddktl",
-    "//zircon/system/ulib/fbl",
-    "//zircon/system/ulib/hwreg-i2c",
-    "//zircon/system/ulib/zx",
-    "//zircon/system/ulib/zxtest",
+    "//mk/ulib/fbl",
+    "//mk/ulib/hwreg-i2c",
+    "//mk/ulib/zx",
+    "//mk/ulib/zxtest",
   ]
 }
 

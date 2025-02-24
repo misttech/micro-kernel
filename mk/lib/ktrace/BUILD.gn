@@ -10,15 +10,13 @@ zx_library("ktrace") {
   sources = [ "ktrace.cc" ]
   deps = [
     #"//mk/hypervisor:headers",
-    #"//mk/lib/boot-options",
+    "//mk/lib/boot-options",
     "//mk/lib/init",
     "//mk/lib/ktl",
 
     #"//mk/lib/syscalls:headers",
-
-    #"//mk/kernel/object:headers",
+    "//mk/object:headers",
     "//mk/ulib/zircon-internal",
-    "//mk/lib/fbl",
   ]
 
   public_deps = [
@@ -33,24 +31,6 @@ group("suppress-warning") {
 }
 
 config("suppress-warning.config") {
-  visibility = [
-    ":*",
-
-    # TODO(https://fxbug.dev/42121444): Referenced in environment configs.
-    "//build/config/*",
-    "//mk/*",
-    "//mk/lib/*",
-    "//mk/lib/zbi-format/*",
-    "//mk/ulib/*",
-
-    #"//src/lib/elfldltl/*",
-    #"//src/lib/llvm-profdata/*",
-    #"//src/lib/ubsan-custom/*",
-    #"//src/lib/zbitl/*",
-    # "//src/performance/lib/fxt/*",
-    #"//third_party/zstd/*",
-    # "//vendor/google/*",
-  ]
   if (!is_gcc) {
     # Silence warning in Clang about GNU extension used in string_ref.h.
     cflags_cc = [ "-Wno-gnu-string-literal-operator-template" ]

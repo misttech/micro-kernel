@@ -33,7 +33,7 @@ using EnableAsmGeneration = EnablePrinter;
 //       .Main(argc, argv);
 // }
 // ```
-// See //zircon/system/ulib/hwreg/hwreg_asm_header.gni to easily plug such a
+// See //mk/ulib/hwreg/hwreg_asm_header.gni to easily plug such a
 // header generator program into the build.
 
 class AsmHeader {

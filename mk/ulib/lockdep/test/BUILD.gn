@@ -20,9 +20,9 @@ test("lockdep-test") {
   sources = [ "lock_dep_test.cc" ]
   deps = [
     "//sdk/lib/fdio",
-    "//zircon/system/ulib/lockdep",
-    "//zircon/system/ulib/zircon-internal",
-    "//zircon/system/ulib/zxtest",
+    "//mk/ulib/lockdep",
+    "//mk/ulib/zircon-internal",
+    "//mk/ulib/zxtest",
   ]
   defines = [
     "LOCK_DEP_ENABLED_FEATURE_LEVEL=2",

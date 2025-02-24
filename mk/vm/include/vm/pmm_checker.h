@@ -36,7 +36,7 @@
 //
 class PmmChecker {
  public:
-  // See //zircon/kernel/lib/boot-options/include/lib/boot-options/options.inc
+  // See //mk/lib/boot-options/include/lib/boot-options/options.inc
   // for default value.
   static constexpr CheckFailAction kDefaultAction = BootOptions{}.pmm_checker_action;
 

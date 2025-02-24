@@ -8,7 +8,7 @@ import("//build/fuzz.gni")
 import("//build/test.gni")
 import("//build/testing/boot_tests/zbi_test.gni")
 import("//build/testing/host_test_data.gni")
-import("//build/toolchain/zircon/user_basic_redirect.gni")
+import("//build/toolchain/kernel/user_basic_redirect.gni")
 
 test("elfldltl-unittests") {
   sources = [
@@ -54,7 +54,7 @@ test("elfldltl-unittests") {
   deps = [
     "..",
     "../testing",
-    "//sdk/lib/fit",
+    "//mk/lib/fit",
     "//src/lib/fxl/test:gtest_main",
     "//src/lib/symbolizer-markup",
     "//src/lib/trivial-allocator",
@@ -137,7 +137,7 @@ if (current_os == "linux") {
       ]
       deps = [
         ":linux-static-pie",
-        "//zircon/system/ulib/c/string:hermetic",
+        "//mk/ulib/c/string:hermetic",
       ]
 
       exclude_toolchain_tags = [ "instrumented" ]
@@ -196,8 +196,8 @@ if (is_fuchsia) {
       deps = [
         ":static-pie",
         "//src/zircon/lib/zircon",
-        "//zircon/system/ulib/c/stdlib:hermetic",
-        "//zircon/system/ulib/c/string:hermetic",
+        "//mk/ulib/c/stdlib:hermetic",
+        "//mk/ulib/c/string:hermetic",
       ]
 
       exclude_toolchain_tags = [ "instrumented" ]
@@ -352,7 +352,7 @@ source_set("loader-tests") {
     "..",
     "../testing",
     "//third_party/googletest:gmock",
-    "//zircon/system/ulib/fbl",
+    "//mk/ulib/fbl",
   ]
 
   data_deps = [ ":loader-test-libs" ]
@@ -367,7 +367,7 @@ zbi_test("zbi-static-pie-test") {
 
   deps = [
     ":fuchsia-static-pie-test.basic",
-    "//zircon/kernel",
+    "//mk",
   ]
   assert_no_deps = [
     "//zircon/system/core/*",

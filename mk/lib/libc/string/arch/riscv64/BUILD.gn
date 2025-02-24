@@ -7,8 +7,8 @@
 source_set("riscv64") {
   # TODO(mcgrathr): no optimized routines; get from llvm-libc later
   sources = [
-    "//zircon/kernel/lib/libc/string/memcpy.c",
-    "//zircon/kernel/lib/libc/string/memset.c",
+    "//mk/lib/libc/string/memcpy.c",
+    "//mk/lib/libc/string/memset.c",
   ]
-  deps = [ "//zircon/kernel/lib/libc:headers" ]
+  deps = [ "//mk/lib/libc:headers" ]
 }

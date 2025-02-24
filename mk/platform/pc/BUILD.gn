@@ -9,38 +9,82 @@ import("//build/toolchain/toolchain_environment.gni")
 
 zx_library("pc") {
   sources = [
-    "cmos.cc",
+    "acpi.cc",
+    "cmos_bootbyte.cc",
     "console.cc",
-    "debug.cc",
-
-    #"ide.c",
+    "dev-init.cc",
+    "efi_expected.cc",
+    "hpet.cc",
     "interrupts.cc",
     "keyboard.cc",
-    "lapic.cc",
+    "memory.cc",
     "pic.cc",
     "platform.cc",
+    "power.cc",
+    "smbios.cc",
     "timer.cc",
     "uart.cc",
   ]
 
   deps = [
-    "//mk/dev",
-
-    #"//mk/dev/bus/pci/drivers",
+    #":tests",
+    "//mk/arch/x86:headers",
+    "//mk/dev/hw_rng/intel_rng",
+    "//mk/dev/interrupt",
+    "//mk/dev/pcie",
     "//mk/lib/acpi_lite",
-
-    #"//mk/lib/bio",
+    "//mk/lib/arch",
+    "//mk/lib/boot-options",
     "//mk/lib/cbuf",
+    "//mk/lib/console",
+    "//mk/lib/counters",
+    "//mk/lib/debuglog",
+    "//mk/lib/efi",
+    "//mk/lib/fbl",
+    "//mk/lib/fixed_point",
     "//mk/lib/init",
+    #"//mk/lib/jtrace:headers",
+    "//mk/lib/ktl",
+    "//mk/lib/lockdep",
+    "//mk/lib/pow2_range_allocator",
+    "//mk/lib/topology",
+    "//mk/lib/unittest",
+    "//mk/lib/zbi-format",
+    "//mk/phys:handoff",
+    "//mk/phys/lib/memalloc:range",
     "//mk/platform:headers",
+    "//mk/third_party/ulib/cksum",
+    "//mk/ulib/explicit-memory",
+    "//mk/ulib/lazy_init",
+    "//mk/ulib/ram-crashlog",
+    "//mk/ulib/smbios",
+    "//mk/ulib/uart",
+    "//src/lib/zbitl",
   ]
   public_deps = [
+    # <platform/pc/smbios.h> has #include <lib/smbios/smbios.h>.
+    "//mk/ulib/smbios:headers",
+
     # <ktl/optional.h> in uart.h.
-    "//mk/lib/fbl",
     "//mk/lib/ktl:headers",
   ]
 
   if (toolchain_environment == "kernel") {
-    public_deps += []
+    public_deps += [
+      # <platform/pc/timer.h> has #include <lib/affine/ratio.h>.
+      "//mk/ulib/affine",
+    ]
   }
+}
+
+source_set("tests") {
+  # TODO: testonly = true
+  sources = [ "interrupts_test.cc" ]
+  deps = [
+    ":headers",
+    "//mk/dev/interrupt",
+    "//mk/lib/console",
+    "//mk/lib/pow2_range_allocator",
+    "//mk/lib/unittest",
+  ]
 }

@@ -24,8 +24,8 @@ test("concurrent-test") {
   ]
 
   deps = [
-    "//zircon/system/ulib/concurrent",
-    "//zircon/system/ulib/zxtest",
+    "//mk/ulib/concurrent",
+    "//mk/ulib/zxtest",
   ]
 }
 

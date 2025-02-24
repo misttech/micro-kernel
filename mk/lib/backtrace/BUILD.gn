@@ -11,8 +11,7 @@ zx_library("backtrace") {
 
   deps = [
     "tests",
-
-    #"//mk/lib/version",
+    "//mk/lib/version",
     "//mk/ulib/affine",
   ]
 

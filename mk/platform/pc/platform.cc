@@ -1,312 +1,427 @@
-/*
- * Copyright (c) 2009 Corey Tabaka
- * Copyright (c) 2015 Intel Corporation
- * Copyright (c) 2016 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2009 Corey Tabaka
+// Copyright (c) 2015 Intel Corporation
+// Copyright (c) 2016 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
 #include <assert.h>
-#include <inttypes.h>
-#include <lib/acpi_lite.h>
-#include <malloc.h>
+#include <lib/boot-options/boot-options.h>
+#include <lib/cksum.h>
+#include <lib/debuglog.h>
+#include <lib/lazy_init/lazy_init.h>
+#include <lib/memalloc/range.h>
+#include <lib/system-topology.h>
+#include <lib/zbi-format/cpu.h>
+#include <lib/zbi-format/driver-config.h>
+#include <lib/zbi-format/zbi.h>
+#include <lib/zircon-internal/macros.h>
+#include <mexec.h>
 #include <platform.h>
 #include <string.h>
+#include <trace.h>
+#include <zircon/errors.h>
+#include <zircon/types.h>
 
-#include <arch/mmu.h>
+#include <cstddef>
+
+#include <arch/mp.h>
+#include <arch/ops.h>
 #include <arch/x86.h>
+#include <arch/x86/apic.h>
 #include <arch/x86/mmu.h>
-#include <dev/uart.h>
-#include <hw/multiboot.h>
-#include <kernel/vm.h>
-#include <lk/err.h>
+#include <arch/x86/pv.h>
+#include <explicit-memory/bytes.h>
+#include <fbl/alloc_checker.h>
+#include <fbl/array.h>
+#include <fbl/vector.h>
+#include <kernel/cpu.h>
+#include <kernel/cpu_distance_map.h>
+#include <ktl/algorithm.h>
 #include <lk/init.h>
-#include <lk/trace.h>
+#include <phys/handoff.h>
 #include <platform/console.h>
+#include <platform/crashlog.h>
+#include <platform/efi.h>
+#include <platform/efi_crashlog.h>
 #include <platform/keyboard.h>
 #include <platform/pc.h>
+#include <platform/pc/acpi.h>
+#include <platform/pc/smbios.h>
+#include <platform/ram_mappable_crashlog.h>
+#include <vm/physmap.h>
+#include <vm/pmm.h>
+#include <vm/vm_aspace.h>
 
 #include "platform_p.h"
 
-#if WITH_DEV_BUS_PCI
-#include <dev/bus/pci.h>
-#endif
-#if WITH_LIB_MINIP
-#include <lib/minip.h>
-#endif
+#include <ktl/enforce.h>
 
 #define LOCAL_TRACE 0
 
-/* multiboot information passed in, if present */
-extern uint32_t _multiboot_info;
+namespace {
+namespace crashlog_impls {
 
-#define DEFAULT_MEMEND (16 * 1024 * 1024)
+lazy_init::LazyInit<RamMappableCrashlog, lazy_init::CheckType::None,
+                    lazy_init::Destructor::Disabled>
+    ram_mappable;
+EfiCrashlog efi;
 
-extern uint64_t __code_start;
-extern uint64_t __code_end;
-extern uint64_t __rodata_start;
-extern uint64_t __rodata_end;
-extern uint64_t __data_start;
-extern uint64_t __data_end;
-extern uint64_t __bss_start;
-extern uint64_t __bss_end;
+}  // namespace crashlog_impls
+}  // namespace
 
-/* based on multiboot (or other methods) we support up to 16 arenas */
-#define NUM_ARENAS 16
-static pmm_arena_t mem_arena[NUM_ARENAS];
-
-/* parse an array of multiboot mmap entries */
-static status_t parse_multiboot_mmap(const memory_map_t *mmap, const size_t mmap_length,
-                                     size_t *found_mem_arenas) {
-  for (uint i = 0; i < mmap_length / sizeof(memory_map_t); i++) {
-    uint64_t base = mmap[i].base_addr_low | (uint64_t)mmap[i].base_addr_high << 32;
-    uint64_t length = mmap[i].length_low | (uint64_t)mmap[i].length_high << 32;
-
-    dprintf(SPEW, "\ttype %u addr %#" PRIx64 " len %#" PRIx64 "\n", mmap[i].type, base, length);
-    if (mmap[i].type == MB_MMAP_TYPE_AVAILABLE) {
-      /* do some sanity checks to cut out small arenas */
-      if (length < PAGE_SIZE * 2) {
-        continue;
-      }
-
-      /* align the base and length */
-      uint64_t oldbase = base;
-      base = PAGE_ALIGN(base);
-      if (base > oldbase) {
-        length -= base - oldbase;
-      }
-      length = ROUNDDOWN(length, PAGE_SIZE);
-
-      /* ignore memory < 1MB */
-      if (base < 1 * MB) {
-        /* skip everything < 1MB */
-        continue;
-      }
-
-      /* ignore everything that extends past the size PHYSMAP maps into the kernel.
-       * see arch/x86/arch.c mmu_initial_mappings
-       */
-      if (base >= ARCH_PHYSMAP_SIZE) {
-        continue;
-      }
-      uint64_t end = base + length;
-      if (end > ARCH_PHYSMAP_SIZE) {
-        end = ARCH_PHYSMAP_SIZE;
-        DEBUG_ASSERT(end > base);
-        length = end - base;
-        dprintf(INFO, "PC: trimmed memory to %" PRIu64 " bytes\n", ARCH_PHYSMAP_SIZE);
-      }
-
-      /* initialize a new pmm arena */
-      mem_arena[*found_mem_arenas].name = "memory";
-      mem_arena[*found_mem_arenas].base = base;
-      mem_arena[*found_mem_arenas].size = length;
-      mem_arena[*found_mem_arenas].priority = 1;
-      mem_arena[*found_mem_arenas].flags = PMM_ARENA_FLAG_KMAP;
-      (*found_mem_arenas)++;
-      if (*found_mem_arenas == countof(mem_arena)) {
-        break;
-      }
-    }
+static void platform_save_bootloader_data(void) {
+  // Record any previous crashlog.
+  if (ktl::string_view crashlog = gPhysHandoff->crashlog.get(); !crashlog.empty()) {
+    crashlog_impls::efi.SetLastCrashlogLocation(crashlog);
   }
 
-  return NO_ERROR;
+  // If we have an NVRAM location and we have not already configured a platform
+  // crashlog implementation, use the NVRAM location to back a
+  // RamMappableCrashlog implementation and configure the generic platform
+  // layer to use it.
+  if (gPhysHandoff->nvram && !PlatformCrashlog::HasNonTrivialImpl()) {
+    const zbi_nvram_t& nvram = gPhysHandoff->nvram.value();
+    crashlog_impls::ram_mappable.Initialize(nvram.base, nvram.length);
+    PlatformCrashlog::Bind(crashlog_impls::ram_mappable.Get());
+  }
 }
 
-/* Walk through the multiboot structure and attempt to discover all of the runs
- * of physical memory to bootstrap the pmm areas.
- * Returns number of arenas initialized in passed in pointer
- */
-static status_t platform_parse_multiboot_info(size_t *found_mem_arenas) {
-  *found_mem_arenas = 0;
-
-  dprintf(SPEW, "PC: multiboot address %#" PRIx32 "\n", _multiboot_info);
-  if (_multiboot_info == 0) {
-    return ERR_NOT_FOUND;
+static void platform_init_crashlog(void) {
+  // Nothing to do if we have already selected a crashlog implementation.
+  if (PlatformCrashlog::HasNonTrivialImpl()) {
+    return;
   }
 
-  /* bump the multiboot pointer up to the kernel mapping */
-  /* TODO: test that it's within range of the kernel mapping */
-  const multiboot_info_t *multiboot_info =
-      reinterpret_cast<const multiboot_info_t *>((uintptr_t)_multiboot_info + KERNEL_BASE);
+  // Initialize and select the EfiCrashlog implementation.
+  PlatformCrashlog::Bind(crashlog_impls::efi);
+}
 
-  dprintf(SPEW, "\tflags %#x\n", multiboot_info->flags);
+// Number of pages required to identity map 16GiB of memory.
+constexpr size_t kBytesToIdentityMap = 16ull * GB;
+constexpr size_t kNumL2PageTables = kBytesToIdentityMap / (2ull * MB * NO_OF_PT_ENTRIES);
+constexpr size_t kNumL3PageTables = 1;
+constexpr size_t kNumL4PageTables = 1;
+constexpr size_t kTotalPageTableCount = kNumL2PageTables + kNumL3PageTables + kNumL4PageTables;
 
-  // legacy multiboot memory size field
-  if (multiboot_info->flags & MB_INFO_MEM_SIZE) {
-    dprintf(SPEW, "PC: multiboot memory lower %#x upper %#" PRIx64 "\n",
-            multiboot_info->mem_lower * 1024U, multiboot_info->mem_upper * 1024ULL);
-    if ((multiboot_info->flags & MB_INFO_MMAP) == 0) {
-      // There is no mmap to give us a more detailed memory map
-      // so we'll need to use this one. Synthesize a fake mmap array to pass
-      // to the mmap code.
-      memory_map_t mmap[2] = {};
-      mmap[0].length_low = multiboot_info->mem_lower * 1024U;
-      mmap[0].type = MB_MMAP_TYPE_AVAILABLE;
-      mmap[1].base_addr_low = 1 * 1024U * 1024U;
-      mmap[1].length_low = multiboot_info->mem_upper * 1024U;
-      mmap[1].type = MB_MMAP_TYPE_AVAILABLE;
-      parse_multiboot_mmap(mmap, 2 * sizeof(memory_map_t), found_mem_arenas);
+static fbl::RefPtr<VmAspace> mexec_identity_aspace;
+
+// Array of pages that are safe to use for the new kernel's page tables.  These must
+// be after where the new boot image will be placed during mexec.  This array is
+// populated in platform_mexec_prep and used in platform_mexec.
+static paddr_t mexec_safe_pages[kTotalPageTableCount];
+
+void platform_mexec_prep(uintptr_t final_bootimage_addr, size_t final_bootimage_len) {
+  DEBUG_ASSERT(!arch_ints_disabled());
+  DEBUG_ASSERT(mp_get_online_mask() == cpu_num_to_mask(BOOT_CPU_ID));
+
+  // This code only handles one L3 and one L4 page table for now. Fail if
+  // there are more L2 page tables than can fit in one L3 page table.
+  static_assert(kNumL2PageTables <= NO_OF_PT_ENTRIES,
+                "Kexec identity map size is too large. Only one L3 PTE is supported at this time.");
+  static_assert(kNumL3PageTables == 1, "Only 1 L3 page table is supported at this time.");
+  static_assert(kNumL4PageTables == 1, "Only 1 L4 page table is supported at this time.");
+
+  // Identity map the first 16GiB of RAM
+  mexec_identity_aspace = VmAspace::Create(VmAspace::Type::LowKernel, "x86-64 mexec 1:1");
+  DEBUG_ASSERT(mexec_identity_aspace);
+
+  const uint perm_flags_rwx =
+      ARCH_MMU_FLAG_PERM_READ | ARCH_MMU_FLAG_PERM_WRITE | ARCH_MMU_FLAG_PERM_EXECUTE;
+  void* identity_address = 0x0;
+  paddr_t pa = 0;
+  zx_status_t result =
+      mexec_identity_aspace->AllocPhysical("1:1 mapping", kBytesToIdentityMap, &identity_address, 0,
+                                           pa, VmAspace::VMM_FLAG_VALLOC_SPECIFIC, perm_flags_rwx);
+  if (result != ZX_OK) {
+    panic("failed to identity map low memory");
+  }
+
+  result = alloc_pages_greater_than(final_bootimage_addr + final_bootimage_len + PAGE_SIZE,
+                                    kTotalPageTableCount, kBytesToIdentityMap, mexec_safe_pages);
+  if (result != ZX_OK) {
+    panic("failed to alloc mexec_safe_pages");
+  }
+}
+
+void platform_mexec(mexec_asm_func mexec_assembly, memmov_ops_t* ops, uintptr_t new_bootimage_addr,
+                    size_t new_bootimage_len, uintptr_t new_kernel_entry) {
+  DEBUG_ASSERT(arch_ints_disabled());
+  DEBUG_ASSERT(mp_get_online_mask() == cpu_num_to_mask(BOOT_CPU_ID));
+
+  // This code only handles one L3 and one L4 page table for now. Fail if
+  // there are more L2 page tables than can fit in one L3 page table.
+  static_assert(kNumL2PageTables <= NO_OF_PT_ENTRIES,
+                "Kexec identity map size is too large. Only one L3 PTE is supported at this time.");
+  static_assert(kNumL3PageTables == 1, "Only 1 L3 page table is supported at this time.");
+  static_assert(kNumL4PageTables == 1, "Only 1 L4 page table is supported at this time.");
+  DEBUG_ASSERT(mexec_identity_aspace);
+
+  vmm_set_active_aspace(mexec_identity_aspace.get());
+
+  size_t safe_page_id = 0;
+  volatile pt_entry_t* ptl4 = (pt_entry_t*)paddr_to_physmap(mexec_safe_pages[safe_page_id++]);
+  volatile pt_entry_t* ptl3 = (pt_entry_t*)paddr_to_physmap(mexec_safe_pages[safe_page_id++]);
+
+  // Initialize these to 0
+  for (size_t i = 0; i < NO_OF_PT_ENTRIES; i++) {
+    ptl4[i] = 0;
+    ptl3[i] = 0;
+  }
+
+  for (size_t i = 0; i < kNumL2PageTables; i++) {
+    ptl3[i] = mexec_safe_pages[safe_page_id] | X86_KERNEL_PD_FLAGS;
+    volatile pt_entry_t* ptl2 = (pt_entry_t*)paddr_to_physmap(mexec_safe_pages[safe_page_id]);
+
+    for (size_t j = 0; j < NO_OF_PT_ENTRIES; j++) {
+      ptl2[j] = (2 * MB * (i * NO_OF_PT_ENTRIES + j)) | X86_KERNEL_PD_LP_FLAGS;
     }
+
+    safe_page_id++;
   }
 
-  // more modern multiboot mmap array
-  if (multiboot_info->flags & MB_INFO_MMAP) {
-    const memory_map_t *mmap = (const memory_map_t *)(uintptr_t)multiboot_info->mmap_addr;
-    mmap = (const memory_map_t *)((uintptr_t)mmap + KERNEL_BASE);
+  ptl4[0] = vaddr_to_paddr((void*)ptl3) | X86_KERNEL_PD_FLAGS;
 
-    dprintf(SPEW, "PC: multiboot memory map, length %u:\n", multiboot_info->mmap_length);
-    parse_multiboot_mmap(mmap, multiboot_info->mmap_length, found_mem_arenas);
-  }
-
-  if (multiboot_info->flags & MB_INFO_FRAMEBUFFER) {
-    dprintf(SPEW, "PC: multiboot framebuffer info present\n");
-    dprintf(SPEW, "\taddress %#" PRIx64 " pitch %u width %u height %u bpp %hhu type %u\n",
-            multiboot_info->framebuffer_addr, multiboot_info->framebuffer_pitch,
-            multiboot_info->framebuffer_width, multiboot_info->framebuffer_height,
-            multiboot_info->framebuffer_bpp, multiboot_info->framebuffer_type);
-
-    if (multiboot_info->framebuffer_type == MULTIBOOT_FRAMEBUFFER_TYPE_RGB) {
-      dprintf(SPEW, "\tcolor bit layout: R %u:%u G %u:%u B %u:%u\n",
-              multiboot_info->framebuffer_red_field_position,
-              multiboot_info->framebuffer_red_mask_size,
-              multiboot_info->framebuffer_green_field_position,
-              multiboot_info->framebuffer_green_mask_size,
-              multiboot_info->framebuffer_blue_field_position,
-              multiboot_info->framebuffer_blue_mask_size);
-    }
-  }
-
-  return NO_ERROR;
+  mexec_assembly((uintptr_t)new_bootimage_addr, vaddr_to_paddr((void*)ptl4), 0, 0, ops,
+                 new_kernel_entry);
 }
 
 void platform_early_init(void) {
-  /* get the debug output working */
-  platform_init_debug_early();
+  /* extract bootloader data while still accessible */
+  /* this includes debug uart config, etc. */
+  platform_save_bootloader_data();
+
+  /* is the cmdline option to bypass dlog set ? */
+  dlog_bypass_init();
 
 #if WITH_LEGACY_PC_CONSOLE
   /* get the text console working */
   platform_init_console();
 #endif
 
-  /* initialize the interrupt controller */
-  platform_init_interrupts();
-
-  /* initialize the timer */
-  platform_init_timer();
-
-  /* look at multiboot to determine our memory size */
-  size_t found_arenas;
-  platform_parse_multiboot_info(&found_arenas);
-  if (found_arenas <= 0) {
-    /* if we couldn't find any memory, initialize a default arena */
-    mem_arena[0] = (pmm_arena_t){.name = "memory",
-                                 .base = MEMBASE,
-                                 .size = DEFAULT_MEMEND,
-                                 .priority = 1,
-                                 .flags = PMM_ARENA_FLAG_KMAP};
-    found_arenas = 1;
-    printf("PC: WARNING failed to detect memory map from multiboot, using default\n");
-  }
-
-  DEBUG_ASSERT(found_arenas > 0 && found_arenas <= countof(mem_arena));
-
-  /* add the arenas we just set up to the pmm */
-  uint64_t total_mem = 0;
-  for (size_t i = 0; i < found_arenas; i++) {
-    pmm_add_arena(&mem_arena[i]);
-    total_mem += mem_arena[i].size;
-  }
-  dprintf(INFO, "PC: total memory detected %" PRIu64 " bytes\n", total_mem);
+  /* initialize physical memory arenas */
+  pc_mem_init(gPhysHandoff->memory.get());
 }
 
-void local_apic_callback(const void *_entry, size_t entry_len) {
-  const struct acpi_madt_local_apic_entry *entry =
-      reinterpret_cast<const struct acpi_madt_local_apic_entry *>(_entry);
+void platform_prevm_init() {}
 
-  printf("\tLOCAL APIC id %d, processor id %d, flags %#x\n", entry->apic_id, entry->processor_id,
-         entry->flags);
-}
+// Maps from contiguous id to APICID.
+static fbl::Vector<uint32_t> apic_ids;
+static size_t bsp_apic_id_index;
 
-void io_apic_callback(const void *_entry, size_t entry_len) {
-  const struct acpi_madt_io_apic_entry *entry =
-      reinterpret_cast<const struct acpi_madt_io_apic_entry *>(_entry);
+static void traverse_topology(uint32_t) {
+  // Filter out hyperthreads if we've been told not to init them
+  const bool use_ht = gBootOptions->smp_ht_enabled;
 
-  printf("\tIO APIC id %d, address %#x gsi base %u\n", entry->io_apic_id, entry->io_apic_address,
-         entry->global_system_interrupt_base);
-}
+  // We're implicitly running on the BSP
+  const uint32_t bsp_apic_id = apic_local_id();
+  DEBUG_ASSERT(bsp_apic_id == apic_bsp_id());
 
-void int_source_override_callback(const void *_entry, size_t entry_len) {
-  const struct acpi_madt_int_source_override_entry *entry =
-      reinterpret_cast<const struct acpi_madt_int_source_override_entry *>(_entry);
+  // Maps from contiguous id to logical id in topology.
+  fbl::Vector<cpu_num_t> logical_ids;
 
-  printf("\tINT OVERRIDE bus %u, source %u, gsi %u, flags %#x\n", entry->bus, entry->source,
-         entry->global_sys_interrupt, entry->flags);
-}
+  // Iterate over all the cores, copy apic ids of active cores into list.
+  dprintf(INFO, "cpu list:\n");
+  size_t cpu_index = 0;
+  bsp_apic_id_index = 0;
+  for (const auto* processor_node : system_topology::GetSystemTopology().processors()) {
+    const auto& processor = processor_node->entity.processor;
+    for (size_t i = 0; i < processor.architecture_info.x64.apic_id_count; i++) {
+      const uint32_t apic_id = processor.architecture_info.x64.apic_ids[i];
+      const bool keep = (i < 1) || use_ht;
+      const size_t index = cpu_index++;
 
-void platform_init(void) {
-  platform_init_debug();
+      dprintf(INFO, "\t%3zu: apic id %#4x %s%s%s\n", index, apic_id, (i > 0) ? "SMT " : "",
+              (apic_id == bsp_apic_id) ? "BSP " : "", keep ? "" : "(not using)");
 
-  platform_init_keyboard(&console_input_buf);
+      if (keep) {
+        if (apic_id == bsp_apic_id) {
+          bsp_apic_id_index = apic_ids.size();
+        }
 
-#if WITH_DEV_BUS_PCI
-  bool pci_initted = false;
-  if (acpi_lite_init(0) == NO_ERROR) {
-    if (LOCAL_TRACE) {
-      acpi_lite_dump_tables(false);
-    }
-
-    // dump the APIC table
-    printf("MADT/APIC table:\n");
-    acpi_process_madt_entries_etc(ACPI_MADT_TYPE_LOCAL_APIC, &local_apic_callback);
-    acpi_process_madt_entries_etc(ACPI_MADT_TYPE_IO_APIC, &io_apic_callback);
-    acpi_process_madt_entries_etc(ACPI_MADT_TYPE_INT_SOURCE_OVERRIDE,
-                                  &int_source_override_callback);
-
-    // try to find the mcfg table
-    const struct acpi_mcfg_table *table =
-        (const struct acpi_mcfg_table *)acpi_get_table_by_sig(ACPI_MCFG_SIG);
-    if (table) {
-      if (table->header.length >= sizeof(*table) + sizeof(struct acpi_mcfg_entry)) {
-        const struct acpi_mcfg_entry *entry =
-            reinterpret_cast<const struct acpi_mcfg_entry *>(table + 1);
-        printf("PCI MCFG: segment %#hx bus [%hhu...%hhu] address %#llx\n", entry->segment,
-               entry->start_bus, entry->end_bus, entry->base_address);
-
-        // try to initialize pci based on the MCFG ecam aperture
-        status_t err =
-            pci_init_ecam(entry->base_address, entry->segment, entry->start_bus, entry->end_bus);
-        if (err == NO_ERROR) {
-          pci_bus_mgr_init();
-          pci_initted = true;
+        fbl::AllocChecker ac;
+        apic_ids.push_back(apic_id, &ac);
+        if (!ac.check()) {
+          dprintf(CRITICAL, "Failed to allocate apic_ids table, disabling SMP!\n");
+          return;
+        }
+        logical_ids.push_back(static_cast<cpu_num_t>(index), &ac);
+        if (!ac.check()) {
+          dprintf(CRITICAL, "Failed to allocate logical_ids table, disabling SMP!\n");
+          return;
         }
       }
     }
   }
 
-  // fall back to legacy pci if we couldn't find the pcie aperture
-  if (!pci_initted) {
-    status_t err = pci_init_legacy();
-    if (err == NO_ERROR) {
-      pci_bus_mgr_init();
+  // Find the CPU count limit
+  uint32_t max_cpus = gBootOptions->smp_max_cpus;
+  if (max_cpus > SMP_MAX_CPUS || max_cpus <= 0) {
+    printf("invalid kernel.smp.maxcpus value, defaulting to %d\n", SMP_MAX_CPUS);
+    max_cpus = SMP_MAX_CPUS;
+  }
+
+  dprintf(INFO, "Found %zu cpu%c\n", apic_ids.size(), (apic_ids.size() > 1) ? 's' : ' ');
+  if (apic_ids.size() > max_cpus) {
+    dprintf(INFO, "Clamping number of CPUs to %u\n", max_cpus);
+    while (apic_ids.size() > max_cpus) {
+      apic_ids.pop_back();
+      logical_ids.pop_back();
     }
   }
-#endif
 
-  platform_init_mmu_mappings();
-}
-
-#if WITH_LIB_MINIP
-extern "C" status_t e1000_register_with_minip(void);
-
-void _start_minip(uint level) {
-  status_t err = e1000_register_with_minip();
-  if (err == NO_ERROR) {
-    minip_start_dhcp();
+  if (apic_ids.size() == max_cpus || !use_ht) {
+    // If we are at the max number of CPUs, or have filtered out
+    // hyperthreads, safety check the bootstrap processor is in the set.
+    bool found_bp = false;
+    for (const auto apic_id : apic_ids) {
+      if (apic_id == bsp_apic_id) {
+        found_bp = true;
+        break;
+      }
+    }
+    ASSERT(found_bp);
   }
+
+  // Construct a distance map from the system topology.
+  // The passed lambda is call for every pair of logical processors in the system.
+  const size_t cpu_count = logical_ids.size();
+
+  // Record the lowest level at which cpus are shared in the hierarchy, used later to
+  // set the global distance threshold.
+  unsigned int lowest_sharing_level = 4;  // Start at the highest level we might compute.
+  CpuDistanceMap::Initialize(
+      cpu_count, [&logical_ids, &lowest_sharing_level](cpu_num_t from_id, cpu_num_t to_id) {
+        using system_topology::Node;
+        using system_topology::Graph;
+
+        const cpu_num_t logical_from_id = logical_ids[from_id];
+        const cpu_num_t logical_to_id = logical_ids[to_id];
+        const Graph& topology = system_topology::GetSystemTopology();
+
+        Node* from_node = nullptr;
+        if (topology.ProcessorByLogicalId(logical_from_id, &from_node) != ZX_OK) {
+          printf("Failed to get processor node for logical CPU %u\n", logical_from_id);
+          return -1;
+        }
+        DEBUG_ASSERT(from_node != nullptr);
+
+        Node* to_node = nullptr;
+        if (topology.ProcessorByLogicalId(logical_to_id, &to_node) != ZX_OK) {
+          printf("Failed to get processor node for logical CPU %u\n", logical_to_id);
+          return -1;
+        }
+        DEBUG_ASSERT(to_node != nullptr);
+
+        // If the logical cpus are in the same node, they're distance 1
+        // TODO: consider SMT as a closer level than cache?
+        if (from_node == to_node) {
+          return 1;
+        }
+
+        // Given a level of topology, return true if the two cpus have a shared parent node.
+        auto is_shared_at_level = [&](uint64_t type) -> bool {
+          const Node* from_level_node = nullptr;
+          for (const Node* node = from_node->parent; node != nullptr; node = node->parent) {
+            if (node->entity.discriminant == type) {
+              from_level_node = node;
+              break;
+            }
+          }
+          const Node* to_level_node = nullptr;
+          for (const Node* node = to_node->parent; node != nullptr; node = node->parent) {
+            if (node->entity.discriminant == type) {
+              to_level_node = node;
+              break;
+            }
+          }
+
+          return (from_level_node && from_level_node == to_level_node);
+        };
+
+        // If we've detected the same cache node, then we are level 1
+        if (is_shared_at_level(ZBI_TOPOLOGY_ENTITY_CACHE)) {
+          lowest_sharing_level = ktl::min(lowest_sharing_level, 1u);
+          return 1;
+        }
+
+        // If we're on the same die, we're level 2
+        if (is_shared_at_level(ZBI_TOPOLOGY_ENTITY_DIE)) {
+          lowest_sharing_level = ktl::min(lowest_sharing_level, 2u);
+          return 2;
+        }
+
+        // If we're on the same socket, we're level 3
+        if (is_shared_at_level(ZBI_TOPOLOGY_ENTITY_SOCKET)) {
+          lowest_sharing_level = ktl::min(lowest_sharing_level, 3u);
+          return 3;
+        }
+
+        // Above socket level is all distance 4
+        lowest_sharing_level = ktl::min(lowest_sharing_level, 4u);
+        return 4;
+      });
+
+  // Set the point at which we should consider scheduling to be distant. Set it
+  // one past the point a which we started seeing some sharing at the cache, die,
+  // or socket level.
+  // Limitations: does not handle asymmetric topologies, such as hybrid cpus
+  // with dissimilar cpu clusters.
+  const CpuDistanceMap::Distance kDistanceThreshold = lowest_sharing_level + 1;
+  CpuDistanceMap::Get().set_distance_threshold(kDistanceThreshold);
+
+  CpuDistanceMap::Get().Dump();
+}
+LK_INIT_HOOK(pc_traverse_topology, traverse_topology, LK_INIT_LEVEL_TOPOLOGY)
+
+// Must be called after traverse_topology has processed the SMP data.
+static void platform_init_smp() {
+  x86_init_smp(apic_ids.data(), static_cast<uint32_t>(apic_ids.size()));
+
+  // trim the boot cpu out of the apic id list before passing to the AP booting routine
+  apic_ids.erase(bsp_apic_id_index);
+
+  x86_bringup_aps(apic_ids.data(), static_cast<uint32_t>(apic_ids.size()));
 }
 
-LK_INIT_HOOK(start_minip, _start_minip, LK_INIT_LEVEL_USER - 1);
+zx_status_t platform_mp_prep_cpu_unplug(cpu_num_t cpu_id) {
+  // TODO: Make sure the IOAPIC and PCI have nothing for this CPU
+  return arch_mp_prep_cpu_unplug(cpu_id);
+}
+
+zx_status_t platform_mp_cpu_unplug(cpu_num_t cpu_id) { return arch_mp_cpu_unplug(cpu_id); }
+
+const char* manufacturer = "unknown";
+const char* product = "unknown";
+
+void platform_init(void) {
+  platform_init_crashlog();
+
+#if NO_USER_KEYBOARD
+  platform_init_keyboard(&console_input_buf);
 #endif
+
+  // Initialize all PvEoi instances prior to starting secondary CPUs.
+  PvEoi::InitAll();
+
+  platform_init_smp();
+
+  pc_init_smbios();
+
+  SmbiosWalkStructs([](smbios::SpecVersion version, const smbios::Header* h,
+                       const smbios::StringTable& st) -> zx_status_t {
+    if (h->type == smbios::StructType::SystemInfo && version.IncludesVersion(2, 0)) {
+      auto entry = reinterpret_cast<const smbios::SystemInformationStruct2_0*>(h);
+      st.GetString(entry->manufacturer_str_idx, &manufacturer);
+      st.GetString(entry->product_name_str_idx, &product);
+    }
+    return ZX_OK;
+  });
+  printf("smbios: manufacturer=\"%s\" product=\"%s\"\n", manufacturer, product);
+}
+
+zx::result<power_cpu_state> platform_get_cpu_state(cpu_num_t cpu_id) {
+  return zx::error(ZX_ERR_NOT_SUPPORTED);
+}

@@ -86,7 +86,7 @@ zx_library("fbl") {
 
   if (toolchain_environment == "kernel") {
     # Avoid circularity.
-    configs -= [ "//mk/kernel/vm:headers.config" ]
+    configs -= [ "//mk/vm:headers.config" ]
   }
 
   if (!is_mk && !is_kernel) {

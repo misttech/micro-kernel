@@ -25,8 +25,8 @@ test("fit-unittest") {
   }
   sources = [ "thread_checker_tests.cc" ]
   deps = [
-    "//sdk/lib/fit",
-    "//zircon/system/ulib/zxtest",
+    "//mk/lib/fit",
+    "//mk/ulibzxtest",
   ]
   configs += [ "//build/config:test_exercising_sdk_headers" ]
   if (is_fuchsia) {
@@ -57,8 +57,8 @@ test("fit") {
     "utility_internal_tests.cc",
   ]
   deps = [
-    "//sdk/lib/fit",
-    "//zircon/system/ulib/zxtest",
+    "//mk/lib/fit",
+    "//mk/ulibzxtest",
   ]
   configs += [ "//build/config:test_exercising_sdk_headers" ]
   if (is_fuchsia) {

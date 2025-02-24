@@ -18,9 +18,9 @@ group("tests") {
 test("cxxabi-dynamic-init-tests") {
   sources = [ "cxxabi-dynamic-init-tests.cc" ]
   deps = [
-    "//sdk/lib/fit",
-    "//zircon/kernel/lib/cxxabi-dynamic-init:headers",
-    "//zircon/system/ulib/zxtest",
+    "//mk/lib/fit",
+    "//mk/lib/cxxabi-dynamic-init:headers",
+    "//mk/ulib/zxtest",
   ]
 }
 

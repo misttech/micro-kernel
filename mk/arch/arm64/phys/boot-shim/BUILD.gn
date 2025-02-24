@@ -1,0 +1,42 @@
+# Copyright 2023 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//mk/phys/qemu.gni")
+import("//mk/phys/shim_executable.gni")
+
+group("boot-shim") {
+  deps = [ ":linux-arm64-boot-shim" ]
+}
+
+shim_executable("linux-arm64-boot-shim") {
+  sources = [ "linux-arm64-boot-shim.cc" ]
+
+  deps = [
+    "//mk/lib/boot-options",
+    "//mk/lib/libc",
+    "//mk/phys:address-space",
+    "//mk/phys:allocation",
+    "//mk/phys:boot-zbi",
+    "//mk/phys:exception",
+    "//mk/phys:main",
+    "//mk/phys:new",
+    "//mk/phys:stdio",
+    "//mk/phys:symbolize",
+    "//mk/phys:uart",
+    "//mk/phys/boot-shim:devicetree",
+    "//mk/phys/lib/boot-shim",
+  ]
+}
+
+group("tests") {
+  testonly = true
+  deps = []
+}
+
+group("boot_tests") {
+  testonly = true
+  deps = []
+}

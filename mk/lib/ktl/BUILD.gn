@@ -43,8 +43,8 @@ static_library("ktl") {
 
     deps = [
       ":headers",  # Necessary to put ktl includes before libc.
-      "//mk/lib/libc:headers",
       "//mk/lib/stdcompat:headers",
+      "//mk/lib/libc:headers",
     ]
   }
 }

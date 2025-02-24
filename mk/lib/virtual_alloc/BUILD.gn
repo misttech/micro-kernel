@@ -16,7 +16,7 @@ declare_args() {
 library_headers("virtual_alloc_headers") {
   headers = [ "lib/virtual_alloc.h" ]
   public_deps = [
-    #"//mk/ulib/bitmap",
+    "//mk/ulib/bitmap",
     "//mk/ulib/zircon-internal",
     "//mk/ulib/zx",
   ]
@@ -35,7 +35,7 @@ source_set("virtual_alloc") {
       "HOST_PAGE_SIZE_SHIFT=$virtual_alloc_host_size_shift",
     ]
   } else if (is_kernel) {
-    #deps += [ "tests" ]
+    deps += [ "tests" ]
 
     # Crypto headers are needed as a transitive dependency on being able to include vm_aspace.h
     public_deps += [ "//mk/lib/crypto:headers" ]

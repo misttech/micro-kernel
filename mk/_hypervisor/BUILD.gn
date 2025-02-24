@@ -1,0 +1,40 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/kernel_cpu.gni")
+import("//build/kernel/zx_library.gni")
+
+zx_library("hypervisor") {
+  sources = [
+    "aspace.cc",
+    "cpu.cc",
+    "hypervisor_unittest.cc",
+    "ktrace.cc",
+    "trap_map.cc",
+  ]
+  deps = [
+    "//mk/arch/$kernel_cpu/hypervisor",
+    "//mk/lib/fbl",
+    "//mk/lib/ktl",
+    "//mk/lib/ktrace",
+    "//mk/lib/unittest",
+    "//mk/ulib/bitmap",
+  ]
+  public_deps = [
+    # <hypervisor/trap_map.h> has #include <object/port_dispatcher.h>.
+    "//mk/object:headers",
+
+    # <hypervisor/id_allocator.h> has #include <bitmap/raw-bitmap.h>.
+    "//mk/ulib/bitmap:headers",
+
+    # <hypervisor/aspace.h> has #include <vm/vm_aspace.h>.
+    "//mk/vm:headers",
+
+    # <hypervisor/interrupt_tracker.h> has #include <lib/ktrace.h>.
+    "//mk/lib/id_allocator",
+    "//mk/lib/ktrace:headers",
+  ]
+}

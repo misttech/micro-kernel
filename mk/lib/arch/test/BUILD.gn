@@ -31,10 +31,10 @@ if (is_host) {
       "//src/lib/fxl/test:gtest_main",
       "//third_party/googletest:gmock",
       "//third_party/googletest:gtest",
-      "//zircon/kernel/lib/arch",
-      "//zircon/kernel/lib/arch/testing",
-      "//zircon/system/ulib/hwreg",
-      "//zircon/system/ulib/zx",
+      "//mk/lib/arch",
+      "//mk/lib/arch/testing",
+      "//mk/ulib/hwreg",
+      "//mk/ulib/zx",
     ]
   }
 }
@@ -43,8 +43,8 @@ if (is_kernel) {
   source_set("kernel-tests") {
     sources = [ "random-tests.cc" ]
     deps = [
-      "//zircon/kernel/lib/arch",
-      "//zircon/kernel/lib/unittest",
+      "//mk/lib/arch",
+      "//mk/lib/unittest",
     ]
   }
 }

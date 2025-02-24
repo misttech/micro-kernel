@@ -10,6 +10,9 @@ import("//build/kernel/c_utils.gni")
 import("//build/kernel/kernel_cpu.gni")
 import("//build/toolchain/kernel/kernel_toolchain_suite.gni")
 import("//build/toolchain/variant.gni")
+import("//build/zbi/zbi.gni")
+import("//mk/phys/kernel_elf_binary.gni")
+import("kernel_package.gni")
 import("params.gni")
 
 declare_args() {
@@ -56,7 +59,7 @@ if (current_toolchain == default_toolchain) {
         "//mk/lib/heap:headers.config",
 
         # <lib/lockup_detector.h> is included by some "low-level" headers.
-        #"//mk/lib/lockup_detector:headers.config",
+        "//mk/lib/lockup_detector:headers.config",
 
         # <kernel/percpu.h> has #include <lib/lazy_init/lazy_init.h>.
         "//mk/ulib/lazy_init:headers.config",
@@ -72,24 +75,23 @@ if (current_toolchain == default_toolchain) {
         "//mk/ulib/concurrent:headers.config",
 
         # <kernel/thread.h> has #include <vm/kstack.h>.
-        #"//mk/vm:headers.config",
-        "//mk/kernel/vm:headers.config",
+        "//mk/vm:headers.config",
 
         # <vm/page.h> has #include <vm/phys/arena.h>
-        #"//zircon/kernel/vm/phys:headers.config",
+        "//mk/vm/phys:headers.config",
 
         # <vm/vm_object.h> has #include <lib/user_copy/user_ptr.h>.
         "//mk/lib/user_copy:headers.config",
 
         # <vm/pmm_checker.h> has #include <lib/boot-options/boot-options.h>.
-        #"//mk/lib/acpi_lite:headers.config",
-        #"//mk/lib/boot-options:headers.config",
-        #"//mk/lib/devicetree:headers.config",
-        #"//mk/ulib/uart:headers.config",
+        "//mk/lib/acpi_lite:headers.config",
+        "//mk/lib/boot-options:headers.config",
+        "//mk/lib/devicetree:headers.config",
+        "//mk/ulib/uart:headers.config",
         "//mk/ulib/hwreg:headers.config",
 
         # <vm/phys/arena.h> has #include <lib/memalloc/range.h>
-        #"//zircon/kernel/phys/lib/memalloc:range.headers.config",
+        "//mk/phys/lib/memalloc:range.headers.config",
 
         # <lib/ktrace.h> has #include <lib/zircon-internal/ktrace.h>.
         "//mk/ulib/zircon-internal:headers.config",
@@ -115,7 +117,7 @@ if (current_toolchain == default_toolchain) {
 
         "//mk/lib/backtrace:headers.config",
 
-        #"//zircon/kernel/lib/version:headers.config",
+        "//mk/lib/version:headers.config",
 
         "//mk/lib/wake-vector:headers.config",
 
@@ -127,10 +129,10 @@ if (current_toolchain == default_toolchain) {
         "//mk/lib/zbi-format:include",
 
         # <kernel/scheduler.h> depends on <lib/power-management/power-state.h>
-        #"//zircon/kernel/lib/power-management:headers.config",
+        "//mk/lib/power-management:headers.config",
 
         # <kernel/scheduler.h> depends on <lib/stall.h>
-        #"//zircon/kernel/lib/stall:headers.config",
+        "//mk/lib/stall:headers.config",
       ]
 
       configs = [ "//mk:kernel_config" ]
@@ -239,7 +241,7 @@ config("standalone") {
   }
 
   if (is_gcc && current_os == "mk") {
-    #cflags += [ "-fpie" ]
+    cflags += [ "-fpie" ]
   }
 
   if (!is_gcc && current_os == "mk") {
@@ -256,15 +258,10 @@ if (is_kernel) {
   # These are needed both in kernel sources (pervasively) and in the linker
   # scripts.
   kernel_defines = [
-    "IS_64BIT=1",
-    "MEMBASE=0",
-    "X86_LEGACY=0",
+    # TODO: should not be needed in C, but is in one place now.
+    "KERNEL_BASE=$kernel_base",
 
-    "KERNEL_BASE=0xffffffff80000000",
-    "KERNEL_LOAD_OFFSET=0x00200000",
-
-    "SMP_MAX_CPUS=1",
-    "ARCH_HAS_MMU=1",
+    "SMP_MAX_CPUS=$smp_max_cpus",
   ]
 
   config("instrumented-stack-size") {
@@ -329,8 +326,8 @@ if (is_kernel) {
     configs += [ "//build/config:frame_pointers" ]
 
     # Disable stack protector and safe stack
-    configs += [ "//build/config:no-stack-protector" ]
-    configs += [ "//build/config:no-safe-stack" ]
+    #configs += [ "//build/config:no-stack-protector" ]
+    #configs += [ "//build/config:no-safe-stack" ]
 
     defines = kernel_defines + kernel_extra_defines
     defines += [
@@ -340,14 +337,13 @@ if (is_kernel) {
       "ZIRCON_TOOLCHAIN",
       "LK_DEBUGLEVEL=$kernel_debug_level",
       "DEBUG_PRINT_LEVEL=$kernel_debug_print_level",
-
-      #"VM_TRACING_LEVEL=$vm_tracing_level",
-      #"FUTEX_BLOCK_TRACING_ENABLED=$futex_block_tracing_enabled",
-      #"LOCK_TRACING_ENABLED=$lock_tracing_enabled",
-      #"EXPERIMENTAL_THREAD_SAMPLER_ENABLED=$experimental_thread_sampler_enabled",
+      "VM_TRACING_LEVEL=$vm_tracing_level",
+      "FUTEX_BLOCK_TRACING_ENABLED=$futex_block_tracing_enabled",
+      "LOCK_TRACING_ENABLED=$lock_tracing_enabled",
+      "EXPERIMENTAL_THREAD_SAMPLER_ENABLED=$experimental_thread_sampler_enabled",
     ]
 
-    #cflags = [ "-fpie" ]
+    cflags = [ "-fpie" ]
   }
 
   config("headers") {
@@ -418,9 +414,9 @@ if (is_kernel) {
   config("persistent_ram_config") {
     visibility = [
       ":*",
-      #"//mk/lib/crashlog/*",
-      #"//mk/lib/jtrace/*",
-      #"//mk/lib/persistent-debuglog/*",
+      "//mk/lib/crashlog/*",
+      "//mk/lib/jtrace/*",
+      "//mk/lib/persistent-debuglog/*",
     ]
     defines = [ "PERSISTENT_RAM_ALLOCATION_GRANULARITY=$persistent_ram_allocation_granularity" ]
   }
@@ -445,39 +441,33 @@ if (is_kernel) {
 
     visibility = [
       ":*",
-      #"//zircon/kernel/phys:*",
+      "//mk/phys:*",
     ]
     defines = [ "KERNEL_IMAGE_MAX_SIZE=$kernel_image_max_size" ]
   }
 
-  # This is the kernel proper, an ELF executable with full symbols.
-  # It's the file to use with a debugger, for example.
-  executable("kernel") {
+  kernel_elf_binary("physkernel") {
     visibility = [ ":*" ]
 
-    # //zircon/scripts/zircon.elf-gdb.py expects kernel symbols in "zircon.elf".
-    output_name = "mk"
-    output_extension = "elf"
-    ldflags = [
-      "-Wl,-T," + rebase_path("kernel.ld", root_build_dir),
-      "-Wl,--emit-relocs",
-    ]
-    if (toolchain_variant.tags + [ "lto" ] - [ "lto" ] !=
-        toolchain_variant.tags) {
-      # (Thin)LTO linker driver overrides the PIC/PIE metadata embedded in the
-      # IR and will choose the relocation model based on the output which for
-      # the kernel would be static rather than PIE. We need to explicitly
-      # override the relocation via linker flag.
-      ldflags += [ "-Wl,-mllvm,-relocation-model=pic" ]
-    }
-    inputs = [ "kernel.ld" ]
     configs += [
+      ":elf-kernel.config",
       ":kernel_defsym",
-      "//build/config/kernel:no-synthetic-sections",
     ]
     deps = [
       ":kernel-main",
-      #"arch/$kernel_cpu:zbi-kernel-image",
+      "phys:physboot.kernel",
+    ]
+  }
+
+  config("elf-kernel.config") {
+    visibility = [ ":*" ]
+
+    inputs = [ "elf-kernel.ld" ]
+    ldflags = [ "-Wl,-T," + rebase_path(inputs[0], root_build_dir) ]
+
+    configs = [
+      "//build/config/kernel:static-pie-compile",
+      "//build/config/kernel:static-pie-link",
     ]
   }
 
@@ -497,11 +487,11 @@ if (is_kernel) {
     }
   }
 
-  mk_elf_rspfile = "$target_gen_dir/mk.elf.rsp"
-  link_output_rspfile("mk.elf.rsp") {
+  physkernel_rspfile = "$target_gen_dir/physkernel.rsp"
+  link_output_rspfile("physkernel.rsp") {
     visibility = [ ":*" ]
-    deps = [ ":mk.elf" ]
-    outputs = [ mk_elf_rspfile ]
+    deps = [ ":physkernel" ]
+    outputs = [ physkernel_rspfile ]
   }
 
   # See elf-kernel.ld where KERNEL_GOT_TOLERANCE is used.
@@ -535,19 +525,20 @@ if (is_kernel) {
     ]
   }
 
-  #toolchain_utils_action("validate-kernel-symbols") {
-  #  visibility = [ ":*" ]
-  #  outputs = [ "$target_gen_dir/$target_name.stamp" ]
-  #  script = "//zircon/mk/scripts/validate-kernel-symbols.py"
-  #  utils = [ "nm" ]
-  #  deps = [
-  #    ":mk.elf",
-  #    ":mk.elf.rsp",
-  #  ]
-  #  sources = [ mk_elf_rspfile ]
-  #  depfile = "$target_gen_dir/$target_name.d"
-  #  args = rebase_path(sources + outputs + [ depfile ], root_build_dir)
-  #}
+  toolchain_utils_action("validate-kernel-symbols") {
+    visibility = [ ":*" ]
+    outputs = [ "$target_gen_dir/$target_name.stamp" ]
+    script = "//mk/scripts/validate-kernel-symbols.py"
+    utils = [ "nm" ]
+    deps = [
+      ":physkernel",
+      ":physkernel.rsp",
+    ]
+    sources = [ physkernel_rspfile ]
+    depfile = "$target_gen_dir/$target_name.d"
+    args = rebase_path(sources + outputs + [ depfile ], root_build_dir)
+  }
+
   #
   ## Copy gdb extension script file needed for kernel debugging.
   #copy("gdb_extension") {
@@ -555,9 +546,49 @@ if (is_kernel) {
   #  sources = [ "scripts/mk.elf-gdb.py" ]
   #  outputs = [ "$root_out_dir/mk.elf-gdb.py" ]
   #}
+
+  kernel_package("kernel") {
+    deps = [ ":physkernel" ]
+
+    # Embed userboot, the vDSO, and the version-string.txt file in the package
+    # subdirectory.
+    deps += [
+      #"//mk/lib/userabi/userboot",
+      #"//mk/lib/userabi/vdso",
+      "//mk/lib/version:version-string.txt",
+    ]
+  }
+
+  # The final kernel ZBI combines physboot with that kernel storage payload.
+  zbi("mk") {
+    #deps = kernel_zbi_extra_deps
+    deps = [
+      ":kernel",
+      "phys:physboot",
+    ]
+    compress = "zstd.max"
+
+    output_dir = root_out_dir
+    output_extension = "zbi"
+    output_path = rebase_path("$output_dir/$target_name.$output_extension",
+                              root_build_dir)
+    metadata = {
+      # For the //:images build_api_module().
+      images = [
+        {
+          label = get_label_info(":$target_name", "label_with_toolchain")
+          name = "kernel"
+          tags = [ "incomplete" ]
+          type = "zbi"
+          path = output_path
+          cpu = current_cpu
+        },
+      ]
+    }
+  }
 } else {
   group("kernel") {
-    public_deps = [ ":kernel(//mk:kernel_$target_cpu)" ]
+    public_deps = [ ":mk(//mk:kernel_$target_cpu)" ]
   }
 
   group("tests") {

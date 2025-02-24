@@ -1,0 +1,44 @@
+# Copyright 2020 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//mk/params.gni")
+
+source_set("generic-riscv64") {
+  sources = [
+    "dev-init.cc",
+    "platform.cc",
+    "timer.cc",
+  ]
+  deps = [
+    "//src/lib/zbitl",
+    "//mk/dev/hw_rng",
+    "//mk/dev/hw_watchdog/generic32",
+    "//mk/dev/interrupt/gic/common",
+    "//mk/dev/interrupt/gic/v2",
+    "//mk/dev/interrupt/plic",
+    "//mk/dev/pdev/power",
+    "//mk/dev/pdev/timer",
+    "//mk/lib/boot-options",
+    "//mk/lib/cbuf",
+    "//mk/lib/console",
+    "//mk/lib/crashlog",
+    "//mk/lib/fbl",
+    "//mk/lib/init",
+    "//mk/lib/jtrace",
+    "//mk/lib/lockdep",
+    "//mk/lib/persistent-debuglog",
+    "//mk/lib/topology",
+    "//mk/object",
+    "//mk/phys:handoff",
+    "//mk/phys/lib/memalloc:range",
+    "//mk/platform:headers",
+    "//mk/vm",
+    "//mk/ulib/explicit-memory",
+    "//mk/ulib/ram-crashlog",
+  ]
+
+  public_deps = [ "//mk/ulib/affine" ]
+}

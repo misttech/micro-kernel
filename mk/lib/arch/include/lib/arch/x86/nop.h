@@ -15,7 +15,7 @@
 namespace arch {
 
 // Encodes information on x86 `nop` instructions.
-// See //zircon/kernel/lib/arch/include/lib/arch/nop.h for expectations for
+// See //mk/lib/arch/include/lib/arch/nop.h for expectations for
 // the static members of this struct.
 struct X86NopTraits {
   // [intel/vol3]: Table 4-12.  Recommended Multi-Byte Sequence of NOP Instruction.

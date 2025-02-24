@@ -6,12 +6,11 @@
 #define FBL_REF_COUNTED_UPGRADEABLE_H_
 
 #include <zircon/assert.h>
-
-#include <atomic>
-
 #include <fbl/macros.h>
 #include <fbl/ref_counted_internal.h>
 #include <fbl/ref_ptr.h>
+
+#include <atomic>
 
 namespace fbl {
 namespace internal {

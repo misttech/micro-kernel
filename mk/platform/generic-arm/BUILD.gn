@@ -1,0 +1,53 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+source_set("generic-arm") {
+  sources = [
+    "dev-init.cc",
+    "efi.cc",
+    "platform.cc",
+    "uart.cc",
+  ]
+
+  deps = [
+    "//mk/lib/zbi-format",
+    "//mk/dev/hdcp/amlogic_s912",
+    "//mk/dev/hw_rng",
+    "//mk/dev/hw_rng/amlogic_rng",
+    "//mk/dev/hw_watchdog/generic32",
+    "//mk/dev/interrupt/gic/common",
+    "//mk/dev/interrupt/gic/v2",
+    "//mk/dev/interrupt/gic/v3",
+    "//mk/dev/pcie",
+    "//mk/dev/pdev/power",
+    "//mk/dev/power/moonflower",
+    "//mk/dev/power/motmot",
+    "//mk/dev/psci",
+    "//mk/dev/timer/arm_generic",
+    "//mk/lib/arch",
+    "//mk/lib/boot-options",
+    "//mk/lib/cbuf",
+    "//mk/lib/console",
+    "//mk/lib/crashlog",
+    "//mk/lib/efi:headers",
+    "//mk/lib/fbl",
+    "//mk/lib/init",
+    "//mk/lib/instrumentation:headers",
+    "//mk/lib/jtrace:headers",
+    "//mk/lib/ktl",
+    "//mk/lib/lockdep",
+    "//mk/lib/persistent-debuglog",
+    "//mk/lib/topology",
+    "//mk/object",
+    "//mk/phys:handoff",
+    "//mk/phys/lib/memalloc:range",
+    "//mk/platform:headers",
+    "//mk/vm",
+    "//mk/ulib/explicit-memory",
+    "//mk/ulib/ram-crashlog",
+    "//mk/ulib/uart",
+  ]
+}

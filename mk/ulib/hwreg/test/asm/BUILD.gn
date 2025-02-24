@@ -4,7 +4,7 @@
 
 import("//build/components.gni")
 import("//build/test.gni")
-import("//zircon/system/ulib/hwreg/hwreg_asm_header.gni")
+import("//mk/ulib/hwreg/hwreg_asm_header.gni")
 
 hwreg_asm_header("test-header") {
   visibility = [ ":*" ]

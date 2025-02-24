@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 import("//build/cpp/library_headers.gni")
-import("//build/toolchain/zircon/user_basic_redirect.gni")
+import("//build/toolchain/kernel/user_basic_redirect.gni")
 
 has_fd = !is_kernel && toolchain_variant.tags + [ "standalone" ] -
                        [ "standalone" ] == toolchain_variant.tags
@@ -61,7 +61,7 @@ library_headers("headers") {
     "lib/elfldltl/symbol.h",
     "lib/elfldltl/tls-layout.h",
   ]
-  public_deps = [ "//sdk/lib/fit" ]
+  public_deps = [ "//mk/lib/fit" ]
 
   # These APIs depend on some POSIX-like file-descriptor-based APIs.
   if (has_fd) {
@@ -78,10 +78,10 @@ library_headers("headers") {
     "lib/elfldltl/alloc-checker-container.h",
     "lib/elfldltl/unique-fd.h",
   ]
-  public_deps += [ "//zircon/system/ulib/fbl" ]
+  public_deps += [ "//mk/ulib/fbl" ]
 
   # These APIs depend on Fuchsia userland APIs (<lib/zx/...>, etc.).
-  if (is_fuchsia && !is_kernel) {
+  if (is_mk && !is_kernel) {
     headers += [
       "lib/elfldltl/mapped-vmo-file.h",
       "lib/elfldltl/vmar-loader.h",
@@ -92,21 +92,21 @@ library_headers("headers") {
 
     # Make sure that there's no transitive deps on libzircon, so header-only
     # use of the library doesn't affect dynamic linking dependencies.
-    if (zircon_toolchain == false) {
+    if (kernel_toolchain == false) {
       _headers = ""
     } else {
       _headers = ":headers"
     }
     public_deps += [
       # <lib/elfldltl/vmo.h> has #include <lib/zx/vmo.h>.
-      "//zircon/system/ulib/zx$_headers",
+      "//mk/ulib/zx$_headers",
     ]
   }
 
   if (is_kernel) {
     public_deps += [
-      "//zircon/kernel/lib/ktl",
-      "//zircon/kernel/lib/libc",
+      "//mk/lib/ktl",
+      "//mk/lib/libc",
     ]
   }
 }
@@ -127,15 +127,15 @@ static_library("elfldltl") {
 
   if (has_fd) {
     sources += [ "mapped-fd-file.cc" ]
-    deps += [ "//sdk/lib/fit" ]
+    deps += [ "//mk/lib/fit" ]
   }
 
-  if (is_fuchsia && !is_kernel) {
+  if (is_mk && !is_kernel) {
     sources += [
       "mapped-vmo-file.cc",
       "vmar-loader.cc",
     ]
-    deps += [ "//zircon/system/ulib/zx" ]
+    deps += [ "//mk/ulib/zx" ]
   }
 
   if (is_linux) {

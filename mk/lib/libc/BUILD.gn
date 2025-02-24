@@ -47,7 +47,7 @@ static_library("libc") {
 config("headers.after") {
   visibility = [
     ":*",
-    "//mk/kernel:headers",
+    "//mk:headers",
   ]
 
   # libc/include is before toolchain headers because it needs to be able to

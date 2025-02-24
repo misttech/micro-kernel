@@ -8,5 +8,16 @@ import("//build/kernel/migrated_targets.gni")
 
 zx_library("cbuf") {
   sources = [ "cbuf.cc" ]
-  deps = [ "//mk/lib/fbl" ]
+  deps = [
+    ":tests",
+    "//mk/lib/ktl",
+    "//mk/lib/zxc",
+  ]
+}
+
+source_set("tests") {
+  # TODO: testonly = true
+  sources = [ "cbuf_tests.cc" ]
+  include_dirs = [ "include" ]
+  deps = [ "//mk/lib/unittest" ]
 }

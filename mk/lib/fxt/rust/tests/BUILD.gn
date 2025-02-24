@@ -18,7 +18,7 @@ rustc_binary("rust_fxt_integration_test_bin") {
     "//src/lib/fuchsia",
     "//src/lib/fuchsia-async",
     "//src/lib/fuchsia-component",
-    "//src/performance/lib/fxt/rust",
+    "//mk/lib/fxt/rust",
     "//third_party/rust_crates:futures",
     "//third_party/rust_crates:log",
   ]
@@ -35,8 +35,8 @@ executable("provider_puppet_cpp_bin") {
     "//sdk/lib/async-loop:async-loop-cpp",
     "//sdk/lib/async-loop:async-loop-default",
     "//sdk/lib/syslog/cpp",
-    "//zircon/system/ulib/trace",
-    "//zircon/system/ulib/trace-provider",
+    "//mk/ulibtrace",
+    "//mk/ulibtrace-provider",
   ]
 }
 

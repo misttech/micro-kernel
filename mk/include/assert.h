@@ -5,8 +5,8 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT
 
-#ifndef MK_INCLUDE_ASSERT_H_
-#define MK_INCLUDE_ASSERT_H_
+#ifndef ZIRCON_KERNEL_INCLUDE_ASSERT_H_
+#define ZIRCON_KERNEL_INCLUDE_ASSERT_H_
 
 // For a description of which asserts are enabled at which debug levels, see the documentation for
 // GN build argument |assert_level|.
@@ -160,4 +160,4 @@ void assert_fail_msg(const char *file, int line, const char *expression, const c
 
 __END_CDECLS
 
-#endif  // MK_INCLUDE_ASSERT_H_
+#endif  // ZIRCON_KERNEL_INCLUDE_ASSERT_H_

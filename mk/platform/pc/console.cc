@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <arch/kernel_aspace.h>
 #include <arch/x86.h>
 #include <platform/console.h>
 #include <platform/pc.h>
@@ -46,9 +47,7 @@ static int visual_page = 0;
 static int curs_x[PAGE_MAX];
 static int curs_y[PAGE_MAX];
 
-static struct {
-  int x1, y1, x2, y2;
-} view_window = {0, 0, 79, 24};
+static struct { int x1, y1, x2, y2; } view_window = {0, 0, 79, 24};
 
 void platform_init_console(void) {
   curr_save();
@@ -140,7 +139,7 @@ void _clear(char c, char attr, int x1, int y1, int x2, int y2) {
   w |= c;
   for (i = x1; i <= x2; i++) {
     for (j = y1; j <= y2; j++) {
-      *((unsigned short *)(uintptr_t)(FB + 2 * i + 160 * j + 2 * active_page * VPAGE_SIZE)) = w;
+      *((unsigned short*)(uintptr_t)(FB + 2 * i + 160 * j + 2 * active_page * VPAGE_SIZE)) = w;
     }
   }
 
@@ -149,24 +148,24 @@ void _clear(char c, char attr, int x1, int y1, int x2, int y2) {
   curr_x = x1;
 }
 
-void clear(void) {
+void clear() {
   _clear(' ', curr_attr, view_window.x1, view_window.y1, view_window.x2, view_window.y2);
 }
 
 void _scroll(char attr, int x1, int y1, int x2, int y2) {
   register int x, y;
   unsigned short xattr = attr << 8, w;
-  unsigned char *v = (unsigned char *)(uintptr_t)(FB + active_page * (2 * VPAGE_SIZE));
+  unsigned char* v = (unsigned char*)(uintptr_t)(FB + active_page * (2 * VPAGE_SIZE));
 
   for (y = y1 + 1; y <= y2; y++) {
     for (x = x1; x <= x2; x++) {
-      w = *((unsigned short *)(v + 2 * (y * 80 + x)));
-      *((unsigned short *)(v + 2 * ((y - 1) * 80 + x))) = w;
+      w = *((unsigned short*)(v + 2 * (y * 80 + x)));
+      *((unsigned short*)(v + 2 * ((y - 1) * 80 + x))) = w;
     }
   }
 
   for (x = x1; x <= x2; x++) {
-    *((unsigned short *)(v + 2 * ((y - 1) * 80 + x))) = xattr;
+    *((unsigned short*)(v + 2 * ((y - 1) * 80 + x))) = xattr;
   }
 }
 
@@ -176,7 +175,7 @@ void scroll(void) {
 
 void cputc(char c) {
   static unsigned short scan_x, x, y;
-  unsigned char *v = (unsigned char *)(uintptr_t)(FB + active_page * (2 * VPAGE_SIZE));
+  unsigned char* v = (unsigned char*)(uintptr_t)(FB + active_page * (2 * VPAGE_SIZE));
   x = curr_x;
   y = curr_y;
 
@@ -215,7 +214,6 @@ void cputc(char c) {
 
     case '\b':
       x--;
-      *(v + 2 * (x + y * 80)) = ' ';
       break;
 
     default:
@@ -235,7 +233,7 @@ void cputc(char c) {
   place(x, y);
 }
 
-void cputs(char *s) {
+void cputs(char* s) {
   char c;
   while (*s != '\0') {
     c = *s++;
@@ -243,9 +241,9 @@ void cputs(char *s) {
   }
 }
 
-void puts_xy(int x, int y, char attr, char *s) {
-  unsigned char *v =
-      (unsigned char *)(uintptr_t)(FB + (80 * y + x) * 2 + active_page * (2 * VPAGE_SIZE));
+void puts_xy(int x, int y, char attr, char* s) {
+  unsigned char* v =
+      (unsigned char*)(uintptr_t)(FB + (80 * y + x) * 2 + active_page * (2 * VPAGE_SIZE));
   while (*s != 0) {
     *v = *s;
     s++;
@@ -256,20 +254,20 @@ void puts_xy(int x, int y, char attr, char *s) {
 }
 
 void putc_xy(int x, int y, char attr, char c) {
-  unsigned char *v =
-      (unsigned char *)(uintptr_t)(FB + (80 * y + x) * 2 + active_page * (2 * VPAGE_SIZE));
+  unsigned char* v =
+      (unsigned char*)(uintptr_t)(FB + (80 * y + x) * 2 + active_page * (2 * VPAGE_SIZE));
   *v = c;
   v++;
   *v = attr;
 }
 
-int printf_xy(int x, int y, char attr, char *fmt, ...) {
+int printf_xy(int x, int y, char attr, char* fmt, ...) {
   char cbuf[200];
   va_list parms;
   int result;
 
   va_start(parms, fmt);
-  result = vsprintf(cbuf, fmt, parms);
+  result = vsnprintf(cbuf, sizeof(cbuf), fmt, parms);
   va_end(parms);
 
   puts_xy(x, y, attr, cbuf);

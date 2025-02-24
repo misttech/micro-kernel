@@ -29,9 +29,9 @@ test("affine") {
   ]
   deps = [
     "//sdk/lib/fdio",
-    "//sdk/lib/fit",
-    "//zircon/system/ulib/affine",
-    "//zircon/system/ulib/zxtest",
+    "//mk/lib/fit",
+    "//mk/ulib/affine",
+    "//mk/ulib/zxtest",
   ]
 }
 
@@ -41,7 +41,7 @@ fuchsia_unittest_package("affine-test-pkg") {
 
 fuchsia_library_fuzzer("affine-fuzzer") {
   sources = [ "affine-fuzzer.cc" ]
-  deps = [ "//zircon/system/ulib/affine" ]
+  deps = [ "//mk/ulib/affine" ]
 }
 
 fuchsia_fuzzer_component("affine-fuzzer-component") {

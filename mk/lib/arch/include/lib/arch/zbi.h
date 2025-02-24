@@ -9,7 +9,8 @@
 
 #ifdef __ASSEMBLER__
 
-#include <fidl/zbi/data/asm/zbi.h>
+//#include <fidl/zbi/data/asm/zbi.h>
+#include <lib/zbi-format/zbi.asm.h>
 
 #else
 

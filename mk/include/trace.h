@@ -1,4 +1,3 @@
-// Copyright 2025 Mist Tecnologia Ltda
 // Copyright 2016 The Fuchsia Authors
 // Copyright (c) 2008-2013 Travis Geiselbrecht
 //
@@ -6,12 +5,12 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT
 
-#ifndef MK_INCLUDE_TRACE_H_
-#define MK_INCLUDE_TRACE_H_
+#ifndef ZIRCON_KERNEL_INCLUDE_TRACE_H_
+#define ZIRCON_KERNEL_INCLUDE_TRACE_H_
 
 #include <stdio.h>
 
-// #define __FUNC__ __PRETTY_FUNCTION__
+//#define __FUNC__ __PRETTY_FUNCTION__
 #define __FUNC__ __func__
 
 /* trace routines */
@@ -69,4 +68,4 @@
     }                              \
   } while (0)
 
-#endif  // MK_INCLUDE_TRACE_H_
+#endif  // ZIRCON_KERNEL_INCLUDE_TRACE_H_

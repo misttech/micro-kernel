@@ -12,7 +12,7 @@ source_set("tests") {
   ]
 
   deps = [
-    "//zircon/kernel/lib/backtrace:headers",
-    "//zircon/kernel/lib/unittest",
+    "//mk/lib/backtrace:headers",
+    "//mk/lib/unittest",
   ]
 }

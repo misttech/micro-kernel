@@ -31,7 +31,7 @@ class InternedString;
 
 extern "C" {
 
-// The following symbols are always provided by the kernel (see //zircon/kernel/kernel.ld),
+// The following symbols are always provided by the kernel (see //mk/kernel.ld),
 // regardless of whether the section is empty. In userspace, an empty section does not generate the
 // begin/end symbols. Avoid linker errors in userspace by providing weak alternatives.
 

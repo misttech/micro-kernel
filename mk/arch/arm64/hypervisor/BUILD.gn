@@ -1,0 +1,30 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+source_set("hypervisor") {
+  sources = [
+    "el2.S",
+    "el2_cpu_state.cc",
+    "gic/el2.S",
+    "gic/gicv2.cc",
+    "gic/gicv3.cc",
+    "guest.cc",
+    "vcpu.cc",
+    "vmexit.cc",
+  ]
+  deps = [
+    "//mk/lib/fit",
+    "//mk/dev/interrupt/gic/common",
+    "//mk/dev/interrupt/gic/v2",
+    "//mk/dev/interrupt/gic/v3",
+    "//mk/dev/psci",
+    "//mk/dev/timer/arm_generic",
+    "//mk/hypervisor:headers",
+    "//mk/lib/ktl",
+    "//mk/lib/ktrace",
+    "//mk/ulib/affine",
+  ]
+}

@@ -1,10 +1,9 @@
-// Copyright 2025 Mist Tecnologia Ltda. All rights reserved.
 // Copyright 2016 The Fuchsia Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef MK_TOP_INCLUDE_ZIRCON_LISTNODE_H_
-#define MK_TOP_INCLUDE_ZIRCON_LISTNODE_H_
+#ifndef ZIRCON_LISTNODE_H_
+#define ZIRCON_LISTNODE_H_
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -12,7 +11,7 @@
 
 __BEGIN_CDECLS
 
-#define containerof(ptr, type, member) ((type*)((uintptr_t)(ptr) - offsetof(type, member)))
+#define containerof(ptr, type, member) ((type*)((uintptr_t)(ptr)-offsetof(type, member)))
 
 typedef struct list_node list_node_t;
 
@@ -21,8 +20,10 @@ struct list_node {
   list_node_t* next;
 };
 
-#define LIST_INITIAL_VALUE(list) {&(list), &(list)}
-#define LIST_INITIAL_CLEARED_VALUE {NULL, NULL}
+#define LIST_INITIAL_VALUE(list) \
+  { &(list), &(list) }
+#define LIST_INITIAL_CLEARED_VALUE \
+  { NULL, NULL }
 
 static inline void list_initialize(list_node_t* list) { list->prev = list->next = list; }
 
@@ -296,4 +297,4 @@ static inline void list_move(list_node_t* old_list, list_node_t* new_list) {
 
 __END_CDECLS
 
-#endif  // MK_TOP_INCLUDE_ZIRCON_LISTNODE_H_
+#endif  // ZIRCON_LISTNODE_H_

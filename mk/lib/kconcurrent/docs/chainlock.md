@@ -56,7 +56,7 @@ possibilities.
    situation and implement proper policy to deal with the errant user-mode
    program instead of triggering a panic.
 
-See also //zircon/system/ulib/concurrent/models/chainlock for a TLA+ model of
+See also //mk/ulib/concurrent/models/chainlock for a TLA+ model of
 the locking protocol.  This model shows how the protocol avoids deadlock while
 also guaranteeing that all threads will eventually obtain their sets of locks,
 regardless of how the sets overlap, or the order in which the locks are

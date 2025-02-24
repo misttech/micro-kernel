@@ -8,7 +8,8 @@
 #define ZIRCON_KERNEL_LIB_ARCH_X86_INCLUDE_LIB_ARCH_INTERNAL_ZBI_CONSTANTS_H_
 
 #ifdef __ASSEMBLER__
-#include <fidl/zbi/data/asm/zbi.h>
+//#include <fidl/zbi/data/asm/zbi.h>
+#include <lib/zbi-format/zbi.asm.h>
 #else
 #include <lib/zbi-format/zbi.h>
 #endif

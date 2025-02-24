@@ -1,4 +1,3 @@
-# Copyright 2025 Mist Tecnologia Ltda
 # Copyright 2019 The Fuchsia Authors
 #
 # Use of this source code is governed by a MIT-style
@@ -14,20 +13,24 @@ library_headers("headers") {
 library_headers("headers.internal") {
   visibility = [ "./*" ]
 
-  headers = [ "lib/page_alloc.h" ]
+  headers = [ "lib/heap_internal.h" ]
 }
 
 source_set("heap") {
   public_deps = [ ":headers" ]
 
   sources = [
-    "heap_wrapper.c",
-    "page_alloc.c",
+    "cxx_allocator.cc",
+    "heap_wrapper.cc",
   ]
-  defines = [ "WITH_LIB_HEAP_CMPCTMALLOC=1" ]
   deps = [
     ":headers.internal",
     "cmpctmalloc",
     "//mk/lib/console",
+    "//mk/lib/virtual_alloc",
+    "//mk/ulib/lazy_init",
+
+    # TODO(https://fxbug.dev/42128324): Remove headers when possible.
+    "//mk/lib/instrumentation:headers",
   ]
 }

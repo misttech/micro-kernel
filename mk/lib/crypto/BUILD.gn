@@ -1,0 +1,75 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/cpp/library_headers.gni")
+
+library_headers("headers") {
+  headers = [
+    "lib/crypto/global_prng.h",
+    "lib/crypto/prng.h",
+  ]
+
+  public_deps = [
+    ":crypto-entropy-src.headers",
+    "entropy:headers",
+
+    # <lib/crypto/prng.h> has #include <ktl/atomic.h>.
+    "//mk/lib/ktl:headers",
+  ]
+}
+
+library_headers("crypto-entropy-src.headers") {
+  headers = [ "lib/crypto/entropy_pool.h" ]
+  public_deps = [
+    # <lib/crypto/entropy_pool.h> #include <lib/stdcompat/span.h>
+    "//mk/lib/stdcompat",
+  ]
+}
+
+source_set("crypto-entropy-src") {
+  sources = [ "entropy_pool.cc" ]
+  public_deps = [ ":crypto-entropy-src.headers" ]
+  deps = [
+    "boringssl",
+    "//mk/lib/ktl",
+    "//mk/lib/libc",
+    "//mk/ulib/explicit-memory",
+  ]
+}
+
+source_set("crypto-entropy-test") {
+  sources = [ "entropy_pool_test.cc" ]
+  include_dirs = [ "include" ]
+  deps = [
+    ":crypto-entropy-src",
+    "//mk/lib/ktl",
+    "//mk/lib/libc",
+    "//mk/lib/unittest",
+  ]
+}
+
+static_library("crypto") {
+  public_deps = [ ":headers" ]
+  sources = [
+    "global_prng.cc",
+    "global_prng_unittest.cc",
+    "prng.cc",
+    "prng_unittest.cc",
+  ]
+  deps = [
+    ":crypto-entropy-src",
+    ":crypto-entropy-test",
+    "boringssl",
+    "entropy",
+    "//mk/lib/boot-options",
+    "//mk/lib/fbl",
+    "//mk/lib/init",
+    "//mk/lib/ktl",
+    "//mk/lib/unittest",
+    "//mk/phys:handoff",
+    "//mk/ulib/explicit-memory",
+  ]
+}

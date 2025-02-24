@@ -1,25 +1,31 @@
-/*
- * Copyright (c) 2008 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2008 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
-#ifndef MK_INCLUDE_ARCH_THREAD_H_
-#define MK_INCLUDE_ARCH_THREAD_H_
+#ifndef ZIRCON_KERNEL_INCLUDE_ARCH_THREAD_H_
+#define ZIRCON_KERNEL_INCLUDE_ARCH_THREAD_H_
 
-// give the arch code a chance to declare the arch_thread struct
+#include <arch.h>
+#include <lib/zircon-internal/thread_annotations.h>
+#include <zircon/compiler.h>
+
 #include <arch/arch_thread.h>
-#include <lk/compiler.h>
+#include <kernel/thread.h>
 
-__BEGIN_CDECLS
+struct Thread;
 
-struct thread;
+void arch_thread_initialize(Thread* thread, vaddr_t entry_point) TA_REQ(thread->get_lock());
+void arch_context_switch(Thread* oldthread, Thread* newthread)
+    TA_REQ(oldthread->get_lock(), newthread->get_lock());
+void arch_save_user_state(Thread* thread);
+void arch_restore_user_state(Thread* thread);
+void arch_thread_construct_first(Thread*);
+vaddr_t arch_thread_get_blocked_fp(Thread*);
 
-void arch_thread_initialize(struct thread *);
-void arch_context_switch(struct thread *oldthread, struct thread *newthread);
+void arch_set_suspended_general_regs(Thread* thread, GeneralRegsSource source, void* gregs);
+void arch_reset_suspended_general_regs(Thread* thread);
 
-__END_CDECLS
-
-#endif  // MK_INCLUDE_ARCH_THREAD_H_
+#endif  // ZIRCON_KERNEL_INCLUDE_ARCH_THREAD_H_

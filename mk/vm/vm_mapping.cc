@@ -901,9 +901,9 @@ zx_status_t VmMapping::DestroyLocked() {
   // TODO(mcgrathr): Turn this into a policy-driven process-fatal case
   // at some point.  teisenbe@ wants to eventually make zx_vmar_destroy
   // never fail.
-  if (aspace_->vdso_code_mapping_ == self) {
-    return ZX_ERR_ACCESS_DENIED;
-  }
+  // if (aspace_->vdso_code_mapping_ == self) {
+  //  return ZX_ERR_ACCESS_DENIED;
+  //}
 
   // Remove any priority.
   zx_status_t status = SetMemoryPriorityLocked(MemoryPriority::DEFAULT);
@@ -1342,9 +1342,9 @@ void VmMapping::MarkMergeable(fbl::RefPtr<VmMapping>&& mapping) {
   }
   // Skip marking any vdso segments mergeable. Although there is currently only one vdso segment and
   // so it would never actually get merged, marking it mergeable is technically incorrect.
-  if (mapping->aspace_->vdso_code_mapping_ == mapping) {
-    return;
-  }
+  //if (mapping->aspace_->vdso_code_mapping_ == mapping) {
+  //  return;
+  //}
   mapping->mergeable_ = Mergeable::YES;
   mapping->TryMergeNeighborsLocked();
 }

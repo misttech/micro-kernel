@@ -18,7 +18,7 @@ aemu_env = {
     device_type = "AEMU"
   }
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "aemu"
     env = aemu_env
@@ -30,7 +30,7 @@ astro_env = {
     device_type = "Astro"
   }
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "astro"
     env = astro_env
@@ -122,7 +122,7 @@ luis_env = {
     device_type = "Luis"
   }
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "luis"
     env = luis_env
@@ -151,7 +151,7 @@ kola_env = {
     device_type = "Kola"
   }
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "kola"
     env = kola_env
@@ -163,7 +163,7 @@ lilac_env = {
     device_type = "Lilac"
   }
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "lilac"
     env = lilac_env
@@ -175,7 +175,7 @@ maple_env = {
     device_type = "Maple"
   }
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "maple"
     env = maple_env
@@ -187,7 +187,7 @@ sorrel_env = {
     device_type = "Sorrel"
   }
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "sorrel"
     env = sorrel_env
@@ -199,7 +199,7 @@ nelson_env = {
     device_type = "Nelson"
   }
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "nelson"
     env = nelson_env
@@ -212,7 +212,7 @@ nuc7_env = {
   }
 }
 
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "nuc7"
     env = nuc7_env
@@ -224,7 +224,7 @@ nuc11_env = {
     device_type = "Intel NUC Kit NUC11TNHv5"
   }
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "nuc11"
     env = nuc11_env
@@ -236,7 +236,7 @@ qemu_env = {
     device_type = "QEMU"
   }
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "qemu"
     env = qemu_env
@@ -256,7 +256,7 @@ sherlock_env = {
     device_type = "Sherlock"
   }
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "sherlock"
     env = sherlock_env
@@ -268,7 +268,7 @@ vim3_env = {
     device_type = "Vim3"
   }
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "vim3"
     env = vim3_env
@@ -280,7 +280,7 @@ gce_env = {
     device_type = "GCE"
   }
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "gce"
     env = gce_env
@@ -292,7 +292,7 @@ atlas_env = {
     device_type = "Atlas"
   }
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "atlas"
     env = atlas_env
@@ -316,7 +316,7 @@ if (target_cpu == "x64") {
   }
   emu_env = aemu_env
 }
-_all_named_fuchsia_envs += [
+_all_named_mk_envs += [
   {
     name = "emu"
     env = emu_env
@@ -339,9 +339,9 @@ chromebook_envs = [ atlas_env ]
 
 ### Select environment lists ###
 
-all_fuchsia_envs = []
-foreach(named_env, _all_named_fuchsia_envs) {
-  all_fuchsia_envs += [ named_env.env ]
+all_mk_envs = []
+foreach(named_env, _all_named_mk_envs) {
+  all_mk_envs += [ named_env.env ]
 }
 
 # TODO(https://fxbug.dev/42160566): allow these tests to run on emulators.
@@ -354,7 +354,7 @@ foreach(named_env, _all_named_fuchsia_envs) {
 # 1. GCE virtualizes Linux (as part of its standard ops)
 # 2. Linux virtualizes Zircon (QEMU/KVM)
 # 3. Zircon virtualizes guest Zircon/Linux (Machina)
-guest_envs = all_fuchsia_envs - [
+guest_envs = all_mk_envs - [
                aemu_env,
                qemu_env,
              ]
@@ -387,7 +387,7 @@ lacewing_wlan_ap_envs = [
 
 basic_envs = []
 foreach(name, basic_env_names) {
-  foreach(named_env, _all_named_fuchsia_envs + _all_named_host_envs) {
+  foreach(named_env, _all_named_mk_envs + _all_named_host_envs) {
     if (name == named_env.name) {
       basic_envs += [ named_env.env ]
     }

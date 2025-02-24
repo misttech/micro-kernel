@@ -40,6 +40,22 @@ gen: ## Generate ninja
 	$(NOECHO)$(GN) gen $(OUTPUT)
 .PHONY: gen
 
+args: ## Set up build dir and arguments file
+	$(NOECHO)mkdir -p $(OUTPUT)
+	$(NOECHO)echo "# Basic args:" > $(OUTPUT)/args.gn
+.PHONY: args
+
+debug: args ## Set debug arguments
+	$(NOECHO)echo "compilation_mode = \"debug\"" >> $(OUTPUT)/args.gn
+.PHONY: debug
+
+gdb: args ## Set debug arguments
+	$(NOECHO)echo "compress_debuginfo = \"none\"" >> $(OUTPUT)/args.gn
+	$(NOECHO)echo "optimize = \"debug\"" >> $(OUTPUT)/args.gn
+	$(NOECHO)echo "mk_optimize = \"debug\"" >> $(OUTPUT)/args.gn
+	$(NOECHO)echo "kernel_extra_defines = [ \"DISABLE_KASLR\" ]" >> $(OUTPUT)/args.gn
+.PHONY: gdb
+
 spotless:
 	rm -rf -- "$(MKROOT)/$(OUTPUT)"
 

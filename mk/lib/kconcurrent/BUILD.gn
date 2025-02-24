@@ -14,9 +14,9 @@ library_headers("headers") {
   ]
 
   public_deps = [
-    "//zircon/system/ulib/concurrent:headers",
-    "//zircon/system/ulib/fbl:headers",
-    "//zircon/system/ulib/lockdep:headers",
+    "//mk/ulib/concurrent:headers",
+    "//mk/ulib/fbl:headers",
+    "//mk/ulib/lockdep:headers",
   ]
 }
 
@@ -27,10 +27,10 @@ source_set("kconcurrent") {
   ]
   public_deps = [ ":headers" ]
   deps = [
-    "//zircon/kernel/lib/arch",
-    "//zircon/kernel/lib/counters",
-    "//zircon/system/ulib/affine",
-    "//zircon/system/ulib/concurrent",
-    "//zircon/system/ulib/lockdep",
+    "//mk/lib/arch",
+    "//mk/lib/counters",
+    "//mk/ulib/affine",
+    "//mk/ulib/concurrent",
+    "//mk/ulib/lockdep",
   ]
 }

@@ -8,9 +8,9 @@ library_headers("headers") {
   headers = [ "lib/mock-function/mock-function.h" ]
 
   if (is_kernel) {
-    public_deps = [ "//zircon/system/ulib/zxtest:headers" ]
+    public_deps = [ "//mk/ulib/zxtest:headers" ]
   } else {
-    public_deps = [ "//zircon/system/ulib/zxtest" ]
+    public_deps = [ "//mk/ulib/zxtest" ]
   }
 }
 

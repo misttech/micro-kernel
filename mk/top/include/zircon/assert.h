@@ -1,10 +1,9 @@
-// Copyright 2025 Mist Tecnologia Ltda. All rights reserved.
 // Copyright 2016 The Fuchsia Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef TOP_INCLUDE_ZIRCON_ASSERT_H_
-#define TOP_INCLUDE_ZIRCON_ASSERT_H_
+#ifndef ZIRCON_ASSERT_H_
+#define ZIRCON_ASSERT_H_
 
 // For a description of which asserts are enabled at which debug levels, see the documentation for
 // GN build argument |assert_level|.
@@ -241,4 +240,4 @@ __END_CDECLS
 #endif
 
 #endif  // #ifdef _KERNEL
-#endif  // TOP_INCLUDE_ZIRCON_ASSERT_H_
+#endif  // ZIRCON_ASSERT_H_

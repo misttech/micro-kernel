@@ -10,10 +10,10 @@ test("mock-function-test") {
   sources = [ "mock-function-test.cc" ]
   deps = [
     "//sdk/lib/fdio",
-    "//zircon/system/ulib/fbl",
-    "//zircon/system/ulib/mock-function",
-    "//zircon/system/ulib/zx",
-    "//zircon/system/ulib/zxtest",
+    "//mk/ulib/fbl",
+    "//mk/ulib/mock-function",
+    "//mk/ulib/zx",
+    "//mk/ulib/zxtest",
   ]
 }
 
