@@ -42,7 +42,7 @@ jobs:
         run: |
           export PATH=$PWD/.jiri_root/bin:$PATH
           jiri import -name=integration mk https://github.com/misttech/mk-integration
-          jiri fetch-packages
+          jiri update
 
       - name: Build
         run: make gen && make all
