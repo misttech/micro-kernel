@@ -9,31 +9,48 @@ import("//build/kernel/kernel_cpu.gni")
 source_set("top") {
   sources = [
     "debug.cc",
-    "init.c",
-    "main.c",
+    "handoff.cc",
+    "init.cc",
+    "main.cc",
   ]
   deps = [
-    "//mk/app",
     "//mk/arch/$kernel_cpu",
-    "//mk/dev",
+    "//mk/dev:init",
+    "//mk/dev/hw_rng",
     "//mk/kernel",
+    "//mk/lib/backtrace",
+    "//mk/lib/boot-options",
     "//mk/lib/console",
+    "//mk/lib/counters",
+    "//mk/lib/crashlog",
+    "//mk/lib/cxxabi-dynamic-init:headers",
+    "//mk/lib/debuglog",
+    "//mk/lib/heap",
+    "//mk/lib/init",
+    "//mk/lib/io",
+
+    #"//mk/lib/jtrace:headers",
+    "//mk/lib/lockup_detector",
+
+    #"//mk/lib/userabi",
+    "//mk/lib/version",
+    "//mk/phys:handoff",
     "//mk/platform",
-    "//mk/target",
+    "//src/lib/zbitl",
   ]
 
   # TODO(https://fxbug.dev/374753100): Remove this after soft transition.
   defines = [ "_LIBCPP_VERBOSE_ABORT_NOT_NOEXCEPT" ]
 }
 
-# If not building for Fuchsia|mistos-os (e.g., linux, macos) then binaries need to get
-# zircon headers directly from source. Otherwise they come from sysroot.
+# If not building for mk (e.g., linux, macos) then binaries need to get
+# mk/zircon headers directly from source.
 config("public_config") {
-  include_dirs = [ "." ]
+  include_dirs = [ "include" ]
   visibility = [ ":*" ]
 }
 
-# These headers are exported for use in building non-fuchsia-host binaries.
+# These headers are exported for use in building non-mk-host binaries.
 source_set("public") {
   #public = [ "zircon/mistos/syscalls/object.h" ]
 

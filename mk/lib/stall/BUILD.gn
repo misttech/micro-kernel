@@ -1,0 +1,16 @@
+# Copyright 2024 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/migrated_targets.gni")
+
+zx_library("stall") {
+  sources = [ "stall.cc" ]
+  deps = [
+    "tests",
+    "//mk/lib/init",
+  ]
+  public_deps = [ "//mk/lib/ktl:headers" ]
+}

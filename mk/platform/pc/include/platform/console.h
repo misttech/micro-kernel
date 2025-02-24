@@ -1,13 +1,14 @@
-/*
- * Copyright (c) 2009 Corey Tabaka
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
-#pragma once
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2009 Corey Tabaka
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
-#include <lk/compiler.h>
+#ifndef ZIRCON_KERNEL_PLATFORM_PC_INCLUDE_PLATFORM_CONSOLE_H_
+#define ZIRCON_KERNEL_PLATFORM_PC_INCLUDE_PLATFORM_CONSOLE_H_
+
+#include <zircon/compiler.h>
 
 __BEGIN_CDECLS
 
@@ -32,14 +33,14 @@ void curr_save(void);
 void curr_restore(void);
 
 void cputc(char c);
-void cputs(char *s);
+void cputs(char* s);
 
 void window(int x1, int y1, int x2, int y2);
 
 void putc_xy(int x, int y, char attr, char c);
-void puts_xy(int x, int y, char attr, char *s);
+void puts_xy(int x, int y, char attr, char* s);
 
-int printf_xy(int x, int y, char attr, char *fmt, ...) __PRINTFLIKE(4, 5);
+int printf_xy(int x, int y, char attr, char* fmt, ...) __PRINTFLIKE(4, 5);
 
 #define CURSOR_BLOCK() cursor(0, 15);
 #define CURSOR_OFF() cursor(16, 16);
@@ -64,3 +65,5 @@ int printf_xy(int x, int y, char attr, char *fmt, ...) __PRINTFLIKE(4, 5);
 #define WHITE 15
 
 __END_CDECLS
+
+#endif  // ZIRCON_KERNEL_PLATFORM_PC_INCLUDE_PLATFORM_CONSOLE_H_

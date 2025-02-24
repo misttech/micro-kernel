@@ -19,7 +19,11 @@ assert(
 ### Top-level targets.
 ###
 group("default") {
-  deps = [ "//mk:kernel" ]
+  #testonly = true
+  deps = [
+    "//mk:kernel",
+    "//mk/arch/x86/phys/boot-shim",
+  ]
 }
 
 # A GN pool matching the special Ninja 'console' pool. Any action() that

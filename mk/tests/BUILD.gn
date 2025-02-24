@@ -1,0 +1,142 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/migrated_targets.gni")
+import("//mk/params.gni")
+
+group("tests") {
+  deps = [
+    ":phys",
+    "//mk/lib/libc:tests",
+  ]
+  if (toolchain_environment == "kernel") {
+    deps += [ ":kernel" ]
+  } else {  # TODO(https://fxbug.dev/42145882): testonly in kernel proper
+    testonly = true
+  }
+}
+
+# This is the subset that's compatible with the kernel.phys environment.
+source_set("phys") {
+  # TODO(https://fxbug.dev/42145882): testonly = true
+  testonly = toolchain_environment != "kernel"
+  cflags = [ "-fno-builtin" ]
+  sources = [
+    "multi_file_tests.cc",
+    "popcount.cc",
+    "printf_tests.cc",
+    "relocation_tests.cc",
+    "string_file_tests.cc",
+    "string_view_tests.cc",
+    "unittest_tests.cc",
+  ]
+  deps = [
+    ":zbitl",
+    "//mk/lib/boot-options/tests:kernel-tests",
+    "//mk/lib/ktl",
+    "//mk/lib/libc",
+    "//mk/lib/unittest",
+    "//mk/ulib/fbl",
+  ]
+
+  if (toolchain_environment == "kernel") {
+    deps += [ "//mk/lib/console" ]
+  }
+}
+
+source_set("zbitl") {
+  # TODO(https://fxbug.dev/42145882): testonly = true
+  testonly = toolchain_environment != "kernel"
+  sources = [ "zbitl_tests.cc" ]
+
+  deps = [
+    "//src/lib/zbitl",
+    "//mk/lib/ktl",
+    "//mk/lib/libc",
+    "//mk/lib/unittest",
+  ]
+
+  if (toolchain_environment == "kernel") {
+    deps += [ "//mk/lib/console" ]
+  }
+}
+
+if (toolchain_environment == "kernel") {
+  # These are only for the kernel proper.
+  source_set("kernel") {
+    # TODO(https://fxbug.dev/42145882): testonly = true
+    cflags = [ "-fno-builtin" ]
+    sources = [
+      "alloc_checker_tests.cc",
+      "benchmarks.cc",
+      "brwlock_tests.cc",
+      "cache_tests.cc",
+      "clock_tests.cc",
+      "cpu_search_tests.cc",
+      "cpu_tests.cc",
+      "dpc_tests.cc",
+      "event_tests.cc",
+      "fibo.cc",
+      "heap_tests.cc",
+      "interrupt_disable_tests.cc",
+      "job_tests.cc",
+      "kstack_tests.cc",
+      "lock_dep_tests.cc",
+      "loop_limiter_tests.cc",
+      "mem_tests.cc",
+      "mmu_tests.cc",
+      "mp_hotplug_tests.cc",
+      "mutex_spin_time_tests.cc",
+      "owned_wait_queue_topology.cc",
+      "pi_tests.cc",
+      "pow2_tests.cc",
+      "preempt_disable_tests.cc",
+      "range_check_tests.cc",
+      "relaxed_atomic_tests.cc",
+      "relocation_tests.cc",
+      "resource_tests.cc",
+      "sleep_tests.cc",
+      "string_tests.cc",
+      "sync_ipi_tests.cc",
+      "tests.cc",
+      "thread_dispatcher_tests.cc",
+      "thread_tests.cc",
+      "timer_tests.cc",
+      "uart_tests.cc",
+      "variant_tests.cc",
+      "wait_queue_ordering_tests.cc",
+    ]
+    deps = [
+      "//mk/lib/arch",
+      "//mk/lib/arch/test:kernel-tests",
+      "//mk/lib/boot-options",
+      "//mk/lib/console",
+      "//mk/lib/crypto",
+      "//mk/lib/debuglog",
+      "//mk/lib/fbl",
+      "//mk/lib/instrumentation/test:tests",
+      "//mk/lib/io",
+      "//mk/lib/jtrace/tests",
+      "//mk/lib/kconcurrent/tests",
+      "//mk/lib/ktl",
+      "//mk/lib/ktrace/tests",
+      "//mk/lib/persistent-debuglog/tests",
+      "//mk/lib/power-management:tests",
+      "//mk/lib/root_resource_filter",
+      "//mk/lib/thread_sampler/tests",
+      "//mk/lib/unittest",
+      "//mk/lib/zxc",
+      "//mk/object",
+      "//mk/ulib/affine",
+      "//mk/ulib/pretty",
+    ]
+    if (!kernel_no_userabi) {
+      sources += [ "userboot_tests.cc" ]
+      deps += [ "//mk/lib/userabi" ]
+    }
+    public_deps = [ "//mk/ulib/zx:headers" ]
+  }
+}

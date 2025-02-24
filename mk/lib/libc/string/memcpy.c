@@ -1,38 +1,33 @@
-/*
-** Copyright 2001, Travis Geiselbrecht. All rights reserved.
-** Distributed under the terms of the NewOS License.
-*/
-/*
- * Copyright (c) 2008 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2008 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
+
+#include <stdint.h>
 #include <string.h>
-#include <sys/types.h>
 
-#if !_ASM_MEMCPY
-
-typedef long word;
+typedef uintptr_t word;
 
 #define lsize sizeof(word)
 #define lmask (lsize - 1)
 
-void *memcpy(void *dest, const void *src, size_t count) {
+__attribute__((no_sanitize_address)) void *__unsanitized_memcpy(void *dest, const void *src,
+                                                                size_t count) {
   char *d = (char *)dest;
   const char *s = (const char *)src;
-  int len;
+  size_t len;
 
   if (count == 0 || dest == src)
     return dest;
 
-  if (((long)d | (long)s) & lmask) {
+  if (((uintptr_t)d | (uintptr_t)s) & lmask) {
     // src and/or dest do not align on word boundary
-    if ((((long)d ^ (long)s) & lmask) || (count < lsize))
+    if ((((uintptr_t)d ^ (uintptr_t)s) & lmask) || (count < lsize))
       len = count;  // copy the rest of the buffer with the byte mover
     else
-      len = lsize - ((long)d & lmask);  // move the ptrs up to a word boundary
+      len = lsize - ((uintptr_t)d & lmask);  // move the ptrs up to a word boundary
 
     count -= len;
     for (; len > 0; len--)
@@ -49,4 +44,5 @@ void *memcpy(void *dest, const void *src, size_t count) {
   return dest;
 }
 
-#endif
+// Make the function a weak symbol so asan can override it.
+__typeof(__unsanitized_memcpy) memcpy __attribute__((weak, alias("__unsanitized_memcpy")));

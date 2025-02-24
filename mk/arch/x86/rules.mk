@@ -36,20 +36,19 @@ GLOBAL_DEFINES += \
 	SMP_MAX_CPUS=1 \
 	ARCH_HAS_MMU=1
 
-MODULE_SRCS += \
-	$(LOCAL_DIR)/start.S \
-	$(LOCAL_DIR)/asm.S \
-	$(LOCAL_DIR)/exceptions.S \
-	$(LOCAL_DIR)/mmu.c \
-	$(LOCAL_DIR)/ops.S \
-	$(LOCAL_DIR)/arch.c \
-	$(LOCAL_DIR)/cache.c \
-	$(LOCAL_DIR)/descriptor.c \
-	$(LOCAL_DIR)/faults.c \
-	$(LOCAL_DIR)/feature.c \
-	$(LOCAL_DIR)/gdt.S \
-	$(LOCAL_DIR)/thread.c \
-	$(LOCAL_DIR)/fpu.c
+MODULE_SRCS += $(LOCAL_DIR)/start.S
+MODULE_SRCS += $(LOCAL_DIR)/asm.S
+MODULE_SRCS += $(LOCAL_DIR)/exceptions.S
+MODULE_SRCS += $(LOCAL_DIR)/mmu.cc
+MODULE_SRCS += $(LOCAL_DIR)/ops.S
+MODULE_SRCS += $(LOCAL_DIR)/arch.cc
+MODULE_SRCS += $(LOCAL_DIR)/cache.cc
+MODULE_SRCS += $(LOCAL_DIR)/descriptor.cc
+MODULE_SRCS += $(LOCAL_DIR)/faults.cc
+MODULE_SRCS += $(LOCAL_DIR)/feature.cc
+MODULE_SRCS += $(LOCAL_DIR)/gdt.S
+MODULE_SRCS += $(LOCAL_DIR)/thread.cc
+MODULE_SRCS += $(LOCAL_DIR)/fpu.cc
 
 GLOBAL_DEFINES += \
 	X86_WITH_FPU=1

@@ -1,5 +1,3 @@
-
-// Copyright 2025 Mist Tecnologia Ltda
 // Copyright 2016 The Fuchsia Authors
 // Copyright (c) 2008-2012 Travis Geiselbrecht
 //
@@ -7,8 +5,8 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT
 
-#ifndef MK_INCLUDE_DEBUG_H_
-#define MK_INCLUDE_DEBUG_H_
+#ifndef ZIRCON_KERNEL_INCLUDE_DEBUG_H_
+#define ZIRCON_KERNEL_INCLUDE_DEBUG_H_
 
 #include <stddef.h>
 #include <stdio.h>
@@ -68,4 +66,4 @@ void spin_cycles(uint32_t usecs);
 
 __END_CDECLS
 
-#endif  // MK_INCLUDE_DEBUG_H_
+#endif  // ZIRCON_KERNEL_INCLUDE_DEBUG_H_

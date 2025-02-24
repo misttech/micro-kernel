@@ -1,0 +1,20 @@
+# Copyright 2024 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/cpp/library_headers.gni")
+
+library_headers("headers") {
+  headers = [ "vm/phys/arena.h" ]
+  public_deps = [
+    "//mk/lib/stdcompat",
+
+    # <vm/phys/arena.h> has #include <lib/fit/result.h>
+    "//mk/lib/fit",
+
+    # <vm/phys/arena.h> has #include <lib/memalloc/range.h>
+    "//mk/phys/lib/memalloc:range.headers",
+  ]
+}

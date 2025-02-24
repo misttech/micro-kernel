@@ -1,0 +1,28 @@
+# Copyright 2020 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/migrated_targets.gni")
+
+zx_library("backtrace") {
+  sources = [ "backtrace.cc" ]
+
+  deps = [
+    "tests",
+    "//mk/lib/version",
+    "//mk/ulib/affine",
+  ]
+
+  public_deps = [
+    "//mk/lib/arch:headers",
+    "//mk/lib/ktl:headers",
+    "//mk/ulib/affine",
+  ]
+
+  if (current_cpu == "x64") {
+    # Needed by global_cpu_context_exchange.h.
+    public_deps += [ "//mk/arch/x86:headers" ]
+  }
+}

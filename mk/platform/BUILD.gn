@@ -9,11 +9,45 @@ import("//build/kernel/zx_library.gni")
 
 zx_library("platform") {
   sources = [
-    "debug.c",
-    "init.c",
-    "power.c",
+    "debug.cc",
+    "efi.cc",
+    "efi_bootbyte.cc",
+    "efi_crashlog.cc",
+    "efi_test.cc",
+    "halt_helper.cc",
+    "hw_reboot_reason.cc",
+    "mexec.cc",
+    "power.cc",
+    "ram_mappable_crashlog.cc",
   ]
-  deps = [ "//mk/lib/console" ]
+  deps = [
+    "//mk/dev/interrupt",
+    "//mk/dev/pdev/hw_watchdog",
+    "//mk/lib/boot-options",
+    "//mk/lib/cbuf",
+    "//mk/lib/code-patching:headers",
+    "//mk/lib/console",
+    "//mk/lib/counters",
+    "//mk/lib/crashlog",
+    "//mk/lib/debuglog",
+    "//mk/lib/init",
+    "//mk/lib/instrumentation:headers",
+    "//mk/lib/jtrace:headers",
+    "//mk/lib/ktl",
+    "//mk/lib/persistent-debuglog",
+    "//mk/lib/root_resource_filter",
+    "//mk/lib/unittest",
+    "//mk/lib/zbi-format",
+    "//mk/phys:handoff",
+    "//mk/phys/lib/memalloc",
+    "//mk/ulib/fbl",
+    "//mk/ulib/ram-crashlog",
+    "//mk/ulib/zx",
+    "//src/lib/zbitl",
+  ]
 
-  public_deps = []
+  public_deps = [
+    # <platform/efi.h> has #include <efi/runtime_services.h>
+    "//mk/lib/efi:headers",
+  ]
 }

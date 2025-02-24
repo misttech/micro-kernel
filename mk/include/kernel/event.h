@@ -1,66 +1,110 @@
-// Copyright 2025 Mist Tecnologia Ltda
-// Copyright (c) 2012-2014 Travis Geiselbrecht
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2008-2014 Travis Geiselbrecht
 //
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT
 
-#ifndef MK_INCLUDE_KERNEL_EVENT_H_
-#define MK_INCLUDE_KERNEL_EVENT_H_
+#ifndef ZIRCON_KERNEL_INCLUDE_KERNEL_EVENT_H_
+#define ZIRCON_KERNEL_INCLUDE_KERNEL_EVENT_H_
 
-#include <stdbool.h>
+#include <stdint.h>
 #include <sys/types.h>
+#include <zircon/compiler.h>
+#include <zircon/types.h>
 
+#include <fbl/canary.h>
 #include <kernel/thread.h>
-#include <lk/compiler.h>
+#include <kernel/timer.h>
+#include <ktl/atomic.h>
 
-__BEGIN_CDECLS
+// Rules for Events and AutounsignalEvents:
+// - Events may be signaled from interrupt context *but* preemption must be
+//   disabled.
+// - Events may not be waited upon from interrupt context.
+// - Standard Events:
+//   - Wake up any waiting threads when signaled.
+//   - Continue to do so (no threads will wait) until unsignaled.
+//   - Stores a single result value when first signaled. This result is
+//     returned to waiters and cleared when unsignaled.
+// - AutounsignalEvents:
+//   - If one or more threads are waiting when signaled, one thread will
+//     be woken up and return.  The signaled state will not be set.
+//   - If no threads are waiting when signaled, the AutounsignalEvent will remain
+//     in the signaled state until a thread attempts to wait (at which
+//     time it will unsignal atomicly and return immediately) or
+//     AutounsignalEvent::Unsignal() is called.
+//   - Stores a single result value when signaled until a thread is woken.
 
-#define EVENT_MAGIC (0x65766E74)  // "evnt"
+class Event {
+ public:
+  constexpr explicit Event(bool initial = false) : Event(initial, Flags::NONE) {}
 
-typedef struct event {
-  int magic;
-  bool signaled;
-  uint flags;
-  wait_queue_t wait;
-} event_t;
+  ~Event();
 
-#define EVENT_FLAG_AUTOUNSIGNAL 1
+  Event(const Event&) = delete;
+  Event& operator=(const Event&) = delete;
 
-#define EVENT_INITIAL_VALUE(e, initial, _flags)   \
-  {                                               \
-      .magic = EVENT_MAGIC,                       \
-      .signaled = initial,                        \
-      .flags = _flags,                            \
-      .wait = WAIT_QUEUE_INITIAL_VALUE((e).wait), \
+  // Event::Wait() and other Wait functions will return ZX_OK if already signaled, even if deadline
+  // has passed. They will return ZX_ERR_TIMED_OUT after the deadline passes if the event has not
+  // been signaled.
+
+  // Returns:
+  // ZX_OK - signaled
+  // ZX_ERR_TIMED_OUT - time out expired
+  // ZX_ERR_INTERNAL_INTR_KILLED - thread killed
+  // ZX_ERR_INTERNAL_INTR_RETRY - thread is suspended
+  // Or the |status| which the caller specified in Event::Signal(status)
+  zx_status_t Wait(const Deadline& deadline) { return WaitWorker(deadline, Interruptible::Yes, 0); }
+
+  // Same as Wait() but waits forever and gives a mask of signals to ignore.
+  // The caller must be interruptible.
+  zx_status_t WaitWithMask(uint signal_mask) {
+    return WaitWorker(Deadline::infinite(), Interruptible::Yes, signal_mask);
   }
 
-/* Rules for Events:
- * - Events may be signaled from interrupt context *but* the reschedule
- *   parameter must be false in that case.
- * - Events may not be waited upon from interrupt context.
- * - Events without FLAG_AUTOUNSIGNAL:
- *   - Wake up any waiting threads when signaled.
- *   - Continue to do so (no threads will wait) until unsignaled.
- * - Events with FLAG_AUTOUNSIGNAL:
- *   - If one or more threads are waiting when signaled, one thread will
- *     be woken up and return.  The signaled state will not be set.
- *   - If no threads are waiting when signaled, the Event will remain
- *     in the signaled state until a thread attempts to wait (at which
- *     time it will unsignal atomicly and return immediately) or
- *     event_unsignal() is called.
- */
+  // no deadline, non interruptible version of the above.
+  zx_status_t Wait() { return WaitWorker(Deadline::infinite(), Interruptible::No, 0); }
 
-void event_init(event_t *, bool initial, uint flags);
-void event_destroy(event_t *);
-status_t event_wait_timeout(event_t *, lk_time_t); /* wait on the event with a timeout */
-status_t event_signal(event_t *, bool reschedule);
-status_t event_unsignal(event_t *);
+  // Wait until deadline
+  // Interruptible arg allows it to return early with ZX_ERR_INTERNAL_INTR_KILLED if thread
+  // is signaled for kill or with ZX_ERR_INTERNAL_INTR_RETRY if the thread is suspended.
+  zx_status_t WaitDeadline(zx_instant_mono_t deadline, Interruptible interruptible) {
+    return WaitWorker(Deadline::no_slack(deadline), interruptible, 0);
+  }
 
-static inline bool event_initialized(event_t *e) { return e->magic == EVENT_MAGIC; }
+  void Signal(zx_status_t wait_result = ZX_OK) TA_EXCL(chainlock_transaction_token);
+  zx_status_t Unsignal();
+  bool is_signaled() const { return result_.load(ktl::memory_order_relaxed) != kNotSignaled; }
 
-static inline status_t event_wait(event_t *e) { return event_wait_timeout(e, INFINITE_TIME); }
+ protected:
+  enum Flags : uint32_t {
+    NONE = 0,
+    AUTOUNSIGNAL = 1,
+  };
 
-__END_CDECLS
+  // Only our AutounsignalEvent subclass can also access this, to keep the flags private.
+  constexpr Event(bool initial, Flags flags)
+      : magic_(kMagic), result_(initial ? ZX_OK : kNotSignaled), flags_(flags) {}
 
-#endif  // MK_INCLUDE_KERNEL_EVENT_H_
+ private:
+  zx_status_t WaitWorker(const Deadline& deadline, Interruptible interruptible, uint signal_mask)
+      TA_EXCL(chainlock_transaction_token);
+
+  static constexpr uint32_t kMagic = fbl::magic("evnt");
+  uint32_t magic_;
+
+  static constexpr zx_status_t kNotSignaled = INT_MAX;
+  ktl::atomic<zx_status_t> result_;
+
+  Flags flags_;
+  WaitQueue wait_;
+};
+
+class AutounsignalEvent : public Event {
+ public:
+  constexpr explicit AutounsignalEvent(bool initial = false)
+      : Event(initial, Flags::AUTOUNSIGNAL) {}
+};
+
+#endif  // ZIRCON_KERNEL_INCLUDE_KERNEL_EVENT_H_

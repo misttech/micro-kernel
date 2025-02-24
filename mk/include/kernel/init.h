@@ -1,13 +1,14 @@
-// Copyright 202 Mist Tecnologia Ltda
-// Copyright (c) 2021 Travis Geiselbrecht
+// Copyright 2017 The Fuchsia Authors
 //
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT
 
-#ifndef MK_INCLUDE_KERNEL_INIT_H_
-#define MK_INCLUDE_KERNEL_INIT_H_
+#ifndef ZIRCON_KERNEL_INCLUDE_KERNEL_INIT_H_
+#define ZIRCON_KERNEL_INCLUDE_KERNEL_INIT_H_
 
-void kernel_init(void);
+#include <zircon/compiler.h>
 
-#endif  // MK_INCLUDE_KERNEL_INIT_H_
+void kernel_init();
+
+#endif  // ZIRCON_KERNEL_INCLUDE_KERNEL_INIT_H_

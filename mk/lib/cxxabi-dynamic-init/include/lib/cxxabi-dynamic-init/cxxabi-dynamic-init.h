@@ -15,7 +15,7 @@
 // defined in the .cc file and are simply trivial wrappers around Acquire, Release, and Abort in
 // order to facilitate testing.
 //
-// See also //zircon/kernel/lib/cxxabi-dynamic-init/README.md.
+// See also //mk/lib/cxxabi-dynamic-init/README.md.
 
 namespace cxxabi_dynamic_init {
 

@@ -1,105 +1,96 @@
-/*
- * Copyright (c) 2014 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
-#include <lk/asm.h>
-#include <arch/asm_macros.h>
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2014 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
-/* void arm64_context_switch(vaddr_t *old_sp, vaddr_t new_sp); */
+#include <lib/arch/asm.h>
+#include <arch/arm64/asm.h>
+#include <lib/arch/arm64/system-asm.h>
+
+#ifndef __has_feature
+#define __has_feature(x) 0
+#endif
+
+#if __has_feature(shadow_call_stack)
+// void arm64_context_switch(vaddr_t* old_sp, vaddr_t new_sp, vaddr_t new_tpidr,
+//                           uintptr_t** old_scsp, uintptr_t* new_scsp);
+#else
+// void arm64_context_switch(vaddr_t* old_sp, vaddr_t new_sp, vaddr_t new_tpidr);
+#endif
 FUNCTION(arm64_context_switch)
+    /* The exclusive monitor is logically part of a thread's context.  Clear it to ensure the new
+       thread does not complete the store half of a load-exclusive/store-exclusive started by the
+       old thread.  If the context switch involves an exception return (eret) the monitor will be
+       cleared automatically.  However, if the thread has yielded, an eret may not occur and so we
+       must clear it here. */
+    clrex
+
     /* save old frame */
-    push x28, x29
-    push x26, x27
-    push x24, x25
-    push x22, x23
-    push x20, x21
-    push x18, x19
-    mrs  x18, tpidr_el0
-    mrs  x19, tpidrro_el0
-    push x18, x19
-    push x30, xzr
+    /* This layout should match struct context_switch_frame */
+    sub_from_sp (6 * 16)
+    str  x19, [sp] // don't save x20, it is the percpu pointer
+    stp  x21, x22, [sp, (1 * 16)]
+    stp  x23, x24, [sp, (2 * 16)]
+    stp  x25, x26, [sp, (3 * 16)]
+    stp  x27, x28, [sp, (4 * 16)]
+    stp  x29, x30, [sp, (5 * 16)]
 
     /* save old sp */
-    mov  x15, sp
-    str  x15, [x0]
+    mov  x9, sp
+    str  x9, [x0]
 
     /* load new sp */
     mov  sp, x1
 
+    /* load the new tpidr */
+    msr  tpidr_el1, x2
+
+#if __has_feature(shadow_call_stack)
+    str shadow_call_sp, [x3]
+    mov shadow_call_sp, x4
+#endif
+
     /* restore new frame */
-    pop  x30, xzr
-    pop  x18, x19
-    msr  tpidr_el0, x18
-    msr  tpidrro_el0, x19
-    pop  x18, x19
-    pop  x20, x21
-    pop  x22, x23
-    pop  x24, x25
-    pop  x26, x27
-    pop  x28, x29
+    ldr  x19, [sp] // don't restore x20, it's the percpu pointer
+    ldp  x21, x22, [sp, (1 * 16)]
+    ldp  x23, x24, [sp, (2 * 16)]
+    ldp  x29, x30, [sp, (5 * 16)] // Restore earlier for better scheduling with ret
+    ldp  x25, x26, [sp, (3 * 16)]
+    ldp  x27, x28, [sp, (4 * 16)]
+    add_to_sp (6 * 16)
 
     ret
+    // Prevent speculation through RET
+    SPECULATION_POSTFENCE
+END_FUNCTION(arm64_context_switch)
 
-    /* drop from whatever EL we may already be in to EL1.
-     * carefully avoids using x0-x3 since this is called from start.S
-     * which is trying to preserve them.
-     */
-FUNCTION(arm64_elX_to_el1)
-    mrs x4, CurrentEL
+FUNCTION(arm64_get_secondary_sp)
+    mrs     x9, mpidr_el1
+    movlit  x10, 0xff00ffffff  // Mask for AFFx (cluster) IDs.
+    and     x9, x9, x10
+    mov     x10, #SMP_MAX_CPUS
 
-    cmp x4, #(0b01 << 2)
-    bne .notEL1
-    /* Already in EL1 */
+    adr_global x11, arm64_secondary_sp_list
+
+.Lsp_loop:
+    ldr     x12, [x11, #0]
+    cmp     x12, x9
+    beq     .Lsp_found
+    add     x11, x11, #40
+    subs    x10, x10, #1
+    bne     .Lsp_loop
+    mov     x0, xzr
+    mov     x1, xzr
+    mov     x2, xzr
     ret
+    SPECULATION_POSTFENCE
 
-.notEL1:
-    cmp x4, #(0b10 << 2)
-    beq .inEL2
-
-    /* set EL2 to 64bit */
-    mrs x4, scr_el3
-    orr x4, x4, #(1<<10)
-    msr scr_el3, x4
-
-    /* prep this mode's ELR and SPSR to drop into EL1 */
-    adr x4, .Ltarget
-    msr elr_el3, x4
-
-    mov x4, #((0b1111 << 6) | (0b0101)) /* EL1h runlevel */
-    msr spsr_el3, x4
-    b   .confEL1
-
-.inEL2:
-    /* prep this mode's ELR and SPSR to drop into EL1 */
-    adr x4, .Ltarget
-    msr elr_el2, x4
-    mov x4, #((0b1111 << 6) | (0b0101)) /* EL1h runlevel */
-    msr spsr_el2, x4
-
-.confEL1:
-    /* disable EL2 coprocessor traps */
-    mov x4, #0x33ff
-    msr cptr_el2, x4
-
-    /* set EL1 to 64bit and disable EL2 instruction traps */
-    mov x4, #(1<<31)
-    msr hcr_el2, x4
-
-    /* set up the EL1 bounce interrupt */
-    mov x4, sp
-    msr sp_el1, x4
-
-    /* make sure MPIDR_EL1 and MIDR_EL1 are set with the proper values */
-    mrs x4, mpidr_el1
-    msr vmpidr_el2, x4
-    mrs x4, midr_el1
-    msr vpidr_el2, x4
-
-    isb
-    eret
-
-.Ltarget:
+.Lsp_found:
+    ldr     x0, [x11, #8]
+    ldr     x2, [x11, #16]
+    add     x1, x11, #40
     ret
+    SPECULATION_POSTFENCE
+END_FUNCTION(arm64_get_secondary_sp)

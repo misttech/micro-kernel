@@ -1,46 +1,31 @@
-/*
- * Copyright (c) 2009 Corey Tabaka
- * Copyright (c) 2015 Intel Corporation
- * Copyright (c) 2016 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
-#include <lk/asm.h>
-#include <arch/x86/descriptor.h>
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2009 Corey Tabaka
+// Copyright (c) 2015 Intel Corporation
+// Copyright (c) 2016 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
-#define PHYS_LOAD_ADDRESS (MEMBASE + KERNEL_LOAD_OFFSET)
-#define PHYS_ADDR_DELTA (KERNEL_BASE + KERNEL_LOAD_OFFSET - PHYS_LOAD_ADDRESS)
-#define PHYS(x) ((x) - PHYS_ADDR_DELTA)
+#include <lib/arch/asm.h>
 
-.section .rodata
+.object _temp_gdtr_words, scope=local, type=relro, align=8
+// Intentionlly misalign this by 6 so that the address word holding _temp_gdt
+// is naturally aligned.
+.skip 6
+.label _temp_gdtr, global
+    .short _temp_gdt_end - _temp_gdt - 1
+    .quad _temp_gdt
+.end_object
 
-.balign 8
-DATA(_gdtr_phys)
-    .short _gdt_end - _gdt - 1
-    .int PHYS(_gdt)
-END_DATA(_gdtr_phys)
-
-.balign 8
-DATA(_gdtr)
-    .short _gdt_end - _gdt - 1
-#if ARCH_X86_32
-    .int _gdt
-#elif ARCH_X86_64
-    .quad _gdt
-#endif
-END_DATA(_gdtr)
-
-.data
-.balign 8
-DATA(_gdt)
+// Not rodata since the it gets mutated by calls to set_global_desc_64() in
+// //mk/arch/x86/descriptor.cc.
+.object _temp_gdt, scope=global, type=data, align=8
+    /* null entry */
     .int 0
     .int 0
 
-/* ring 0 descriptors */
-.set codesel_32, . - _gdt
-_code_32_gde:
+    /* CODE_SELECTOR */
     .short 0xffff           /* limit 15:00 */
     .short 0x0000           /* base 15:00 */
     .byte  0x00             /* base 23:16 */
@@ -48,36 +33,7 @@ _code_32_gde:
     .byte  0b11001111       /* G(1) D(1) 0 0 limit 19:16 */
     .byte  0x0              /* base 31:24 */
 
-.set datasel, . - _gdt
-_data_gde:
-    .short 0xffff           /* limit 15:00 */
-    .short 0x0000           /* base 15:00 */
-    .byte  0x00             /* base 23:16 */
-    .byte  0b10010010       /* P(1) DPL(00) S(1) 0 E(0) W(1) A(0) */
-    .byte  0b11001111       /* G(1) B(1) 0 0 limit 19:16 */
-    .byte  0x0              /* base 31:24 */
-
-.set user_codesel_32, . - _gdt
-_user_code_32_gde:
-    .short 0xffff           /* limit 15:00 */
-    .short 0x0000           /* base 15:00 */
-    .byte  0x00             /* base 23:16 */
-    .byte  0b11111010       /* P(1) DPL(11) S(1) 1 C(0) R(1) A(0) */
-    .byte  0b11001111       /* G(1) D(1) 0 0 limit 19:16 */
-    .byte  0x0              /* base 31:24 */
-
-
-.set user_datasel, . - _gdt
-_user_data_32_gde:
-    .short 0xffff           /* limit 15:00 */
-    .short 0x0000           /* base 15:00 */
-    .byte  0x00             /* base 23:16 */
-    .byte  0b11110010       /* P(1) DPL(11) S(1) 0 E(0) W(1) A(0) */
-    .byte  0b11001111       /* G(1) B(1) 0 0 limit 19:16 */
-    .byte  0x0              /* base 31:24 */
-
-.set codesel_64, . - _gdt
-_code_64_gde:
+    /* CODE_64_SELECTOR */
     .short 0xffff           /* limit 15:00 */
     .short 0x0000           /* base 15:00 */
     .byte  0x00             /* base 23:16 */
@@ -85,26 +41,19 @@ _code_64_gde:
     .byte  0b10101111       /* G(1) D(0) L(1) AVL(0) limit 19:16 */
     .byte  0x0              /* base 31:24 */
 
-.set datasel_64, . - _gdt
-_data_64_gde:
+    /* DATA_SELECTOR */
     .short 0xffff           /* limit 15:00 */
     .short 0x0000           /* base 15:00 */
     .byte  0x00             /* base 23:16 */
-    .byte  0b10010010       /* P(1) DPL(00) S(1) 1 C(0) R(1) A(0) */
-    .byte  0b11001111       /* G(1) B(1) 0 AVL(0) limit 19:16 */
+    .byte  0b10010010       /* P(1) DPL(00) S(1) 0 E(0) W(1) A(0) */
+    .byte  0b11001111       /* G(1) B(1) 0 0 limit 19:16 */
     .byte  0x0              /* base 31:24 */
 
-.set user_codesel_64, . - _gdt
-_user_code_64_gde:
-    .short 0xffff           /* limit 15:00 */
-    .short 0x0000           /* base 15:00 */
-    .byte  0x00             /* base 23:16 */
-    .byte  0b11111010       /* P(1) DPL(11) S(1) 1 C(0) R(1) A(0) */
-    .byte  0b10101111       /* G(1) D(1) L(0) AVL(0) limit 19:16 */
-    .byte  0x0              /* base 31:24 */
+    /* disable 32bit ring3 code descriptor on 64bit kernel */
+    .int  0x0
+    .int  0x0
 
-.set user_datasel_64, . - _gdt
-_user_data_64_gde:
+    /* USER_DATA_SELECTOR */
     .short 0xffff           /* limit 15:00 */
     .short 0x0000           /* base 15:00 */
     .byte  0x00             /* base 23:16 */
@@ -112,22 +61,27 @@ _user_data_64_gde:
     .byte  0b11001111       /* G(1) B(1) 0 0 limit 19:16 */
     .byte  0x0              /* base 31:24 */
 
-/* TSS descriptor */
-.set tsssel, . - _gdt
-_tss_gde:
-.set i, 1
+    /* USER_CODE_64_SELECTOR */
+    .short 0xffff           /* limit 15:00 */
+    .short 0x0000           /* base 15:00 */
+    .byte  0x00             /* base 23:16 */
+    .byte  0b11111010       /* P(1) DPL(11) S(1) 1 C(0) R(1) A(0) */
+    .byte  0b10101111       /* G(1) D(0) L(1) AVL(0) limit 19:16 */
+    .byte  0x0              /* base 31:24 */
+
 .rept SMP_MAX_CPUS
+    /* TSS_SELECTORs */
     .short 0                /* limit 15:00 */
     .short 0                /* base 15:00 */
     .byte  0                /* base 23:16 */
-    .byte  0x89             /* P(1) DPL(00) S(0) TYPE(9) */
-    .byte  0x80             /* G(1) D/B(0) L(0) AVL(0) limit 19:16 */
+    .byte  0b10001001       /* P(1) DPL(00) 0 10 B(0) 1 */
+    .byte  0b10000000       /* G(1) 0 0 AVL(0) limit 19:16 */
     .byte  0                /* base 31:24 */
-    .quad  0x0000000000000000
-.set i, i+1
+    /* second half of 64bit desciptor */
+    .int   0x00000000       /* base 63:32 */
+    .int   0x00000000       /* reserved/sbz */
 .endr
 
-END_DATA(_gdt)
-
-DATA(_gdt_end)
+.label _temp_gdt_end, global
+.end_object
 

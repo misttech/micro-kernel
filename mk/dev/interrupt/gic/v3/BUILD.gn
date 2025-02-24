@@ -1,0 +1,35 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/cpp/library_headers.gni")
+
+library_headers("headers") {
+  headers = [
+    "dev/interrupt/arm_gicv3_init.h",
+    "dev/interrupt/arm_gicv3_regs.h",
+  ]
+  public_deps = [ "//mk/lib/zbi-format" ]
+}
+
+source_set("v3") {
+  sources = [
+    "arm_gicv3.cc",
+    "arm_gicv3_pcie.cc",
+  ]
+  public_deps = [ ":headers" ]
+  deps = [
+    "//mk/dev/interrupt",
+    "//mk/dev/interrupt/gic/common",
+    "//mk/dev/interrupt/gic/v2:headers",
+    "//mk/dev/pcie",
+    "//mk/dev/pdev/interrupt",
+    "//mk/lib/init",
+    "//mk/lib/kpci",
+    "//mk/lib/ktrace",
+    "//mk/lib/root_resource_filter",
+    "//mk/ulib/lazy_init",
+  ]
+}

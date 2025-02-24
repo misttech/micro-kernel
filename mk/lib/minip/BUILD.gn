@@ -20,6 +20,8 @@ zx_library("minip") {
   deps = [
     "//mk/lib/cbuf",
     "//mk/lib/console",
+    "//mk/lib/fbl",
+    "//mk/lib/init",
     "//mk/lib/iovec",
     "//mk/lib/pool",
     "//mk/lib/pretty",

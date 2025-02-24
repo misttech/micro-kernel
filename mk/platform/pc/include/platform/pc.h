@@ -1,42 +1,38 @@
-/*
- * Copyright (c) 2009 Corey Tabaka
- * Copyright (c) 2015 Intel Corporation
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
-#pragma once
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2009 Corey Tabaka
+// Copyright (c) 2015 Intel Corporation
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
+#ifndef ZIRCON_KERNEL_PLATFORM_PC_INCLUDE_PLATFORM_PC_H_
+#define ZIRCON_KERNEL_PLATFORM_PC_INCLUDE_PLATFORM_PC_H_
+
+#include <arch/x86/interrupts.h>
 #include <platform/pc/iomap.h>
-#include <platform/pc/memmap.h>
 
 /* NOTE: keep arch/x86/crt0.S in sync with these definitions */
 
-/* interrupts */
-#define INT_VECTORS 256
-
 /* defined interrupts */
-#define INT_BASE 0x20
-#define INT_PIT 0x20
-#define INT_KEYBOARD 0x21
-#define INT_PIC2 0x22
-#define INT_COM2_COM4 0x23
-#define INT_COM1_COM3 0x24
-
-#define INT_BASE2 0x28
-#define INT_CMOSRTC 0x28
-#define INT_PS2MOUSE 0x2c
-#define INT_IDE0 0x2e
-#define INT_IDE1 0x2f
-
-/* dynamic interrupts are allocated in this range */
-#define INT_DYNAMIC_START 0x30
-#define INT_DYNAMIC_END 0xef
-
-/* APIC vectors */
-#define INT_APIC_TIMER 0xf0
+#define ISA_IRQ_PIT 0
+#define ISA_IRQ_KEYBOARD 1
+#define ISA_IRQ_PIC2 2
+#define ISA_IRQ_SERIAL2 3
+#define ISA_IRQ_SERIAL1 4
+#define ISA_IRQ_PRINTER1 7
+#define ISA_IRQ_CMOSRTC 8
+#define ISA_IRQ_PS2MOUSE 12
+#define ISA_IRQ_IDE0 14
+#define ISA_IRQ_IDE1 15
 
 /* PIC remap bases */
-#define INT_PIC1_BASE 0x20
-#define INT_PIC2_BASE 0x28
+#define PIC1_BASE X86_INT_PLATFORM_BASE
+#define PIC2_BASE (PIC1_BASE + 8)
+
+// Manufacturer and product name information, fetched from SMBIOS during
+// system startup.
+extern const char* manufacturer;
+extern const char* product;
+
+#endif  // ZIRCON_KERNEL_PLATFORM_PC_INCLUDE_PLATFORM_PC_H_

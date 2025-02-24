@@ -6,6 +6,7 @@
  * https://opensource.org/licenses/MIT
  */
 
+#include <align.h>
 #include <assert.h>
 #include <lib/page_alloc.h>
 #include <string.h>

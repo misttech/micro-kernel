@@ -183,7 +183,8 @@ if (defined(toolchain_variant.is_basic) && toolchain_variant.is_basic) {
 # Some library targets may be built as different type depending on the target
 # platform. This variable specifies the default library type for each target.
 if (is_mk) {
-  #default_library_type = "shared_library"
+  default_library_type = "shared_library"
+} else {
   default_library_type = "static_library"
 }
 
@@ -445,6 +446,7 @@ if (kernel_toolchain == false) {
     "//build/config:relative_paths",
     "//build/config:symbol_visibility_hidden",
     "//build/config:thread_safety_annotations",
+
     #"//build/config:werror",
     "//build/config:no-template-backtrace-limit",
     "//build/config/kernel:compiler",
@@ -1127,7 +1129,7 @@ foreach(_target_type,
             (defined(hermetic_action_ignored_prefixes) &&
              filter_exclude(hermetic_action_ignored_prefixes,
                             _ignored_prefixes_allowlist) != [])) {
-          deps += [ "//build:non_hermetic_deps" ]
+          #deps += [ "//build:non_hermetic_deps" ]
         }
       }
       if (!hermetic_toolchain || !hermetic_deps) {
@@ -1135,8 +1137,8 @@ foreach(_target_type,
         # This is useful for ensuring incremental build correctness, even in
         # the presence of non-hermetic actions.
         inputs += [ "$root_build_dir/force_nonhermetic_rebuild" ]
-        deps +=
-            [ "//build/tracer:nonhermetic_rebuild_sentinel($host_toolchain)" ]
+        #deps +=
+        #    [ "//build/tracer:nonhermetic_rebuild_sentinel($host_toolchain)" ]
       }
 
       if (!should_trace) {
@@ -1260,7 +1262,7 @@ foreach(_target_type,
 
       # To suppress checking for output dir leaks, in the invoker:
       #   no_output_dir_leaks = false
-      no_output_dir_leaks = true
+      no_output_dir_leaks = false
       if (defined(invoker.no_output_dir_leaks)) {
         no_output_dir_leaks = invoker.no_output_dir_leaks
       } else if (string_replace("##${current_toolchain}",
@@ -1272,7 +1274,7 @@ foreach(_target_type,
       }
 
       if (!no_output_dir_leaks) {
-        deps += [ "//build:output_dir_leaking_allowlist" ]
+        #deps += [ "//build:output_dir_leaking_allowlist" ]
       }
 
       # Prevent the build output dir path from leaking into the

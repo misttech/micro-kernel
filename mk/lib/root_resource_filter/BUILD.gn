@@ -1,0 +1,21 @@
+# Copyright 2020 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/migrated_targets.gni")
+
+zx_library("root_resource_filter") {
+  sources = [ "root_resource_filter.cc" ]
+  deps = [
+    "//mk/lib/counters",
+    "//mk/lib/crypto",
+    "//mk/lib/debuglog",
+    "//mk/lib/init",
+    "//mk/lib/page_cache",
+    "//mk/phys:handoff",
+    "//mk/phys/lib/memalloc",
+    "//mk/ulib/region-alloc",
+  ]
+}

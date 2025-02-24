@@ -56,7 +56,7 @@ group("stdcompat-test-deps") {
   testonly = true
   visibility = [ ":*" ]
   public_deps = [
-    "//sdk/lib/stdcompat",
+    "//mk/lib/stdcompat",
     "//src/lib/fxl/test:gtest_main",
     "//src/sys/test_runners/gtest:death_test",
     "//third_party/googletest:gmock",

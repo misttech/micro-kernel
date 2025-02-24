@@ -1,10 +1,9 @@
-// Copyright 2025 Mist Tecnologia Ltda. All rights reserved.
 // Copyright 2018 The Fuchsia Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef TOP_INCLUDE_ZIRCON_LIMITS_H_
-#define TOP_INCLUDE_ZIRCON_LIMITS_H_
+#ifndef ZIRCON_LIMITS_H_
+#define ZIRCON_LIMITS_H_
 
 #include <stdint.h>
 
@@ -36,4 +35,4 @@
 #define ZX_MIN_PAGE_SIZE ((uintptr_t)(1u << ZX_MIN_PAGE_SHIFT))
 #define ZX_MAX_PAGE_SIZE ((uintptr_t)(1u << ZX_MAX_PAGE_SHIFT))
 
-#endif  // TOP_INCLUDE_ZIRCON_LIMITS_H_
+#endif  // ZIRCON_LIMITS_H_

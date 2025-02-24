@@ -43,6 +43,7 @@ exec_script_whitelist = [
   "//build/toolchain/default_concurrent_jobs.gni",
   "//build/toolchain/mk/mk_toolchain.gni",
   "//build/config/clang/clang_toolchain_info.gni",
+  "//mk/arch/x86/phys/BUILD.gn",
 ]
 
 check_system_includes = true

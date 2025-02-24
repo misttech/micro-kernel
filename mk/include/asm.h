@@ -1,4 +1,3 @@
-// Copyright 2025 Mist Tecnologia Ltda
 // Copyright 2016 The Fuchsia Authors
 // Copyright (c) 2008-2013 Travis Geiselbrecht
 //
@@ -6,8 +5,8 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT
 
-#ifndef MK_INCLUDE_ASM_H_
-#define MK_INCLUDE_ASM_H_
+#ifndef ZIRCON_KERNEL_INCLUDE_ASM_H_
+#define ZIRCON_KERNEL_INCLUDE_ASM_H_
 
 #ifndef __ASSEMBLER__
 #error for assembly files only
@@ -41,5 +40,4 @@
   .cfi_escape DW_CFA_val_expression, \reg, 1, DW_OP_lit0
 .endm
 
-#endif  // MK_INCLUDE_ASM_H_
-
+#endif  // ZIRCON_KERNEL_INCLUDE_ASM_H_

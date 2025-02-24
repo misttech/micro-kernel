@@ -1,4 +1,3 @@
-// Copyright 2025 Mist Tecnologia Ltda
 // Copyright 2016 The Fuchsia Authors
 // Copyright (c) 2008-2009 Travis Geiselbrecht
 //
@@ -11,8 +10,8 @@
 #include <assert.h>
 #include <ctype.h>
 #include <debug.h>
-#include <lib/zircon-internal/thread_annotations.h>
-#include <platform.h>
+#include <lib/boot-options/boot-options.h>
+#include <lib/debuglog.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,12 +51,9 @@ static char* debug_buffer;
 static bool echo = true;
 
 /* command processor state */
-#if 0
 namespace {
 DECLARE_SINGLETON_MUTEX(CommandLock);
 }  // namespace
-#endif
-static Mutex command_lock;
 int lastresult;
 static bool exit_console;
 
@@ -590,7 +586,7 @@ static zx_status_t command_loop(int (*get_line)(const char**, void*), void* get_
     }
 
     if (!locked)
-      command_lock.acquire();
+      CommandLock::Get()->lock().Acquire();
 
     exit_console = false;
     lastresult = command->cmd_callback(argc, args, 0);
@@ -619,7 +615,7 @@ static zx_status_t command_loop(int (*get_line)(const char**, void*), void* get_
     }
 
     if (!locked)
-      command_lock.release();
+      CommandLock::Get()->lock().Release();
   }
 
   free(outbuf);
@@ -756,7 +752,7 @@ static void panic_puts(const char* str) {
 
 static int panic_getc(void) {
   char c;
-  if (platform_pgetc(&c, false) < 0) {
+  if (platform_pgetc(&c) < 0) {
     return -1;
   } else {
     return c;
@@ -808,7 +804,7 @@ void panic_shell_start(void) {
   // Panic may have been triggered via an interrupt/exception path, where blocking would normally
   // disallowed. As some panic shell commands need to take mutexes and perform other operations that
   // would otherwise be invalid if blocking is disallowed we re-allow it.
-  // arch_set_blocking_disallowed(false);
+  arch_set_blocking_disallowed(false);
 
   for (;;) {
     panic_puts("! ");
@@ -861,11 +857,10 @@ static int cmd_boot_test_success(int argc, const cmd_args* argv, uint32_t flags)
 
 static int cmd_graceful_shutdown(int argc, const cmd_args* argv, uint32_t flags) {
   printf("*** Performing graceful shutdown from kernel shell... ***\n");
-  // const zx_instant_mono_t dlog_deadline = current_mono_time() + ZX_SEC(10);
-  // dlog_shutdown(dlog_deadline);
+  const zx_instant_mono_t dlog_deadline = current_mono_time() + ZX_SEC(10);
+  dlog_shutdown(dlog_deadline);
   // Does not return.
-  // platform_halt(HALT_ACTION_SHUTDOWN, ZirconCrashReason::NoCrash);
-  platform_halt(HALT_ACTION_SHUTDOWN, HALT_REASON_NO_CRASH);
+  platform_halt(HALT_ACTION_SHUTDOWN, ZirconCrashReason::NoCrash);
 }
 
 static int cmd_exit(int argc, const cmd_args* argv, uint32_t flags) {
@@ -927,7 +922,6 @@ static int cmd_repeat(int argc, const cmd_args* argv, uint32_t flags) {
   return ZX_OK;
 }
 
-#if 0
 static constexpr TimerSlack kSlack{ZX_MSEC(10), TIMER_SLACK_CENTER};
 
 void RecurringCallback::CallbackWrapper(Timer* t, zx_instant_mono_t now, void* arg) {
@@ -960,10 +954,8 @@ void RecurringCallback::Toggle() {
     started_ = false;
   }
 }
-#endif
 
 void kernel_shell_init() {
-#if 0
   if (!gBootOptions->shell_script.empty()) {
     SmallString script = gBootOptions->shell_script;
     for (char* p = strchr(script.data(), '+'); p; p = strchr(p + 1, '+')) {
@@ -974,6 +966,4 @@ void kernel_shell_init() {
   if (gBootOptions->shell) {
     console_start();
   }
-#endif
-  console_start();
 }

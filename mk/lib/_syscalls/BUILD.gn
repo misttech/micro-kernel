@@ -1,0 +1,104 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/kernel_cpu.gni")
+import("//build/kernel/zx_library.gni")
+import("//mk/params.gni")
+
+assert(is_kernel, current_toolchain)
+
+zx_library("syscalls") {
+  visibility = [ "//mk/*" ]
+
+  # This can be used for headers only by the vDSO and test code.
+
+  sources = []
+
+  # Depend on the files generated from the syscall IDL.
+  public_deps = [ "//zircon/vdso:private" ]
+
+  if (!kernel_no_userabi) {
+    deps = [ ":impl" ]
+  }
+}
+
+source_set("impl") {
+  visibility = [ ":*" ]
+  sources = [
+    "channel.cc",
+    "clock.cc",
+    "debug.cc",
+    "driver.cc",
+    "driver_${kernel_cpu}.cc",
+    "driver_pci.cc",
+    "exceptions.cc",
+    "fifo.cc",
+    "futex.cc",
+    "handle_ops.cc",
+    "hypervisor.cc",
+    "iob.cc",
+    "object.cc",
+    "object_wait.cc",
+    "pager.cc",
+    "port.cc",
+    "profile.cc",
+    "resource.cc",
+    "restricted.cc",
+    "sampler.cc",
+    "socket.cc",
+    "stream.cc",
+    "system.cc",
+    "system_${kernel_cpu}.cc",
+    "task.cc",
+    "test.cc",
+    "timer.cc",
+    "vmar.cc",
+    "vmo.cc",
+    "zircon.cc",
+  ]
+  deps = [
+    ":dispatch",
+    ":headers",
+    "//src/lib/zbitl",
+    "//mk/lib/boot-options",
+    "//mk/lib/console",
+    "//mk/lib/counters",
+    "//mk/lib/crashlog",
+    "//mk/lib/crypto",
+    "//mk/lib/fbl",
+    "//mk/lib/heap",
+    "//mk/lib/io",
+    "//mk/lib/kpci",
+    "//mk/lib/ktl",
+    "//mk/lib/ktrace",
+    "//mk/lib/mtrace",
+    "//mk/lib/persistent-debuglog",
+    "//mk/lib/power-management",
+    "//mk/lib/thread_sampler",
+    "//mk/lib/user_copy",
+    "//mk/lib/userabi:headers",
+    "//mk/object",
+    "//mk/ulib/explicit-memory",
+    "//mk/ulib/region-alloc",
+  ]
+  if (current_cpu == "x64") {
+    deps += [
+      "//mk/lib/acpi_lite",
+      "//mk/platform/pc",
+    ]
+  }
+}
+
+# Only this file depends on vdso-valid-sysret.h.
+source_set("dispatch") {
+  sources = [ "syscalls.cc" ]
+  deps = [
+    ":headers",
+    "//mk/lib/boot-options",
+    "//mk/lib/ktl",
+    "//mk/lib/userabi:headers",
+  ]
+}

@@ -80,6 +80,17 @@
 
 
   "settings": {
+    // Matches the default Fuchsia code style.
+    "editor.rulers": [
+      100
+    ],
+
+    // Disable graph visualization of incoming/outgoing changes. This feature
+    // does not work well on Fuchsia git repositories with deep and complex
+    // histories. If left enabled, this would otherwise cause infinite loading
+    // in the "Source Control" tab.
+    "scm.showHistoryGraph": false,
+
     ////////
     // C/C++
 
@@ -88,9 +99,10 @@
       "--background-index",
       "--header-insertion=never"
     ],
-    "clangd.path": "${workspaceFolder}/prebuilt/downloads/clang/bin/clangd",
+    "[linux].clangd.path": "${workspaceFolder}/prebuilt/third_party/clang/linux-x64/bin/clangd",
+    "[mac].clangd.path": "${workspaceFolder}/prebuilt/third_party/clang/mac-x64/bin/clangd",
 
-    // Formats C/C++ include guards to match Fuchsia style.
+    // Formats C/C++ include guards to match mk style.
     "C/C++ Include Guard.Comment Style": "Line",
     "C/C++ Include Guard.Macro Type": "Filepath",
     "C/C++ Include Guard.Suffix": "_H_",
@@ -129,7 +141,6 @@
       // Don't exclude local files used for overrides
       "local/**": false,
     },
-
     "search.useIgnoreFiles": true,
     // Don't follow symlinks (into other parts of the tree)
     "search.followSymlinks": false,

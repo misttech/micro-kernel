@@ -14,6 +14,7 @@ zx_library("bio") {
 
   deps = [
     "//mk/lib/console",
+    "//mk/lib/init",
     "//mk/lib/pretty",
   ]
 }

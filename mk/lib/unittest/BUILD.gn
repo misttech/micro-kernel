@@ -1,0 +1,40 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/migrated_targets.gni")
+
+zx_library("unittest") {
+  sources = [ "unittest.cc" ]
+  deps = [ "//mk/ulib/pretty" ]
+  public_deps = [
+    # <lib/unittest/unittest.h> has #include <lib/special-sections/special-sections.h>.
+    "//mk/lib/special-sections:headers",
+  ]
+  if (toolchain_environment == "kernel") {
+    sources += [
+      "console.cc",
+      "user_memory.cc",
+      "user_memory_tests.cc",
+    ]
+    public_deps += [
+      # <lib/unittest/user_memory.h> has #include <lib/crypto/prng.h>.
+      "//mk/vm:headers",
+
+      # <lib/unittest/user_memory.h> has #include <lib/instrumentation/asan.h>.
+      "//mk/lib/instrumentation:headers",
+
+      # <lib/unittest/user_memory.h> has #include <ktl/move.h>.
+      "//mk/lib/ktl:headers",
+    ]
+    deps += [ "//mk/lib/console" ]
+  } else {
+    sources += [ "phys.cc" ]
+    deps += [
+      "//mk/lib/ktl",
+      "//mk/lib/libc",
+    ]
+  }
+}

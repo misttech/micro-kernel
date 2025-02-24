@@ -7,8 +7,8 @@
 //
 // May be included by C, C++, and assembly files.
 
-#ifndef TOP_INCLUDE_MK_COMPILER_H_
-#define TOP_INCLUDE_MK_COMPILER_H_
+#ifndef ZIRCON_COMPILER_H_
+#define ZIRCON_COMPILER_H_
 
 // Ensure we are using a known compiler.
 #if !defined(__GNUC__) && !defined(__clang__)
@@ -373,4 +373,4 @@
 
 #endif  // !defined(__ASSEMBLER__)
 
-#endif  // TOP_INCLUDE_MK_COMPILER_H_
+#endif  // ZIRCON_COMPILER_H_

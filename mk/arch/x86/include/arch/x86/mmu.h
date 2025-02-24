@@ -1,122 +1,128 @@
-/*
- * Copyright (c) 2008 Travis Geiselbrecht
- * Copyright (c) 2015 Intel Corporation
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
-#pragma once
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2008 Travis Geiselbrecht
+// Copyright (c) 2015 Intel Corporation
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
+
+#ifndef ZIRCON_KERNEL_ARCH_X86_INCLUDE_ARCH_X86_MMU_H_
+#define ZIRCON_KERNEL_ARCH_X86_INCLUDE_ARCH_X86_MMU_H_
+
+#include <arch/x86/page_tables/constants.h>
 
 /* top level defines for the x86 mmu */
 /* NOTE: the top part can be included from assembly */
-#define KB (1024UL)
-#define MB (1024UL * 1024UL)
-#define GB (1024UL * 1024UL * 1024UL)
 
-#define X86_MMU_PG_P 0x001       /* P    Valid                   */
-#define X86_MMU_PG_RW 0x002      /* R/W  Read/Write              */
-#define X86_MMU_PG_U 0x004       /* U/S  User/Supervisor         */
-#define X86_MMU_PG_PS 0x080      /* PS   Page size (0=4k,1=4M)   */
-#define X86_MMU_PG_PTE_PAT 0x080 /* PAT  PAT index               */
-#define X86_MMU_PG_G 0x100       /* G    Global                  */
-#define X86_MMU_CLEAR 0x0
-#define X86_DIRTY_ACCESS_MASK 0xf9f
-#define X86_MMU_CACHE_DISABLE 0x010 /* C Cache disable */
+#define X86_EPT_R (1u << 0) /* R    Read     */
+#define X86_EPT_W (1u << 1) /* W    Write    */
+#define X86_EPT_X (1u << 2) /* X    Execute  */
+#define X86_EPT_A (1u << 8) /* A    Accessed */
+#define X86_EPT_D (1u << 9) /* D    Dirty    */
 
-#if !X86_LEGACY
+/* From Volume 3, Section 28.2.6: EPT and Memory Typing */
+#define X86_EPT_MEMORY_TYPE_MASK (7u << 3)
+#define X86_EPT_UC (0u << 3) /* UC   Uncached memory type        */
+#define X86_EPT_WC (1u << 3) /* WC   Write-combining memory type */
+#define X86_EPT_WT (4u << 3) /* WT   Write-through memory type   */
+#define X86_EPT_WP (5u << 3) /* WP   Write-protected memory type */
+#define X86_EPT_WB (6u << 3) /* WB   Write-back memory type      */
+
+/* Page Attribute Table memory types, defined in Table 11-10 of Intel 3A */
+#define X86_PAT_UC 0x00  /* Uncached */
+#define X86_PAT_WC 0x01  /* Write-combining */
+#define X86_PAT_WT 0x04  /* Write-through */
+#define X86_PAT_WP 0x05  /* Write protected */
+#define X86_PAT_WB 0X06  /* Write-back */
+#define X86_PAT_UC_ 0x07 /* Weakly Uncached (can be overridden by a WC MTRR setting) */
+
+/* Our configuration for the PAT indexes.  This must be kept in sync with the
+ * selector definitions below it.  For safety, it is important to ensure that
+ * the default mode is less cached than our substitution.  This ensures that
+ * any mappings defined before we switch all CPUs to this new map will still
+ * function correctly. */
+#define X86_PAT_INDEX0 X86_PAT_WB  /* default */
+#define X86_PAT_INDEX1 X86_PAT_WT  /* default */
+#define X86_PAT_INDEX2 X86_PAT_UC_ /* default */
+#define X86_PAT_INDEX3 X86_PAT_UC  /* default */
+#define X86_PAT_INDEX4 X86_PAT_WB  /* default */
+#define X86_PAT_INDEX5 X86_PAT_WT  /* default */
+#define X86_PAT_INDEX6 X86_PAT_UC_ /* default */
+#define X86_PAT_INDEX7 X86_PAT_WC  /* UC by default */
+
+/* These assume our defined PAT entries.  We need to update these if we decide
+ * to change them PAT entries */
+#define X86_MMU_PTE_PAT_WRITEBACK X86_PAT_PTE_SELECTOR(0)
+#define X86_MMU_PTE_PAT_WRITETHROUGH X86_PAT_PTE_SELECTOR(1)
+#define X86_MMU_PTE_PAT_UNCACHABLE X86_PAT_PTE_SELECTOR(3)
+#define X86_MMU_PTE_PAT_WRITE_COMBINING X86_PAT_PTE_SELECTOR(7)
+#define X86_MMU_LARGE_PAT_WRITEBACK X86_PAT_LARGE_SELECTOR(0)
+#define X86_MMU_LARGE_PAT_WRITETHROUGH X86_PAT_LARGE_SELECTOR(1)
+#define X86_MMU_LARGE_PAT_UNCACHABLE X86_PAT_LARGE_SELECTOR(3)
+#define X86_MMU_LARGE_PAT_WRITE_COMBINING X86_PAT_LARGE_SELECTOR(7)
+
 /* default flags for inner page directory entries */
-#define X86_KERNEL_PD_FLAGS (X86_MMU_PG_RW | X86_MMU_PG_P)
+#define X86_KERNEL_PD_FLAGS (X86_MMU_PG_A | X86_MMU_PG_D | X86_MMU_PG_RW | X86_MMU_PG_P)
 
 /* default flags for 2MB/4MB/1GB page directory entries */
-#define X86_KERNEL_PD_LP_FLAGS (X86_MMU_PG_G | X86_MMU_PG_PS | X86_MMU_PG_RW | X86_MMU_PG_P)
-#else
-/* default flags for page dir and page table entries in legacy (386) format */
-#define X86_KERNEL_PT_FLAGS (X86_MMU_PG_RW | X86_MMU_PG_P)
-#endif
+#define X86_KERNEL_PD_LP_FLAGS \
+  (X86_MMU_PG_A | X86_MMU_PG_D | X86_MMU_PG_G | X86_MMU_PG_PS | X86_MMU_PG_RW | X86_MMU_PG_P)
 
-#define PAGE_SIZE 4096
-#define PAGE_DIV_SHIFT 12
+#define X86_MMU_PG_NX (1UL << 63)
 
-#if ARCH_X86_64
-/* PAE mode */
-#define X86_PDPT_ADDR_MASK (0x00000000ffffffe0ul)
-#define X86_PG_FRAME (0xfffffffffffff000ul)
-#define X86_PHY_ADDR_MASK (0x000ffffffffffffful)
-#define X86_FLAGS_MASK (0x8000000000000ffful)
-#define X86_PTE_NOT_PRESENT (0xFFFFFFFFFFFFFFFEul)
-#define X86_2MB_PAGE_FRAME (0x000fffffffe00000ul)
-#define PAGE_OFFSET_MASK_4KB (0x0000000000000ffful)
-#define PAGE_OFFSET_MASK_2MB (0x00000000001ffffful)
-#define X86_MMU_PG_NX (1ULL << 63)
+#define X86_PT_BASE_ADDRESS_MASK (((1ull << 39) - 1) << 12)
 
-#if ARCH_X86_64
-#define X86_PAGING_LEVELS 4
-#define PML4_SHIFT 39
-#else
-#define X86_PAGING_LEVELS 3
-#endif
+// ASAN shadow memory mapping flags; the shadow is always present, but only non-zero pages are
+// writable.
+//
+// All non-leaf page tables are mapped with flags that allow read-write, global, and no-execute.
+// These flags do not change for the life of the system.
+//
+// During early boot the entire shadow is mapped read-only to a single zero page. Later, read-write
+// pages replace portions of the shadow corresponding to memory covered by ASAN.
+#define X86_KERNEL_KASAN_INITIAL_PT_FLAGS (X86_MMU_PG_G | X86_MMU_PG_P)
+#define X86_KERNEL_KASAN_INITIAL_PD_FLAGS (X86_MMU_PG_P)
+#define X86_KERNEL_KASAN_RW_PT_FLAGS (X86_MMU_PG_G | X86_MMU_PG_RW | X86_MMU_PG_P)
+#define X86_KERNEL_KASAN_PD_FLAGS (X86_MMU_PG_RW | X86_MMU_PG_P)
 
-#define PDP_SHIFT 30
-#define PD_SHIFT 21
-#define PT_SHIFT 12
-#define ADDR_OFFSET 9
-#define PDPT_ADDR_OFFSET 2
-#define NO_OF_PT_ENTRIES 512
+#define MMU_GUEST_SIZE_SHIFT 48
 
-#else
-/* non PAE mode */
-#define X86_PG_FRAME (0xfffff000)
-#define X86_FLAGS_MASK (0x00000fff)
-#define X86_PTE_NOT_PRESENT (0xfffffffe)
-#define X86_4MB_PAGE_FRAME (0xffc00000)
-#define PAGE_OFFSET_MASK_4KB (0x00000fff)
-#define PAGE_OFFSET_MASK_4MB (0x003fffff)
-#define NO_OF_PT_ENTRIES 1024
-#define X86_PAGING_LEVELS 2
-#define PD_SHIFT 22
-#define PT_SHIFT 12
-#define ADDR_OFFSET 10
-
-#endif
+/* page fault error code flags */
+#define PFEX_P (1 << 0)
+#define PFEX_W (1 << 1)
+#define PFEX_U (1 << 2)
+#define PFEX_RSV (1 << 3)
+#define PFEX_I (1 << 4)
+#define PFEX_PK (1 << 5)
+#define PFEX_SGX (1 << 15)
 
 /* C defines below */
 #ifndef __ASSEMBLER__
 
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <sys/types.h>
 
-#include <lk/compiler.h>
-
-__BEGIN_CDECLS
-
-/* Different page table levels in the page table mgmt hirerachy */
-enum page_table_levels {
-  PF_L,
-  PT_L,
-  PD_L,
-#if ARCH_X86_64
-  PDP_L,
-  PML4_L
-#endif
-};
+#include <arch/x86/page_tables/page_tables.h>
 
 struct map_range {
   vaddr_t start_vaddr;
   paddr_t start_paddr; /* Physical address in the PAE mode is 32 bits wide */
-  uint32_t size;
+  size_t size;
 };
 
-#if ARCH_X86_64
-typedef uint64_t map_addr_t;
-typedef uint64_t arch_flags_t;
-#else
-typedef uint32_t map_addr_t;
-typedef uint32_t arch_flags_t;
-#endif
+bool x86_is_vaddr_canonical(vaddr_t vaddr);
+bool x86_mmu_check_paddr(paddr_t paddr);
 
-void x86_mmu_early_init(void);
-void x86_mmu_init(void);
+void x86_mmu_percpu_init();
+void x86_mmu_early_init();
+void x86_mmu_init();
+// Called once on the BSP after CPU init has been completed.
+void x86_mmu_prevm_init();
 
-__END_CDECLS
+volatile pt_entry_t* x86_upper_512gib_page_table();
 
 #endif  // !__ASSEMBLER__
+
+#endif  // ZIRCON_KERNEL_ARCH_X86_INCLUDE_ARCH_X86_MMU_H_

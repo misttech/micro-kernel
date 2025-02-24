@@ -1,0 +1,110 @@
+# Copyright 2020 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//build/kernel/migrated_targets.gni")
+
+zx_library("zbitl") {
+  # TODO: revist the following two specifications after the zircon-to-fuchsia
+  # build migration. They seem currently required in order to export the host
+  # compilation of this library to the fuchsia build.
+  sdk = "source"
+  sdk_headers = []
+
+  sources = [
+    "checking.cc",
+    "cpu-topology.cc",
+    "debugdata.cc",
+    "efi.cc",
+    "item.cc",
+  ]
+  deps = [
+    ":internal.decompress-zstd",
+    "//mk/third_party/ulib/cksum",
+
+    #"//src/zircon/lib/zircon",
+    "//mk/ulib/fbl",
+    "//mk/ulib/zx",
+  ]
+  public_deps = [
+    "//mk/lib/stdcompat",
+
+    # Many files have #include <lib/zbi-format/zbi.h>.
+    "//mk/lib/zbi-format",
+
+    # <lib/zbitl/view.h> has #include <lib/cksum.h>.
+    "//mk/third_party/ulib/cksum:headers",
+
+    # <lib/zbitl/items/bootfs.h> has #include <fbl/alloc_checker.h>.
+    "//mk/ulib/fbl:headers",
+
+    # <lib/zbitl/view.h> has #include <lib/fit/result.h>.
+    "//mk/ulib/zx:headers",
+
+    # <lib/zbitl/efi.h> has #include <efi/protocol/file.h>.
+    "//mk/lib/efi:headers",
+  ]
+
+  if (is_kernel) {
+    # The zbitl headers use various ktl-approved standard C++ headers.
+    deps += [
+      "//mk/lib/ktl",
+      "//mk/lib/libc",
+    ]
+    public_deps += [ "//mk/lib/ktl:headers" ]
+  } else {
+    sources += [
+      "fd.cc",
+      "stdio.cc",
+    ]
+
+    if (is_mk) {
+      sources += [
+        "mapvmo.cc",
+        "vmo-read.cc",
+        "vmo.cc",
+      ]
+      deps += [
+        "//mk/ulib/zircon-internal",
+        "//mk/ulib/zx",
+      ]
+      public_deps += [
+        # <lib/zbitl/vmo.h> has #include <lib/zx/vmo.h>.
+        "//mk/ulib/zx:headers",
+      ]
+    }
+  }
+}
+
+source_set("internal.decompress-zstd") {
+  sources = [
+    "zstd-streaming.cc",
+    "zstd.cc",
+  ]
+  defines = [ "ZSTD_STATIC_LINKING_ONLY" ]
+  deps = [ "//third_party/zstd:zstd-decompress-standalone" ]
+  public_deps = [
+    "//mk/lib/stdcompat",
+
+    # Many files have #include <lib/zbi-format/zbi.h>.
+    "//mk/lib/zbi-format",
+
+    # <lib/zbitl/decompress.h> has #include <lib/fit/result.h>.
+    "//mk/ulib/zx",
+  ]
+  include_dirs = [ "include" ]
+
+  if (is_kernel) {
+    deps += [
+      "//mk/lib/ktl",
+      "//mk/lib/libc",
+    ]
+  } else {
+    sources += [ "default-allocator.cc" ]
+  }
+}
+
+group("tests") {
+  testonly = true
+  deps = [ "tests" ]
+}

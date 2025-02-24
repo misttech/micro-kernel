@@ -1,92 +1,102 @@
-/*
- * Copyright (c) 2008-2015 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
-#pragma once
+// Copyright 2020 The Fuchsia Authors
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
-#include <lib/io.h>
-#include <printf.h>
-#include <sys/types.h>
+#ifndef ZIRCON_KERNEL_LIB_LIBC_INCLUDE_STDIO_H_
+#define ZIRCON_KERNEL_LIB_LIBC_INCLUDE_STDIO_H_
 
-#include <lk/compiler.h>
-#if defined(WITH_LIB_FS)
-#include <lib/fs.h>
-#endif  // WITH_LIB_FS
+#include <stdarg.h>
+#include <stddef.h>
+#include <zircon/compiler.h>
+
+// All anybody really wants from stdio is printf.
+
+#ifdef __cplusplus
+#include <ktl/string_view.h>
+
+class FILE {
+ public:
+  // This is basically equivalent to having a virtual Write function with
+  // subclasses providing their own data members in lieu of ptr.  But it's
+  // simpler and avoids a vtable that might need address fixup at load time
+  // (and the double indirection for a single-entry vtable--at the cost of
+  // double indirection for the ptr data in a callback that uses it).
+
+  using Callback = int(void*, ktl::string_view);
+
+  FILE() = default;
+
+  constexpr FILE(Callback* write, void* ptr) : write_(write), ptr_(ptr) {}
+
+  template <typename T>
+  explicit FILE(T* writer)
+      : write_([](void* ptr, ktl::string_view s) { return static_cast<T*>(ptr)->Write(s); }),
+        ptr_(writer) {}
+
+  // This is what fprintf calls to do output.
+  int Write(ktl::string_view s) { return write_(ptr_, s); }
+
+  constexpr explicit operator bool() const { return write_; }
+
+  constexpr bool operator==(const FILE& other) const {
+    return write_ == other.write_ && ptr_ == other.ptr_;
+  }
+
+  constexpr bool operator!=(const FILE& other) const { return !(*this == other); }
+
+  // This is not defined by libc itself.  The kernel defines it to point at
+  // the default console output mechanism.
+  static FILE stdout_;
+
+ private:
+  Callback* write_ = nullptr;
+  void* ptr_ = nullptr;
+};
+
+#define stdout (&FILE::stdout_)
+
+inline int fputc(int c, FILE* f) {
+  const unsigned char uc = static_cast<unsigned char>(c);
+  return f->Write({reinterpret_cast<const char*>(&uc), 1}) == 1 ? uc : -1;
+}
+
+inline int putc(int c, FILE* f) { return fputc(c, f); }
+
+inline int putchar(int c) { return fputc(c, stdout); }
+
+inline int fputs(const char* s, FILE* f) {
+  ktl::string_view str(s);
+  return f->Write(str) == static_cast<int>(str.size()) ? 0 : -1;
+}
+
+inline int puts(const char* s) { return fputs(s, stdout) == 0 ? putchar('\n') : -1; }
+
+#else  // !__cplusplus
+
+// C users just need the function declarations.
+typedef struct _FILE_is_opaque FILE;
+
+#endif  // __cplusplus
 
 __BEGIN_CDECLS
 
-#if defined(WITH_LIB_FS)
-struct fs_handle {
-  filehandle *handle;
-  off_t offset;
-  bool readonly;
-};
-#endif  // WITH_LIB_FS
-typedef struct FILE {
-#if defined(WITH_LIB_FS)
-  union {
-    io_handle_t *io;
-    struct fs_handle fs_handle;
-  };
-  bool use_fs;
-#else
-  io_handle_t *io;
-#endif  // WITH_LIB_FS
-} FILE;
+int printf(const char*, ...) __PRINTFLIKE(1, 2);
+int fprintf(FILE*, const char*, ...) __PRINTFLIKE(2, 3);
+int snprintf(char* buf, size_t len, const char*, ...) __PRINTFLIKE(3, 4);
 
-extern FILE __stdio_FILEs[];
-
-#define stdin (&__stdio_FILEs[0])
-#define stdout (&__stdio_FILEs[1])
-#define stderr (&__stdio_FILEs[2])
-
-#define EOF (-1)
-
-FILE *fopen(const char *filename, const char *mode);
-int fclose(FILE *stream);
-size_t fread(void *ptr, size_t size, size_t count, FILE *stream);
-size_t fwrite(const void *ptr, size_t size, size_t count, FILE *stream);
-int fflush(FILE *stream);
-int feof(FILE *stream);
-
-#define SEEK_SET 0
-#define SEEK_CUR 1
-#define SEEK_END 2
-
-int fseek(FILE *stream, long offset, int whence);
-long ftell(FILE *stream);
-
-int fputc(int c, FILE *fp);
-#define putc(c, fp) fputc(c, fp)
-int putchar(int c);
-
-int fputs(const char *s, FILE *fp);
-int puts(const char *str);
-
-int fgetc(FILE *fp);
-#define getc(fp) fgetc(fp)
-int getchar(void);
-
-char *fgets(char *s, int size, FILE *stream);
-
-#if !DISABLE_DEBUG_OUTPUT
-int printf(const char *fmt, ...) __PRINTFLIKE(1, 2);
-int vprintf(const char *fmt, va_list ap);
-#else
-static inline int __PRINTFLIKE(1, 2) printf(const char *fmt, ...) { return 0; }
-static inline int vprintf(const char *fmt, va_list ap) { return 0; }
-#endif
-
-int fprintf(FILE *fp, const char *fmt, ...) __PRINTFLIKE(2, 3);
-int vfprintf(FILE *fp, const char *fmt, va_list ap);
-int _fprintf_output_func(const char *str, size_t len, void *state);
-
-int sprintf(char *str, const char *fmt, ...) __PRINTFLIKE(2, 3);
-int snprintf(char *str, size_t len, const char *fmt, ...) __PRINTFLIKE(3, 4);
-int vsprintf(char *str, const char *fmt, va_list ap);
-int vsnprintf(char *str, size_t len, const char *fmt, va_list ap);
+int vprintf(const char*, va_list);
+int vfprintf(FILE*, const char*, va_list);
+int vsnprintf(char* buf, size_t len, const char*, va_list);
 
 __END_CDECLS
+
+#if DISABLE_DEBUG_OUTPUT
+// The declarations stand so these can be used without parens to get
+// the real functions (e.g. &printf or (printf)(...)).
+#define printf(...)
+#define vprintf(fmt, args)
+#endif
+
+#endif  // ZIRCON_KERNEL_LIB_LIBC_INCLUDE_STDIO_H_

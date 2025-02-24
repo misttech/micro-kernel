@@ -1,0 +1,32 @@
+# Copyright 2021 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/migrated_targets.gni")
+
+zx_library("jtrace") {
+  sources = [
+    "jtrace.cc",
+    "jtrace_internal.h",
+  ]
+  deps = [
+    "//mk/lib/fit:headers",
+    "//mk/lib/arch",
+    "//mk/lib/console",
+    "//mk/lib/debuglog",
+    "//mk/lib/io",
+    "//mk/lib/ktl",
+    #"//mk/lib/syscalls",
+    "//mk/vm",
+    "//mk/ulib/affine",
+    "//mk/ulib/fbl:headers",
+    "//mk/ulib/lazy_init",
+    "//mk/ulib/pretty",
+  ]
+  public_configs = [
+    #"//mk:jtrace_config",
+    "//mk:persistent_ram_config",
+  ]
+}

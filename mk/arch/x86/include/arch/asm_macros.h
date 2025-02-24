@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT
 
-#ifndef ARCH_X86_INCLUDE_ARCH_ASM_MACROS_H_
-#define ARCH_X86_INCLUDE_ARCH_ASM_MACROS_H_
+#ifndef ZIRCON_KERNEL_ARCH_X86_INCLUDE_ARCH_ASM_MACROS_H_
+#define ZIRCON_KERNEL_ARCH_X86_INCLUDE_ARCH_ASM_MACROS_H_
 
 // clang-format off
 
@@ -106,7 +106,4 @@ add $\value, %rsp
   jmp _x; \
   int3
 
-#endif  // ARCH_X86_INCLUDE_ARCH_ASM_MACROS_H_
-
-
-#endif  // ARCH_X86_INCLUDE_ARCH_ASM_MACROS_H_
+#endif  // ZIRCON_KERNEL_ARCH_X86_INCLUDE_ARCH_ASM_MACROS_H_

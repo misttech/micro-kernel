@@ -1,0 +1,26 @@
+# Copyright 2020 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/migrated_targets.gni")
+
+zx_library("lockup_detector") {
+  sources = [
+    "diagnostics.cc",
+    "lockup_detector.cc",
+  ]
+  deps = [
+    "tests",
+    "//mk/lib/backtrace",
+    "//mk/lib/boot-options",
+    "//mk/lib/console",
+    "//mk/lib/counters",
+    "//mk/lib/crashlog",
+    "//mk/lib/version",
+    #"//mk/object",
+    "//mk/ulib/affine",
+  ]
+  public_deps = [ "//mk/lib/ktl:headers" ]
+}

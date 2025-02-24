@@ -1,4 +1,3 @@
-# Copyright 2025 Mist Tecnologia Ltda
 # Copyright 2019 The Fuchsia Authors
 #
 # Use of this source code is governed by a MIT-style
@@ -7,26 +6,64 @@
 
 source_set("kernel") {
   sources = [
-    "debug.c",
-    "event.c",
-    "init.c",
-    "mp.c",
-    "mutex.c",
-    "port.c",
-    "semaphore.c",
-    "thread.c",
-    "timer.c",
+    "brwlock.cc",
+    "cpu_distance_map.cc",
+    "cpu_search_set.cc",
+    "deadline.cc",
+    "debug.cc",
+    "dpc.cc",
+    "event.cc",
+    "idle_power_thread.cc",
+    "init.cc",
+    "mp.cc",
+    "mutex.cc",
+    "owned_wait_queue.cc",
+    "percpu.cc",
+    "restricted.cc",
+    "restricted_state.cc",
+    "scheduler.cc",
+    "scheduler_pi.cc",
+    "scheduler_state.cc",
+    "semaphore.cc",
+    "task_runtime_stats.cc",
+    "thread.cc",
+    "timer.cc",
+    "wait.cc",
   ]
 
   deps = [
-    "//mk/kernel/vm",
-    "//mk/lib/console",
+    #":tests",
     "//mk/lib/fit",
+    "//mk/dev/interrupt",
+    "//mk/dev/pdev/hw_watchdog",
+    "//mk/lib/abi_type_validator",
+    "//mk/lib/arch",
+    "//mk/lib/boot-options:headers",
+    "//mk/lib/console",
+    "//mk/lib/counters",
+    "//mk/lib/fbl",
     "//mk/lib/heap",
+    "//mk/lib/init",
+    #"//mk/lib/jtrace",
+    "//mk/lib/kconcurrent",
     "//mk/lib/ktl",
+    "//mk/lib/ktrace",
     "//mk/lib/libc",
-    "//mk/lib/pretty",
-    "//mk/target",
+    "//mk/lib/power-management",
+    "//mk/lib/stall",
+    #"//mk/lib/thread_sampler",
+    "//mk/lib/topology",
+    #"//mk/lib/userabi",
+    "//mk/lib/version",
+    "//mk/lib/wake-vector",
+    "//mk/object",
+    "//mk/vm",
+    "//mk/ulib/affine",
+    "//mk/ulib/explicit-memory",
+    "//mk/ulib/lazy_init",
+    "//mk/ulib/pretty",
+    "//mk/ulib/zircon-internal",
+    "//mk/ulib/zx",
   ]
 
   # TODO(https://fxbug.dev/42101573): This dependency is conditional because when built
@@ -36,4 +73,20 @@ source_set("kernel") {
   if (!is_gcc) {
     deps += [ "//mk/lib/cxxabi-dynamic-init" ]
   }
+}
+
+source_set("tests") {
+  # TODO: testonly = true
+  sources = [
+    "mutex_tests.cc",
+    "semaphore_tests.cc",
+    "spinlock_tests.cc",
+    "thread_test.cc",
+  ]
+  deps = [
+    "//mk/lib/arch",
+    "//mk/lib/console",
+    "//mk/lib/unittest",
+    "//mk/ulib/zircon-internal",
+  ]
 }

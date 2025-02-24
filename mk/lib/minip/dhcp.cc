@@ -90,7 +90,7 @@ class dhcp {
 
   static int dhcp_thread(void *arg);
 
-  Mutex lock_;
+  LkMutex lock_;
   udp_socket_t *dhcp_udp_handle_ = nullptr;
   thread_t *dhcp_thr_ = nullptr;
 
@@ -214,7 +214,7 @@ void dhcp::udp_callback(void *data, size_t sz, uint32_t srcip, uint16_t srcport)
   u32 server = 0;
   int op = -1;
 
-  AutoLock guard(lock_);
+  LkAutoLock guard(lock_);
 
   // lossy testing for state machine transitions
   if (false) {
@@ -345,7 +345,7 @@ int dhcp::dhcp_thread(void *arg) {
   auto worker = [&]() {
     while (!d->configured_) {
       {
-        AutoLock guard(d->lock_);
+        LkAutoLock guard(d->lock_);
         switch (d->state_) {
           case INITIAL:
           case DISCOVER_SENT:
@@ -369,7 +369,7 @@ int dhcp::dhcp_thread(void *arg) {
 }
 
 status_t dhcp::start() {
-  AutoLock guard(lock_);
+  LkAutoLock guard(lock_);
 
   int ret = udp_open(IPV4_BCAST, DHCP_CLIENT_PORT, DHCP_SERVER_PORT, &dhcp_udp_handle_);
   if (ret != NO_ERROR) {

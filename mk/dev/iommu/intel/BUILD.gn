@@ -1,0 +1,36 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/migrated_targets.gni")
+
+zx_library("intel") {
+  sources = [
+    "context_table_state.cc",
+    "device_context.cc",
+    "domain_allocator.cc",
+    "intel_iommu.cc",
+    "iommu_impl.cc",
+    "iommu_page.cc",
+    "second_level_pt.cc",
+  ]
+  deps = [
+    "//mk/arch/x86/page_tables",
+    "//mk/dev/interrupt",
+    "//mk/dev/pcie",
+    "//mk/lib/fbl",
+    "//mk/lib/ktl",
+    "//mk/lib/root_resource_filter",
+    "//mk/lib/user_copy",
+    "//mk/vm:headers",
+    "//mk/ulib/bitmap",
+    "//mk/ulib/hwreg",
+    "//mk/ulib/region-alloc",
+  ]
+  public_deps = [
+    # dev/iommu/intel.h has #include <fbl/ref_ptr.h>.
+    "//mk/lib/fbl:headers",
+  ]
+}

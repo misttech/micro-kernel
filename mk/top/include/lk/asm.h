@@ -1,27 +1,13 @@
-/*
- * Copyright (c) 2008-2013 Travis Geiselbrecht
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
-#pragma once
+// Copyright 2025 Mist Tecnologia Ltda
+// Copyright (c) 2008-2013 Travis Geiselbrecht
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
-#define FUNCTION(x)  \
-  .global x;         \
-  .type x, STT_FUNC; \
-  x:
-#define DATA(x)        \
-  .global x;           \
-  .type x, STT_OBJECT; \
-  x:
+#ifndef MK_TOP_INCLUDE_LK_ASM_H_
+#define MK_TOP_INCLUDE_LK_ASM_H_
 
-#define LOCAL_FUNCTION(x) \
-  .type x, STT_FUNC;      \
-  x:
-#define LOCAL_DATA(x)  \
-  .type x, STT_OBJECT; \
-  x:
+#include <asm.h>
 
-#define END_FUNCTION(x) .size x, .- x
-#define END_DATA(x) .size x, .- x
+#endif  // MK_TOP_INCLUDE_LK_ASM_H_

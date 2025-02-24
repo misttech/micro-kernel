@@ -1,0 +1,24 @@
+# Copyright 2020 The Fuchsia Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//build/kernel/zx_library.gni")
+
+zx_library("ktrace") {
+  sdk = "source"
+  sdk_headers = [ "lib/ktrace/ktrace.h" ]
+  sources = [ "ktrace.cc" ]
+  deps = [
+    "//sdk/fidl/fuchsia.tracing.kernel:fuchsia.tracing.kernel_hlcpp",
+    "//sdk/lib/async",
+    "//sdk/lib/fidl",
+    "//mk/ulib/zircon-internal",
+    "//mk/ulib/zx",
+  ]
+  public_deps = [ "//mk/ulib/svc" ]
+}
+
+group("tests") {
+  testonly = true
+  deps = [ "test:tests" ]
+}

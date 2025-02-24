@@ -23,7 +23,7 @@
 // Largely C level api for the PCI bus manager
 
 namespace {
-SpinLock lock;
+LkSpinLock lock;
 pci_backend *pcib = nullptr;
 }  // namespace
 
@@ -45,7 +45,7 @@ status_t pci_read_config_byte(const pci_location_t state, uint32_t reg, uint8_t 
   if (!pcib)
     return ERR_NOT_CONFIGURED;
 
-  AutoSpinLock guard(&lock);
+  LkAutoSpinLock guard(&lock);
 
   int res = pcib->read_config_byte(state, reg, value);
 
@@ -55,7 +55,7 @@ status_t pci_read_config_half(const pci_location_t state, uint32_t reg, uint16_t
   if (!pcib)
     return ERR_NOT_CONFIGURED;
 
-  AutoSpinLock guard(&lock);
+  LkAutoSpinLock guard(&lock);
 
   int res = pcib->read_config_half(state, reg, value);
 
@@ -66,7 +66,7 @@ status_t pci_read_config_word(const pci_location_t state, uint32_t reg, uint32_t
   if (!pcib)
     return ERR_NOT_CONFIGURED;
 
-  AutoSpinLock guard(&lock);
+  LkAutoSpinLock guard(&lock);
 
   int res = pcib->read_config_word(state, reg, value);
 
@@ -77,7 +77,7 @@ status_t pci_write_config_byte(const pci_location_t state, uint32_t reg, uint8_t
   if (!pcib)
     return ERR_NOT_CONFIGURED;
 
-  AutoSpinLock guard(&lock);
+  LkAutoSpinLock guard(&lock);
 
   int res = pcib->write_config_byte(state, reg, value);
 
@@ -88,7 +88,7 @@ status_t pci_write_config_half(const pci_location_t state, uint32_t reg, uint16_
   if (!pcib)
     return ERR_NOT_CONFIGURED;
 
-  AutoSpinLock guard(&lock);
+  LkAutoSpinLock guard(&lock);
 
   int res = pcib->write_config_half(state, reg, value);
 
@@ -99,7 +99,7 @@ status_t pci_write_config_word(const pci_location_t state, uint32_t reg, uint32_
   if (!pcib)
     return ERR_NOT_CONFIGURED;
 
-  AutoSpinLock guard(&lock);
+  LkAutoSpinLock guard(&lock);
 
   int res = pcib->write_config_word(state, reg, value);
 

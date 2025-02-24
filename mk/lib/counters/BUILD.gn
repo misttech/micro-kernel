@@ -1,0 +1,37 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/migrated_targets.gni")
+
+zx_library("counters") {
+  sdk = "source"
+  sdk_headers = [
+    "lib/counters.h",
+    "lib/counter-vmo-abi.h",
+  ]
+
+  visibility = [
+    "//src/zircon/bin/kcounter:*",
+    "//src/zircon/tests/kcounter:*",
+    "//vendor/google/*",
+    "//mk/*",
+    "//mk/ulib/*",
+    "//mk/ulib/kcounter/*",
+  ]
+
+  sources = []
+  if (is_kernel) {
+    sources += [ "counters.cc" ]
+    deps = [
+      "//mk/lib/init",
+      "//mk/lib/special-sections",
+    ]
+    public_deps = [
+      # <lib/counters.h> has #include <lib/special-sections/special-sections.h>.
+      "//mk/lib/special-sections:headers",
+    ]
+  }
+}

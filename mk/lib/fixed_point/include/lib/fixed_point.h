@@ -1,12 +1,12 @@
-/*
- * Copyright (c) 2013, Google Inc. All rights reserved.
- *
- * Use of this source code is governed by a MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT
- */
+// Copyright 2016 The Fuchsia Authors
+// Copyright (c) 2013, Google Inc. All rights reserved.
+//
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT
 
-#pragma once
+#ifndef ZIRCON_KERNEL_LIB_FIXED_POINT_INCLUDE_LIB_FIXED_POINT_H_
+#define ZIRCON_KERNEL_LIB_FIXED_POINT_INCLUDE_LIB_FIXED_POINT_H_
 
 #include <stdint.h>
 
@@ -22,25 +22,25 @@ struct fp_32_64 {
 
 #include "fixed_point_debug.h"
 
-static void fp_32_64_div_32_32(struct fp_32_64 *result, uint32_t dividend, uint32_t divisor) {
+static inline void fp_32_64_div_32_32(struct fp_32_64* result, uint32_t dividend, uint32_t divisor) {
   uint64_t tmp;
   uint32_t rem;
 
   tmp = ((uint64_t)dividend << 32) / divisor;
-  rem = ((uint64_t)dividend << 32) % divisor;
-  result->l0 = tmp >> 32;
-  result->l32 = tmp;
+  rem = (uint32_t)(((uint64_t)dividend << 32) % divisor);
+  result->l0 = (uint32_t)(tmp >> 32);
+  result->l32 = (uint32_t)tmp;
   tmp = ((uint64_t)rem << 32) / divisor;
-  result->l64 = tmp;
+  result->l64 = (uint32_t)tmp;
 }
 
-static uint64_t mul_u32_u32(uint32_t a, uint32_t b, int a_shift, int b_shift) {
+static inline uint64_t mul_u32_u32(uint32_t a, uint32_t b, int a_shift, int b_shift) {
   uint64_t ret = (uint64_t)a * b;
   debug_mul_u32_u32(a, b, a_shift, b_shift, ret);
   return ret;
 }
 
-static uint64_t u64_mul_u32_fp32_64(uint32_t a, struct fp_32_64 b) {
+static inline uint64_t u64_mul_u32_fp32_64(uint32_t a, struct fp_32_64 b) {
   uint64_t tmp;
   uint64_t res_0;
   uint64_t res_l32;
@@ -53,7 +53,7 @@ static uint64_t u64_mul_u32_fp32_64(uint32_t a, struct fp_32_64 b) {
   res_l32 = (uint32_t)tmp;
   res_l32 += mul_u32_u32(a, b.l64, 0, -64) >> 32; /* Improve rounding accuracy */
   res_0 += res_l32 >> 32;
-  res_l32_32 = res_l32;
+  res_l32_32 = (uint32_t)res_l32;
   ret = res_0 + (res_l32_32 >> 31); /* Round to nearest integer */
 
   debug_u64_mul_u32_fp32_64(a, b, res_0, res_l32_32, ret);
@@ -61,9 +61,9 @@ static uint64_t u64_mul_u32_fp32_64(uint32_t a, struct fp_32_64 b) {
   return ret;
 }
 
-static uint32_t u32_mul_u64_fp32_64(uint64_t a, struct fp_32_64 b) {
-  uint32_t a_r32 = a >> 32;
-  uint32_t a_0 = a;
+static inline uint32_t u32_mul_u64_fp32_64(uint64_t a, struct fp_32_64 b) {
+  uint32_t a_r32 = (uint32_t)(a >> 32);
+  uint32_t a_0 = (uint32_t)a;
   uint64_t res_l32;
   uint32_t ret;
 
@@ -72,17 +72,17 @@ static uint32_t u32_mul_u64_fp32_64(uint64_t a, struct fp_32_64 b) {
   res_l32 += mul_u32_u32(a_r32, b.l32, 32, -32) << 32;
   res_l32 += mul_u32_u32(a_0, b.l32, 0, -32);
   res_l32 += mul_u32_u32(a_r32, b.l64, 32, -64);
-  res_l32 += mul_u32_u32(a_0, b.l64, 0, -64) >> 32;  /* Improve rounding accuracy */
-  ret = (res_l32 >> 32) + ((uint32_t)res_l32 >> 31); /* Round to nearest integer */
+  res_l32 += mul_u32_u32(a_0, b.l64, 0, -64) >> 32;              /* Improve rounding accuracy */
+  ret = (uint32_t)((res_l32 >> 32) + ((uint32_t)res_l32 >> 31)); /* Round to nearest integer */
 
   debug_u32_mul_u64_fp32_64(a, b, res_l32, ret);
 
   return ret;
 }
 
-static uint64_t u64_mul_u64_fp32_64(uint64_t a, struct fp_32_64 b) {
-  uint32_t a_r32 = a >> 32;
-  uint32_t a_0 = a;
+static inline uint64_t u64_mul_u64_fp32_64(uint64_t a, struct fp_32_64 b) {
+  uint32_t a_r32 = (uint32_t)(a >> 32);
+  uint32_t a_0 = (uint32_t)a;
   uint64_t res_0;
   uint64_t res_l32;
   uint32_t res_l32_32;
@@ -104,10 +104,12 @@ static uint64_t u64_mul_u64_fp32_64(uint64_t a, struct fp_32_64 b) {
   tmp = mul_u32_u32(a_0, b.l64, 0, -64); /* Improve rounding accuracy */
   res_l32 += tmp >> 32;
   res_0 += res_l32 >> 32;
-  res_l32_32 = res_l32;
+  res_l32_32 = (uint32_t)(res_l32);
   ret = res_0 + (res_l32_32 >> 31); /* Round to nearest integer */
 
   debug_u64_mul_u64_fp32_64(a, b, res_0, res_l32_32, ret);
 
   return ret;
 }
+
+#endif  // ZIRCON_KERNEL_LIB_FIXED_POINT_INCLUDE_LIB_FIXED_POINT_H_

@@ -1,0 +1,38 @@
+# Copyright 2019 The Fuchsia Authors
+#
+# Use of this source code is governed by a MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT
+
+import("//build/kernel/migrated_targets.gni")
+
+zx_library("ktrace") {
+  sources = [ "ktrace.cc" ]
+  deps = [
+    #"//mk/hypervisor:headers",
+    "//mk/lib/boot-options",
+    "//mk/lib/init",
+    "//mk/lib/ktl",
+
+    #"//mk/lib/syscalls:headers",
+    "//mk/object:headers",
+    "//mk/ulib/zircon-internal",
+  ]
+
+  public_deps = [
+    ":suppress-warning",
+    "//mk/lib/fxt:headers",
+  ]
+}
+
+group("suppress-warning") {
+  visibility = [ ":*" ]
+  public_configs = [ ":suppress-warning.config" ]
+}
+
+config("suppress-warning.config") {
+  if (!is_gcc) {
+    # Silence warning in Clang about GNU extension used in string_ref.h.
+    cflags_cc = [ "-Wno-gnu-string-literal-operator-template" ]
+  }
+}

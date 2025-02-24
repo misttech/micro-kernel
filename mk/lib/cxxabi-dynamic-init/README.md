@@ -12,4 +12,4 @@ the use of function scoped static variables.  In development builds
 of these functions after global constructors have executed will result
 in a kernel panic.
 
-See also [validate-kernel-symbols.py](//zircon/kernel/scripts/validate-kernel-symbols.py).
+See also [validate-kernel-symbols.py](//mk/scripts/validate-kernel-symbols.py).
